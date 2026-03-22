@@ -113,8 +113,8 @@
 <script>
 console.log('📥 Module Export & Signature v5.0 - Init');
 
-const SIGNATURE_PAGE_URL = 'https://crm.finox.ca/modules/signature.html';
-const RINGCENTRAL_WORKER = 'https://crm.finox.ca/ringcentral';
+const SIGNATURE_PAGE_URL = window.location.origin + '/modules/signature.html';
+const RINGCENTRAL_WORKER = window.location.origin + '/ringcentral';
 
 let clientData = null;
 let lettresHistorique = [];
@@ -534,7 +534,14 @@ window.sendSignatureSms = async function(url, password, target, btn) {
             const data = await response.json();
 
             if (data.error === 'RC_NOT_CONNECTED') {
-                FINOX.showNotification('⚠️ RingCentral non connecté. Allez dans Paramètres > Intégrations', 'warning');
+                // Proposer la connexion RC directement
+                const connectNow = confirm('RingCentral non connecté.\n\nVoulez-vous connecter votre compte RingCentral maintenant?');
+                if (connectNow) {
+                    const user = FINOX.getCurrentUser();
+                    const returnUrl = encodeURIComponent(window.location.href);
+                    const authUrl = RINGCENTRAL_WORKER + '/oauth/start?user_id=' + user.id + '&return_url=' + returnUrl;
+                    window.open(authUrl, 'RingCentral OAuth', 'width=600,height=700,scrollbars=yes');
+                }
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 return;

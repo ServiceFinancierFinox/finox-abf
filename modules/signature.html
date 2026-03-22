@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Electronique - FINOX</title>
+    <link rel="icon" href="https://www.finox.ca/favicon.ico">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --gold: #C9A227;
+            --gold-dark: #A68A1F;
+            --dark: #1a1a2e;
+            --gray: #6b7280;
+            --light-gray: #f3f4f6;
+            --border: #e5e7eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: var(--dark);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header img { height: 50px; }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--dark), #2a2a4e);
+            color: #fff;
+            padding: 24px;
+        }
+        
+        .card-header h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .card-header p { color: rgba(255,255,255,0.7); font-size: 14px; }
+        .card-body { padding: 24px; }
+        
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .login-icon { font-size: 64px; margin-bottom: 20px; }
+        .login-form h2 { font-size: 20px; margin-bottom: 8px; }
+        .login-form p { color: var(--gray); font-size: 14px; margin-bottom: 24px; }
+        
+        .password-input {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .password-input input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .password-input input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.2);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(201, 162, 39, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success { background: var(--success); color: #fff; }
+        
+        .document-preview {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            max-height: 60vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        .document-preview iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            pointer-events: none;
+        }
+
+        /* Gradient fade + bouton pour passer le document */
+        .doc-scroll-hint {
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 16px 16px;
+            background: linear-gradient(to bottom, transparent, #fff 60%);
+            text-align: center;
+            z-index: 2;
+        }
+        .doc-scroll-hint button {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 28px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 320px;
+        }
+        .doc-continue-separator {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 12px 0;
+            color: var(--gray);
+            font-size: 13px;
+        }
+        
+        .consent-section {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .consent-section h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+        
+        .consent-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .consent-item:hover { border-color: var(--gold); }
+        
+        .consent-item.checked {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--success);
+        }
+        
+        .consent-item input { display: none; }
+        
+        .consent-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        
+        .consent-item.checked .consent-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+        }
+        
+        .consent-item.checked .consent-checkbox::after {
+            content: '\2713';
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .consent-text { font-size: 14px; line-height: 1.5; }
+        .consent-text .required { color: var(--danger); }
+        
+        .signature-section { margin-bottom: 24px; }
+        .signature-section h3 { font-size: 16px; margin-bottom: 16px; }
+        
+        .signature-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .signature-tab {
+            padding: 10px 20px;
+            background: var(--light-gray);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .signature-tab.active {
+            background: #fff;
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        
+        .signature-canvas-container {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        #signatureCanvas {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .signature-actions { margin-top: 12px; }
+        
+        .btn-clear {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--gray);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .signature-typed { display: none; }
+        
+        .signature-typed input {
+            width: 100%;
+            padding: 16px;
+            font-size: 24px;
+            font-family: 'Brush Script MT', cursive;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .signature-typed input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--light-gray);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 12px;
+        }
+        
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .card-body { padding: 16px; }
+            .password-input input { width: 45px; height: 55px; font-size: 20px; }
+        }
+
+        /* ═══ MODE PLEIN ÉCRAN SIGNATURE (mobile) ═══ */
+        .sig-expand-btn {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .sig-expand-btn { display: inline-block; }
+            #signatureCanvas { width: 100%; height: auto; }
+        }
+        .sig-fs-overlay {
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            animation: sigFsIn 0.2s forwards;
+        }
+        @keyframes sigFsIn { from { opacity: 0; } to { opacity: 1; } }
+        .sig-fs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--dark);
+        }
+        .sig-fs-header span { color: #fff; font-weight: 600; font-size: 16px; }
+        .sig-fs-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .sig-fs-canvas-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #f0f0f0;
+        }
+        .sig-fs-canvas-wrap canvas {
+            background: #fff;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            touch-action: none;
+            cursor: crosshair;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .sig-fs-actions {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #fff;
+            border-top: 1px solid var(--border);
+        }
+        .sig-fs-actions button {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .sig-fs-btn-clear { background: var(--light-gray); color: var(--gray); }
+        .sig-fs-btn-cancel { background: var(--light-gray); color: var(--danger); }
+        .sig-fs-btn-ok { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+    </header>
+
+    <div class="container">
+        <div id="loadingState" class="card">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: var(--gray);">Chargement du document...</p>
+            </div>
+        </div>
+
+        <div id="errorState" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">&#10060;</div>
+                <h2 style="margin-bottom: 12px;">Document non disponible</h2>
+                <p id="errorMessage" style="color: var(--gray);">Le lien est invalide ou a expire.</p>
+            </div>
+        </div>
+
+        <div id="signedState" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 60px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">&#9989;</div>
+                <h2 style="margin-bottom: 12px; color: var(--success);">Document deja signe</h2>
+                <p style="color: var(--gray);">Ce document a deja ete signe. Merci!</p>
+            </div>
+        </div>
+
+        <div id="loginState" class="card" style="display: none;">
+            <div class="card-header">
+                <h1>&#128274; Acces Securise</h1>
+                <p>Entrez votre code pour acceder au document</p>
+            </div>
+            <div class="card-body">
+                <div class="login-form">
+                    <div class="login-icon">&#128203;</div>
+                    <h2>Bonjour <span id="clientNameLogin"></span></h2>
+                    <p>Entrez les 4 derniers chiffres de votre numero de telephone pour acceder a votre Analyse des Besoins Financiers.</p>
+                    
+                    <div class="password-input">
+                        <input type="tel" maxlength="1" id="pwd1" inputmode="numeric" pattern="[0-9]">
+                        <input type="tel" maxlength="1" id="pwd2" inputmode="numeric" pattern="[0-9]">
+                        <input type="tel" maxlength="1" id="pwd3" inputmode="numeric" pattern="[0-9]">
+                        <input type="tel" maxlength="1" id="pwd4" inputmode="numeric" pattern="[0-9]">
+                    </div>
+                    
+                    <div id="loginError" style="color: var(--danger); margin-bottom: 16px; display: none;">
+                        Code incorrect. Veuillez reessayer.
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="verifyPassword()">
+                        &#128275; Acceder au document
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="documentState" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h1>&#128203; Analyse des Besoins Financiers</h1>
+                    <p>Signature de <strong><span id="clientNameDoc"></span></strong></p>
+                    <p id="docRecipientNote" style="font-size:13px;color:#888;margin-top:4px;display:none;"></p>
+                </div>
+                <div class="card-body">
+                    <div class="document-preview" id="documentPreview"></div>
+                    <div class="doc-continue-separator" id="docContinueSep">
+                        &#128071; Faites defiler vers le bas pour signer &#128071;
+                    </div>
+
+                    <!-- Avis de Divulgation consents (dynamic, loaded from DB) -->
+                    <div class="consent-section" id="avisConsentSection" style="display:none;">
+                        <h3>&#9989; Consentements — Avis de Divulgation</h3>
+                        <div id="avisConsentList"></div>
+                    </div>
+
+                    <div class="consent-section" id="consentSection">
+                        <h3>&#9989; Consentements requis</h3>
+
+                        <label class="consent-item" onclick="toggleConsent(this)">
+                            <input type="checkbox" id="consent1" required>
+                            <span class="consent-checkbox"></span>
+                            <span class="consent-text">
+                                <span class="required">*</span> J'ai lu et compris l'integralite du document ci-dessus.
+                            </span>
+                        </label>
+
+                        <label class="consent-item" onclick="toggleConsent(this)">
+                            <input type="checkbox" id="consent2" required>
+                            <span class="consent-checkbox"></span>
+                            <span class="consent-text">
+                                <span class="required">*</span> Je confirme que les informations fournies sont exactes et completes a ma connaissance.
+                            </span>
+                        </label>
+
+                        <label class="consent-item" onclick="toggleConsent(this)">
+                            <input type="checkbox" id="consent3">
+                            <span class="consent-checkbox"></span>
+                            <span class="consent-text">
+                                J'accepte d'etre contacte(e) par mon conseiller pour discuter de mes besoins en assurance.
+                            </span>
+                        </label>
+
+                        <label class="consent-item" onclick="toggleConsent(this)">
+                            <input type="checkbox" id="consent4" required>
+                            <span class="consent-checkbox"></span>
+                            <span class="consent-text">
+                                <span class="required">*</span> J'accepte que ma signature electronique ait la meme valeur legale qu'une signature manuscrite.
+                            </span>
+                        </label>
+                    </div>
+                    
+                    <div class="signature-section">
+                        <h3>&#9999; Votre signature</h3>
+                        
+                        <div class="signature-tabs">
+                            <div class="signature-tab active" onclick="switchSignatureMode('draw')">&#9999; Dessiner</div>
+                            <div class="signature-tab" onclick="switchSignatureMode('type')">&#9000; Taper</div>
+                        </div>
+                        
+                        <div class="signature-canvas-container" id="drawMode">
+                            <canvas id="signatureCanvas" width="400" height="150"></canvas>
+                            <div class="signature-actions">
+                                <button class="btn-clear" onclick="clearSignature()">&#128465; Effacer</button>
+                                <button class="sig-expand-btn" onclick="openFullscreenSignature()">&#128241; Agrandir pour signer</button>
+                            </div>
+                            <p style="font-size: 12px; color: var(--gray); margin-top: 10px;">
+                                Signez avec votre souris ou votre doigt
+                            </p>
+                        </div>
+                        
+                        <div class="signature-typed" id="typeMode">
+                            <input type="text" id="typedSignature" placeholder="Tapez votre nom complet">
+                            <p style="font-size: 12px; color: var(--gray); margin-top: 10px;">
+                                Votre nom sera affiche en style signature
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">
+                        <button class="btn btn-success" id="submitBtn" onclick="submitSignature()" disabled style="padding: 18px 40px; font-size: 16px;">
+                            &#9989; Signer et soumettre
+                        </button>
+                        <p style="font-size: 12px; color: var(--gray); margin-top: 12px;">
+                            En cliquant, vous confirmez tous les consentements coches ci-dessus.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="successState" class="card" style="display: none;">
+            <div class="card-body" style="text-align: center; padding: 40px 30px;">
+                <div style="font-size: 70px; margin-bottom: 16px;">&#127881;</div>
+                <h2 style="margin-bottom: 10px; color: var(--success);">Document signe avec succes!</h2>
+                <p style="color: var(--gray); margin-bottom: 8px;">
+                    Merci! Votre conseiller a ete notifie de votre signature.<br>
+                    Vous recevrez une copie du document signe par courriel.
+                </p>
+                <p style="font-size: 13px; color: var(--gray); margin-bottom: 30px;">
+                    Signe le <span id="signedDate"></span>
+                </p>
+
+                <!-- Two-Step Google Review Funnel -->
+                <div id="reviewFunnel" style="display:none; margin-top:20px; padding-top:28px; border-top:1px solid var(--border);">
+                    <!-- Step 1: Rating -->
+                    <div id="reviewStep1">
+                        <p style="font-size:16px; font-weight:600; color:var(--dark); margin-bottom:6px;">Comment evaluez-vous votre experience?</p>
+                        <p style="font-size:13px; color:var(--gray); margin-bottom:18px;">Votre avis nous aide a mieux vous servir</p>
+                        <div id="starRating" style="display:flex; justify-content:center; gap:8px; margin-bottom:20px;">
+                            <button onclick="selectRating(1)" class="star-btn" data-star="1" style="font-size:38px; background:none; border:none; cursor:pointer; transition:transform 0.15s; padding:4px;">&#9734;</button>
+                            <button onclick="selectRating(2)" class="star-btn" data-star="2" style="font-size:38px; background:none; border:none; cursor:pointer; transition:transform 0.15s; padding:4px;">&#9734;</button>
+                            <button onclick="selectRating(3)" class="star-btn" data-star="3" style="font-size:38px; background:none; border:none; cursor:pointer; transition:transform 0.15s; padding:4px;">&#9734;</button>
+                            <button onclick="selectRating(4)" class="star-btn" data-star="4" style="font-size:38px; background:none; border:none; cursor:pointer; transition:transform 0.15s; padding:4px;">&#9734;</button>
+                            <button onclick="selectRating(5)" class="star-btn" data-star="5" style="font-size:38px; background:none; border:none; cursor:pointer; transition:transform 0.15s; padding:4px;">&#9734;</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2a: High rating → Google -->
+                    <div id="reviewStepGoogle" style="display:none; text-align:center;">
+                        <div style="font-size:50px; margin-bottom:12px;">&#128153;</div>
+                        <p style="font-size:16px; font-weight:600; color:var(--dark); margin-bottom:6px;">Merci beaucoup!</p>
+                        <p style="font-size:13px; color:var(--gray); margin-bottom:18px;">Partagez votre experience sur Google pour aider d'autres personnes a nous trouver</p>
+                        <a id="googleReviewLink" href="#" target="_blank" rel="noopener" style="display:inline-block; padding:14px 32px; background:linear-gradient(135deg, #4285F4, #34A853); color:#fff; border-radius:10px; font-weight:600; font-size:15px; text-decoration:none; box-shadow:0 4px 14px rgba(66,133,244,0.3); transition:transform 0.2s;">
+                            <span style="margin-right:8px;">&#11088;</span> Laisser un avis Google
+                        </a>
+                        <p style="font-size:11px; color:var(--gray); margin-top:14px;">Cela ne prend que 30 secondes!</p>
+                    </div>
+
+                    <!-- Step 2b: Low rating → Feedback -->
+                    <div id="reviewStepFeedback" style="display:none; text-align:center;">
+                        <div style="font-size:50px; margin-bottom:12px;">&#128172;</div>
+                        <p style="font-size:16px; font-weight:600; color:var(--dark); margin-bottom:6px;">Merci pour votre retour</p>
+                        <p style="font-size:13px; color:var(--gray); margin-bottom:16px;">Aidez-nous a nous ameliorer en partageant vos commentaires</p>
+                        <textarea id="feedbackText" placeholder="Dites-nous comment nous pouvons nous ameliorer..." style="width:100%; min-height:100px; padding:12px; border:1px solid var(--border); border-radius:10px; font-family:inherit; font-size:13px; resize:vertical; margin-bottom:12px;"></textarea>
+                        <button onclick="submitFeedback()" style="padding:12px 28px; background:var(--gold); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:14px; cursor:pointer;">Envoyer mon commentaire</button>
+                        <div id="feedbackThanks" style="display:none; margin-top:16px;">
+                            <p style="color:var(--success); font-weight:600;">&#10004; Merci! Votre commentaire a ete transmis a votre conseiller.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 FINOX Services Financiers - Document confidentiel</p>
+        <p style="margin-top: 8px;">Ce document est protege et son acces est securise.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // =====================================================
+        // CONFIGURATION - TON PROJET SUPABASE
+        // =====================================================
+        const SUPABASE_URL = 'https://vtcnnqzxreuxupsbjufg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0Y25ucXp4cmV1eHVwc2JqdWZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NDU0NzUsImV4cCI6MjA4NDUyMTQ3NX0.3-rRe2N37ecgjlqtybNMi4WkRGOHoCgpx-P1pD1kxhI';
+        // =====================================================
+        // Va dans Supabase > Settings > API > anon public
+        // et colle la cle ci-dessus
+        // =====================================================
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let signatureRequest = null;
+        let signatureMode = 'draw';
+        let isDrawing = false;
+        let canvas, ctx;
+        let userEnteredPassword = null; // Store password for submit_signature call
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token') || window.location.pathname.split('/').pop();
+            
+            if (!token || token === 'signature.html') {
+                showError('Lien invalide. Veuillez utiliser le lien recu par courriel.');
+                return;
+            }
+            
+            await loadSignatureRequest(token);
+            setupPasswordInputs();
+            setupSignatureCanvas();
+            setupConsentListeners();
+        });
+        
+        async function loadSignatureRequest(token) {
+            try {
+                const { data, error } = await supabaseClient.rpc('get_signature_request_by_token', {
+                    p_token: token
+                });
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    showError('Document non trouve ou lien expire.');
+                    return;
+                }
+                
+                signatureRequest = data[0];
+                
+                if (signatureRequest.status === 'signed') {
+                    // If ?view=signed, allow viewing the signed document with password
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('view') === 'signed') {
+                        document.getElementById('clientNameLogin').textContent = signatureRequest.recipient_name || signatureRequest.client_name || '';
+                        window._viewSignedMode = true;
+                        showState('loginState');
+                        return;
+                    }
+                    showState('signedState');
+                    return;
+                }
+                
+                if (signatureRequest.status === 'expired' || new Date(signatureRequest.expires_at) < new Date()) {
+                    showError('Ce lien a expire. Veuillez contacter votre conseiller.');
+                    return;
+                }
+                
+                document.getElementById('clientNameLogin').textContent = signatureRequest.recipient_name || signatureRequest.client_name || '';
+                showState('loginState');
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError('Erreur lors du chargement du document.');
+            }
+        }
+        
+        function setupPasswordInputs() {
+            const inputs = [
+                document.getElementById('pwd1'),
+                document.getElementById('pwd2'),
+                document.getElementById('pwd3'),
+                document.getElementById('pwd4')
+            ];
+            
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    if (e.target.value && index < 3) {
+                        inputs[index + 1].focus();
+                    }
+                    if (inputs.every(i => i.value)) {
+                        verifyPassword();
+                    }
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+            });
+            
+            setTimeout(() => inputs[0]?.focus(), 100);
+        }
+        
+        async function verifyPassword() {
+            const password = [
+                document.getElementById('pwd1').value,
+                document.getElementById('pwd2').value,
+                document.getElementById('pwd3').value,
+                document.getElementById('pwd4').value
+            ].join('');
+
+            if (password.length !== 4) return;
+
+            // Disable inputs during verification
+            document.querySelectorAll('.password-input input').forEach(i => { i.disabled = true; });
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || window.location.pathname.split('/').pop();
+
+                // Server-side password verification (password never exposed to client)
+                const { data, error } = await supabaseClient.rpc('verify_signature_password', {
+                    p_token: token,
+                    p_password: password
+                });
+
+                if (error) throw error;
+
+                if (data && data.success) {
+                    userEnteredPassword = password;
+
+                    // VIEW SIGNED MODE: show document read-only with download button
+                    if (window._viewSignedMode) {
+                        showSignedDocumentView();
+                        return;
+                    }
+
+                    const recipientName = signatureRequest.recipient_name || signatureRequest.client_name || '';
+                    document.getElementById('clientNameDoc').textContent = recipientName;
+                    // Si conjoint, afficher une note explicative
+                    if (signatureRequest.recipient_type === 'conjoint' && signatureRequest.client_name && signatureRequest.client_name !== recipientName) {
+                        const note = document.getElementById('docRecipientNote');
+                        if (note) {
+                            note.textContent = `Document du dossier familial de ${signatureRequest.client_name}`;
+                            note.style.display = 'block';
+                        }
+                    }
+
+                    const preview = document.getElementById('documentPreview');
+                    const iframe = document.createElement('iframe');
+                    iframe.sandbox = 'allow-same-origin';
+                    iframe.style.pointerEvents = 'none'; // Empêche l'iframe de capturer le scroll tactile
+                    iframe.srcdoc = signatureRequest.document_html;
+                    preview.innerHTML = '';
+                    preview.appendChild(iframe);
+
+                    // Auto-resize iframe to full content height (no inner scroll)
+                    iframe.onload = function() {
+                        try {
+                            const h = iframe.contentDocument.documentElement.scrollHeight;
+                            iframe.style.height = h + 'px';
+                        } catch(e) {}
+                    };
+
+                    // Bouton flottant "Aller à la signature" dans le preview
+                    const hint = document.createElement('div');
+                    hint.className = 'doc-scroll-hint';
+                    hint.innerHTML = '<button onclick="document.getElementById(\'consentSection\').scrollIntoView({behavior:\'smooth\',block:\'start\'})">&#9999;&#65039; Continuer vers la signature</button>';
+                    preview.appendChild(hint);
+
+                    // Load Avis de Divulgation consent checkboxes from signature_request metadata
+                    if (signatureRequest.consent_checkboxes || signatureRequest.metadata?.consent_checkboxes) {
+                        const avisCbs = signatureRequest.consent_checkboxes || signatureRequest.metadata.consent_checkboxes;
+                        if (avisCbs && avisCbs.length > 0) {
+                            const avisSection = document.getElementById('avisConsentSection');
+                            const avisList = document.getElementById('avisConsentList');
+                            avisSection.style.display = 'block';
+                            avisList.innerHTML = avisCbs.map((cb, i) => `
+                                <label class="consent-item" onclick="toggleConsent(this)">
+                                    <input type="checkbox" id="avisConsent${i}" ${cb.required ? 'required' : ''} data-avis-id="${cb.id}">
+                                    <span class="consent-checkbox"></span>
+                                    <span class="consent-text">
+                                        ${cb.required ? '<span class="required">*</span> ' : ''}${cb.label}${!cb.required ? ' <span style="color:#888;font-size:12px;">(facultatif)</span>' : ''}
+                                    </span>
+                                </label>
+                            `).join('');
+                        }
+                    }
+
+                    showState('documentState');
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                    document.querySelectorAll('.password-input input').forEach(i => {
+                        i.value = '';
+                        i.disabled = false;
+                        i.style.borderColor = 'var(--danger)';
+                    });
+                    document.getElementById('pwd1').focus();
+
+                    setTimeout(() => {
+                        document.querySelectorAll('.password-input input').forEach(i => {
+                            i.style.borderColor = '';
+                        });
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Erreur vérification:', err);
+                document.querySelectorAll('.password-input input').forEach(i => { i.disabled = false; });
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+        
+        function setupSignatureCanvas() {
+            canvas = document.getElementById('signatureCanvas');
+            ctx = canvas.getContext('2d');
+            
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+            checkSubmitButton();
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            checkSubmitButton();
+        }
+
+        // ═══ MODE PLEIN ÉCRAN SIGNATURE ═══
+        let fsCanvas, fsCtx, fsIsDrawing = false;
+
+        function openFullscreenSignature() {
+            const overlay = document.createElement('div');
+            overlay.className = 'sig-fs-overlay';
+            overlay.id = 'sigFullscreen';
+
+            overlay.innerHTML = `
+                <div class="sig-fs-header">
+                    <span>✍️ Signez ici</span>
+                    <button class="sig-fs-close" onclick="closeFullscreenSignature(false)">✕</button>
+                </div>
+                <div class="sig-fs-canvas-wrap">
+                    <canvas id="fsSignatureCanvas"></canvas>
+                </div>
+                <div class="sig-fs-actions">
+                    <button class="sig-fs-btn-cancel" onclick="closeFullscreenSignature(false)">✕ Annuler</button>
+                    <button class="sig-fs-btn-clear" onclick="clearFsCanvas()">🗑️ Effacer</button>
+                    <button class="sig-fs-btn-ok" onclick="closeFullscreenSignature(true)">✅ Valider</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Taille du canvas = zone disponible
+            fsCanvas = document.getElementById('fsSignatureCanvas');
+            const wrap = overlay.querySelector('.sig-fs-canvas-wrap');
+            const w = wrap.clientWidth - 32;
+            const h = wrap.clientHeight - 32;
+            fsCanvas.width = w;
+            fsCanvas.height = h;
+            fsCanvas.style.width = w + 'px';
+            fsCanvas.style.height = h + 'px';
+
+            fsCtx = fsCanvas.getContext('2d');
+            fsCtx.strokeStyle = '#000';
+            fsCtx.lineWidth = 3;
+            fsCtx.lineCap = 'round';
+            fsCtx.lineJoin = 'round';
+
+            // Copier le contenu existant du petit canvas
+            if (!isCanvasBlank(canvas)) {
+                fsCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, w, h);
+            }
+
+            // Events
+            fsCanvas.addEventListener('mousedown', fsStartDrawing);
+            fsCanvas.addEventListener('mousemove', fsDraw);
+            fsCanvas.addEventListener('mouseup', fsStopDrawing);
+            fsCanvas.addEventListener('mouseout', fsStopDrawing);
+            fsCanvas.addEventListener('touchstart', fsHandleTouch, { passive: false });
+            fsCanvas.addEventListener('touchmove', fsHandleTouch, { passive: false });
+            fsCanvas.addEventListener('touchend', fsStopDrawing);
+
+            // Bloquer le scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function fsStartDrawing(e) {
+            fsIsDrawing = true;
+            const rect = fsCanvas.getBoundingClientRect();
+            fsCtx.beginPath();
+            fsCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function fsDraw(e) {
+            if (!fsIsDrawing) return;
+            const rect = fsCanvas.getBoundingClientRect();
+            fsCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            fsCtx.stroke();
+        }
+
+        function fsStopDrawing() { fsIsDrawing = false; }
+
+        function fsHandleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            fsCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function clearFsCanvas() {
+            fsCtx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+        }
+
+        function isCanvasBlank(cvs) {
+            const data = cvs.getContext('2d').getImageData(0, 0, cvs.width, cvs.height).data;
+            for (let i = 3; i < data.length; i += 4) {
+                if (data[i] !== 0) return false;
+            }
+            return true;
+        }
+
+        function closeFullscreenSignature(save) {
+            if (save && !isCanvasBlank(fsCanvas)) {
+                // Copier le grand canvas vers le petit
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(fsCanvas, 0, 0, fsCanvas.width, fsCanvas.height, 0, 0, canvas.width, canvas.height);
+                checkSubmitButton();
+            }
+            document.getElementById('sigFullscreen')?.remove();
+            document.body.style.overflow = '';
+        }
+        
+        function switchSignatureMode(mode) {
+            signatureMode = mode;
+            document.querySelectorAll('.signature-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.signature-tab:nth-child(${mode === 'draw' ? 1 : 2})`).classList.add('active');
+            
+            document.getElementById('drawMode').style.display = mode === 'draw' ? 'block' : 'none';
+            document.getElementById('typeMode').style.display = mode === 'type' ? 'block' : 'none';
+            
+            checkSubmitButton();
+        }
+        
+        function isCanvasBlank() {
+            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            return !pixelData.some(pixel => pixel !== 0);
+        }
+        
+        function setupConsentListeners() {
+            document.querySelectorAll('.consent-item input').forEach(input => {
+                input.addEventListener('change', checkSubmitButton);
+            });
+            document.getElementById('typedSignature')?.addEventListener('input', checkSubmitButton);
+        }
+        
+        function toggleConsent(element) {
+            const input = element.querySelector('input');
+            input.checked = !input.checked;
+            element.classList.toggle('checked', input.checked);
+            checkSubmitButton();
+        }
+        
+        function checkSubmitButton() {
+            const consent1 = document.getElementById('consent1').checked;
+            const consent2 = document.getElementById('consent2').checked;
+            const consent4 = document.getElementById('consent4').checked;
+            
+            let hasSignature = false;
+            if (signatureMode === 'draw') {
+                hasSignature = !isCanvasBlank();
+            } else {
+                hasSignature = document.getElementById('typedSignature').value.trim().length > 2;
+            }
+            
+            const canSubmit = consent1 && consent2 && consent4 && hasSignature;
+            document.getElementById('submitBtn').disabled = !canSubmit;
+        }
+        
+        async function submitSignature() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '&#8987; Envoi en cours...';
+            
+            try {
+                let signatureData;
+                if (signatureMode === 'draw') {
+                    signatureData = canvas.toDataURL('image/png');
+                } else {
+                    signatureData = document.getElementById('typedSignature').value;
+                }
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token') || window.location.pathname.split('/').pop();
+                
+                // Récupérer l'IP du client
+                let clientIp = null;
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    clientIp = ipData.ip;
+                } catch (e) { console.log('IP non disponible'); }
+                
+                const { data, error } = await supabaseClient.rpc('submit_signature', {
+                    p_token: token,
+                    p_password: userEnteredPassword,
+                    p_consent_read: document.getElementById('consent1').checked,
+                    p_consent_accurate: document.getElementById('consent2').checked,
+                    p_consent_contact: document.getElementById('consent3').checked,
+                    p_consent_electronic: document.getElementById('consent4').checked,
+                    p_signature_type: signatureMode === 'draw' ? 'drawn' : 'typed',
+                    p_signature_data: signatureData,
+                    p_client_ip: clientIp,
+                    p_user_agent: navigator.userAgent
+                });
+                
+                if (error) throw error;
+                
+                if (data.success) {
+                    document.getElementById('signedDate').textContent = new Date().toLocaleString('fr-CA');
+                    showState('successState');
+                    // Init Google Review funnel if URL available
+                    initReviewFunnel();
+                    // Confirmation email sent automatically by CRM when conseiller views the dossier
+                } else {
+                    throw new Error(data.error || 'Erreur lors de la signature');
+                }
+                
+            } catch (error) {
+                console.error('Erreur signature:', error);
+                alert('Erreur lors de la soumission: ' + (error.message || JSON.stringify(error)));
+                btn.disabled = false;
+                btn.innerHTML = '&#9989; Signer et soumettre';
+            }
+        }
+        
+        // Auto-send signed ABF copy to client via Supabase Edge Function
+        async function sendSignedDocumentEmail() {
+            if (!signatureRequest?.id) return;
+            try {
+                console.log('[AutoEmail] Envoi du document signé par courriel...');
+                const response = await fetch(SUPABASE_URL + '/functions/v1/send-signed-abf-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ signature_request_id: signatureRequest.id })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    console.log('[AutoEmail] ✅ Email envoyé avec succès, messageId:', result.messageId);
+                } else {
+                    console.warn('[AutoEmail] Échec:', result.error);
+                }
+            } catch (e) {
+                // Non-bloquant — la signature est déjà sauvegardée
+                console.warn('[AutoEmail] Erreur (non-bloquante):', e);
+            }
+        }
+
+        function showSignedDocumentView() {
+            const recipientName = signatureRequest.recipient_name || signatureRequest.client_name || 'Client';
+            const signedDate = signatureRequest.signed_at ? new Date(signatureRequest.signed_at).toLocaleString('fr-CA') : '';
+
+            // Hide all states and create a view-signed state
+            ['loadingState', 'errorState', 'signedState', 'loginState', 'documentState', 'successState'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+
+            // Create the signed view container
+            let viewDiv = document.getElementById('viewSignedState');
+            if (!viewDiv) {
+                viewDiv = document.createElement('div');
+                viewDiv.id = 'viewSignedState';
+                document.querySelector('.container').appendChild(viewDiv);
+            }
+
+            viewDiv.style.display = 'block';
+            viewDiv.innerHTML = `
+                <div class="card">
+                    <div class="card-header" style="background:linear-gradient(135deg,#1a3a5c,#16213e);">
+                        <h1 style="color:#C9A227;">📄 Document signé</h1>
+                        <p>Signé par <strong>${recipientName}</strong>${signedDate ? ' le ' + signedDate : ''}</p>
+                        <div style="display:inline-block;background:#22c55e;color:#fff;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600;margin-top:8px;">✅ Signé électroniquement</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="signedDocPreview" style="background:#fff;border-radius:8px;overflow:hidden;"></div>
+                        <div style="text-align:center;margin-top:24px;padding:20px;">
+                            <button onclick="downloadSignedDoc()" style="padding:14px 32px;background:#C9A227;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+                                📥 Télécharger le document (HTML)
+                            </button>
+                            <p style="margin-top:10px;font-size:12px;color:#888;">Le document sera téléchargé en format HTML, ouvrable dans n'importe quel navigateur.</p>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Render the document in iframe
+            const preview = document.getElementById('signedDocPreview');
+            const iframe = document.createElement('iframe');
+            iframe.sandbox = 'allow-same-origin';
+            iframe.style.pointerEvents = 'none';
+            iframe.style.width = '100%';
+            iframe.style.border = 'none';
+            iframe.srcdoc = signatureRequest.document_html;
+            preview.appendChild(iframe);
+            iframe.onload = function() {
+                try { iframe.style.height = iframe.contentDocument.documentElement.scrollHeight + 'px'; } catch(e) {}
+            };
+        }
+
+        window.downloadSignedDoc = function() {
+            if (!signatureRequest?.document_html) return;
+            const recipientName = (signatureRequest.recipient_name || signatureRequest.client_name || 'Client').replace(/\s+/g, '_');
+            const date = signatureRequest.signed_at ? new Date(signatureRequest.signed_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+            const blob = new Blob([signatureRequest.document_html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ABF_signe_${recipientName}_${date}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        function showState(stateId) {
+            ['loadingState', 'errorState', 'signedState', 'loginState', 'documentState', 'successState'].forEach(id => {
+                document.getElementById(id).style.display = id === stateId ? 'block' : 'none';
+            });
+            // Also hide viewSignedState if showing another state
+            const viewSigned = document.getElementById('viewSignedState');
+            if (viewSigned) viewSigned.style.display = 'none';
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            showState('errorState');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // TWO-STEP GOOGLE REVIEW FUNNEL
+        // ═══════════════════════════════════════════════════════════
+        let selectedRating = 0;
+        let reviewUrl = null;
+
+        function initReviewFunnel() {
+            // Get google_review_url from signature request data
+            if (signatureRequest && signatureRequest.google_review_url) {
+                reviewUrl = signatureRequest.google_review_url;
+                document.getElementById('googleReviewLink').href = reviewUrl;
+                document.getElementById('reviewFunnel').style.display = 'block';
+            }
+        }
+
+        function selectRating(rating) {
+            selectedRating = rating;
+            // Update star display
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                const star = parseInt(btn.getAttribute('data-star'));
+                btn.innerHTML = star <= rating ? '&#9733;' : '&#9734;';
+                btn.style.color = star <= rating ? '#F59E0B' : '#D1D5DB';
+                btn.style.transform = star === rating ? 'scale(1.2)' : 'scale(1)';
+            });
+
+            // After short delay, show appropriate step
+            setTimeout(() => {
+                document.getElementById('reviewStep1').style.display = 'none';
+                if (rating >= 4) {
+                    document.getElementById('reviewStepGoogle').style.display = 'block';
+                } else {
+                    document.getElementById('reviewStepFeedback').style.display = 'block';
+                }
+
+                // Log rating to DB (fire-and-forget)
+                if (signatureRequest) {
+                    supabaseClient.from('signature_requests')
+                        .update({ review_rating: rating })
+                        .eq('id', signatureRequest.id)
+                        .then(() => {});
+                }
+            }, 400);
+        }
+
+        async function submitFeedback() {
+            const text = document.getElementById('feedbackText').value.trim();
+            if (!text) return;
+
+            // Save feedback to signature request
+            if (signatureRequest) {
+                await supabaseClient.from('signature_requests')
+                    .update({ review_feedback: text })
+                    .eq('id', signatureRequest.id);
+            }
+
+            document.getElementById('feedbackText').style.display = 'none';
+            document.querySelector('#reviewStepFeedback button').style.display = 'none';
+            document.querySelector('#reviewStepFeedback p:last-of-type').style.display = 'none';
+            document.getElementById('feedbackThanks').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
