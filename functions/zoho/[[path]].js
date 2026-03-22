@@ -196,11 +196,16 @@ async function handleSyncClient(request, env, corsHeaders) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LAUNCH - Rediriger vers ABF
+// LAUNCH - Rediriger vers ABF (auto-create si client n'existe pas)
 // ═══════════════════════════════════════════════════════════════
 async function handleLaunch(url, env, corsHeaders) {
     const clientId = url.searchParams.get('client_id');
     const zohoId = url.searchParams.get('zoho_id');
+    const firstName = url.searchParams.get('first_name') || '';
+    const lastName = url.searchParams.get('last_name') || '';
+    const email = url.searchParams.get('email') || '';
+    const phone = url.searchParams.get('phone') || '';
+    const dob = url.searchParams.get('dob') || '';
 
     if (!clientId && !zohoId) {
         return json({ error: 'Provide client_id or zoho_id' }, corsHeaders, 400);
@@ -208,21 +213,51 @@ async function handleLaunch(url, env, corsHeaders) {
 
     let targetId = clientId;
 
-    // Si on a un zoho_id, trouver le client_id Supabase
     if (!targetId && zohoId) {
+        // Chercher le client par zoho_id
         const res = await supabaseFetch(`/rest/v1/clients?zoho_id=eq.${encodeURIComponent(zohoId)}&organization_id=eq.${ORG_ID}&select=id&limit=1`);
         if (res.ok) {
             const clients = await res.json();
             if (clients.length > 0) {
                 targetId = clients[0].id;
+            }
+        }
+
+        // Auto-create si le client n'existe pas encore
+        if (!targetId) {
+            const newClient = {
+                zoho_id: zohoId,
+                first_name: firstName || 'Nouveau',
+                last_name: lastName || 'Client',
+                organization_id: ORG_ID,
+                type_contact: 'client',
+                status: 'actif',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                ...(email && { email }),
+                ...(phone && { phone }),
+                ...(dob && { date_of_birth: dob }),
+            };
+
+            const insertRes = await supabaseFetch('/rest/v1/clients', {
+                method: 'POST',
+                body: JSON.stringify(newClient),
+                headers: { 'Prefer': 'return=representation' },
+            });
+
+            if (insertRes.ok) {
+                const inserted = await insertRes.json();
+                targetId = inserted[0].id;
             } else {
-                return json({ error: 'Client not found for this zoho_id' }, corsHeaders, 404);
+                const err = await insertRes.text();
+                return json({ error: 'Failed to create client', details: err }, corsHeaders, 500);
             }
         }
     }
 
     // Redirect vers ABF
-    const abfUrl = `https://abf.finox.ca/abf.html?from=zoho&id=${targetId}`;
+    const host = url.hostname.includes('pages.dev') ? url.origin : 'https://abf.crm-finox.ca';
+    const abfUrl = `${host}/abf.html?from=zoho&id=${targetId}`;
     return new Response(null, {
         status: 302,
         headers: { ...corsHeaders, 'Location': abfUrl }
