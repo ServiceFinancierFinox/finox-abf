@@ -1239,7 +1239,7 @@
     // ==========================================
     function getInitialModule() {
         const params = new URLSearchParams(window.location.search);
-        return params.get('module') || 'pulse-vital';
+        return params.get('module') || 'abf-contact';
     }
 
     // ==========================================

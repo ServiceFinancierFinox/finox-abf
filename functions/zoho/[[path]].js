@@ -273,7 +273,7 @@ async function handleLaunch(url, env, corsHeaders) {
 
     // Redirect vers ABF
     const host = url.hostname.includes('pages.dev') ? url.origin : 'https://abf.crm-finox.ca';
-    const abfUrl = `${host}/abf.html?from=zoho&id=${targetId}`;
+    const abfUrl = `${host}/abf.html?from=zoho&client=${targetId}&module=abf-contact`;
     return new Response(null, {
         status: 302,
         headers: { ...corsHeaders, 'Location': abfUrl }
