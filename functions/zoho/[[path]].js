@@ -217,7 +217,7 @@ async function handleLaunch(url, env, corsHeaders) {
     let targetId = clientId;
 
     if (!targetId && zohoId) {
-        // Chercher le client par zoho_id
+        // 1. Chercher le client par zoho_id
         const res = await supabaseFetch(`/rest/v1/clients?zoho_id=eq.${encodeURIComponent(zohoId)}&organization_id=eq.${ORG_ID}&select=id&limit=1`);
         if (res.ok) {
             const clients = await res.json();
@@ -226,7 +226,23 @@ async function handleLaunch(url, env, corsHeaders) {
             }
         }
 
-        // Auto-create si le client n'existe pas encore
+        // 2. Si pas trouvé par zoho_id, chercher par email et lier le zoho_id
+        if (!targetId && email) {
+            const emailRes = await supabaseFetch(`/rest/v1/clients?email=eq.${encodeURIComponent(email)}&organization_id=eq.${ORG_ID}&deleted_at=is.null&select=id&limit=1`);
+            if (emailRes.ok) {
+                const emailClients = await emailRes.json();
+                if (emailClients.length > 0) {
+                    targetId = emailClients[0].id;
+                    // Lier le zoho_id au client existant
+                    await supabaseFetch(`/rest/v1/clients?id=eq.${targetId}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ zoho_id: zohoId, updated_at: new Date().toISOString() }),
+                    });
+                }
+            }
+        }
+
+        // 3. Auto-create seulement si le client n'existe nulle part
         if (!targetId) {
             // Trouver le conseiller par email pour l'assigner
             let conseiller_id = null;
