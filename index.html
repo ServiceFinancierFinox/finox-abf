@@ -179,7 +179,7 @@ function goToApp(session) {
         console.log('✅ Provider REFRESH token stocké!');
     }
 
-    const redirectTo = localStorage.getItem('finox_redirect_after_login') || 'app.html';
+    const redirectTo = localStorage.getItem('finox_redirect_after_login') || 'abf.html';
     localStorage.removeItem('finox_redirect_after_login');
     console.log('🚀 Redirection vers:', redirectTo);
     window.location.href = redirectTo;
