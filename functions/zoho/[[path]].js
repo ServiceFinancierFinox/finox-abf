@@ -206,6 +206,8 @@ async function handleLaunch(url, env, corsHeaders) {
     const email = url.searchParams.get('email') || '';
     const phone = url.searchParams.get('phone') || '';
     const dob = url.searchParams.get('dob') || '';
+    const sex = url.searchParams.get('sex') || '';
+    const smoker = url.searchParams.get('smoker') || '';
     const conseillerEmail = url.searchParams.get('conseiller_email') || '';
 
     if (!clientId && !zohoId) {
@@ -248,6 +250,8 @@ async function handleLaunch(url, env, corsHeaders) {
                 ...(email && { email }),
                 ...(phone && { phone }),
                 ...(dob && { date_of_birth: dob }),
+                ...(sex && { sex }),
+                ...(smoker && { smoker: smoker === 'true' || smoker === 'Oui' }),
                 ...(conseiller_id && { conseiller_id }),
             };
 
