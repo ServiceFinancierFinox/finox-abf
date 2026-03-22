@@ -1,0 +1,225 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - BILAN FINANCIER
+     Informations financières de l'entreprise
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.fin-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.fin-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.fin-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* KPI */
+.fin-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 800px) { .fin-kpi { grid-template-columns: repeat(2, 1fr); } }
+.fin-kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; text-align: center; }
+.fin-kpi-value { font-size: 22px; font-weight: 700; color: var(--gold); }
+.fin-kpi-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .fin-grid { grid-template-columns: 1fr; } }
+
+.fin-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+.fin-card-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.fin-form-group { margin-bottom: 16px; }
+.fin-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.fin-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+.fin-form-input:focus { border-color: var(--gold); }
+.fin-form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.fin-form-input.readonly { opacity: 0.7; background: rgba(232,180,77,0.05); border-color: rgba(232,180,77,0.2); }
+.fin-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.fin-ratio { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 8px; }
+.fin-ratio-label { font-size: 12px; color: var(--text-muted); }
+.fin-ratio-value { font-size: 14px; font-weight: 700; }
+.fin-ratio-good { color: #81C784; }
+.fin-ratio-warn { color: #FFB74D; }
+.fin-ratio-bad { color: #ef9a9a; }
+
+.fin-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.fin-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.fin-save-btn:hover { filter: brightness(1.1); }
+</style>
+
+<!-- HEADER -->
+
+
+<!-- KPI -->
+<div class="fin-kpi">
+    <div class="fin-kpi-card"><div class="fin-kpi-value" id="finKpiRevenu">0 $</div><div class="fin-kpi-label">Revenu annuel</div></div>
+    <div class="fin-kpi-card"><div class="fin-kpi-value" id="finKpiBenefice">0 $</div><div class="fin-kpi-label">Bénéfice net</div></div>
+    <div class="fin-kpi-card"><div class="fin-kpi-value" id="finKpiActifs">0 $</div><div class="fin-kpi-label">Actifs totaux</div></div>
+    <div class="fin-kpi-card"><div class="fin-kpi-value" id="finKpiCapitaux" style="color:#81C784;">0 $</div><div class="fin-kpi-label">Capitaux propres</div></div>
+</div>
+
+<!-- FORMULAIRE -->
+<div class="fin-grid">
+    <!-- REVENUS -->
+    <div class="fin-card">
+        <div class="fin-card-title">💰 Revenus & Profitabilité</div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Revenu annuel brut ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input fin-calc money-input" id="finRevenu" placeholder="Ex: 2 000 000" data-kpi="finKpiRevenu">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Bénéfice net ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input fin-calc money-input" id="finBenefice" placeholder="Ex: 300 000" data-kpi="finKpiBenefice">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">BAIIDA / EBITDA ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input money-input" id="finEbitda" placeholder="Ex: 450 000">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Fin de l'exercice financier</label>
+            <input type="text" class="fin-form-input" id="finExercice" placeholder="Ex: 31 décembre">
+        </div>
+    </div>
+
+    <!-- ACTIFS & PASSIFS -->
+    <div class="fin-card">
+        <div class="fin-card-title">📊 Actifs & Passifs</div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Actifs totaux ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input fin-calc money-input" id="finActifs" placeholder="Ex: 5 000 000" data-kpi="finKpiActifs">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Passifs totaux ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input fin-calc money-input" id="finPassifs" placeholder="Ex: 2 000 000">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Capitaux propres ($) (auto-calculé)</label>
+            <input type="text" class="fin-form-input readonly" id="finCapitaux" readonly placeholder="Actifs - Passifs">
+        </div>
+        <div class="fin-form-group">
+            <label class="fin-form-label">Valeur marchande estimée ($)</label>
+            <input type="text" inputmode="decimal" class="fin-form-input money-input" id="finValeurMarchande" placeholder="Ex: 3 000 000">
+        </div>
+    </div>
+</div>
+
+<!-- RATIOS -->
+<div class="fin-card" style="margin-top:20px;">
+    <div class="fin-card-title">📐 Ratios financiers (auto-calculés)</div>
+    <div id="finRatiosContainer">
+        <div class="fin-ratio"><span class="fin-ratio-label">Marge bénéficiaire nette</span><span class="fin-ratio-value" id="finRatioMarge">-</span></div>
+        <div class="fin-ratio"><span class="fin-ratio-label">Ratio d'endettement</span><span class="fin-ratio-value" id="finRatioDette">-</span></div>
+        <div class="fin-ratio"><span class="fin-ratio-label">Rendement des capitaux propres (ROE)</span><span class="fin-ratio-value" id="finRatioROE">-</span></div>
+    </div>
+</div>
+
+<!-- NOTES -->
+<div class="fin-card" style="margin-top:20px;">
+    <div class="fin-card-title">📝 Notes financières</div>
+    <textarea class="fin-form-input" id="finNotes" rows="3" placeholder="Notes sur la situation financière, projections, enjeux..." style="resize:vertical;"></textarea>
+</div>
+
+<!-- SAUVEGARDER -->
+<div class="fin-save-bar">
+    <button class="fin-save-btn" onclick="saveFinances()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('💼 Module ABF Corpo - Bilan financier');
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    const finData = client.abf_data?.corpo?.finances || {};
+
+    function formatMoney(n) { return (n || 0).toLocaleString('fr-CA') + ' $'; }
+
+    // Populate fields
+    const fields = {
+        'finRevenu': finData.revenu_annuel || '',
+        'finBenefice': finData.benefice_net || '',
+        'finEbitda': finData.ebitda || '',
+        'finExercice': finData.fin_exercice || '',
+        'finActifs': finData.actifs_totaux || '',
+        'finPassifs': finData.passifs_totaux || '',
+        'finValeurMarchande': finData.valeur_marchande || '',
+        'finNotes': finData.notes || ''
+    };
+    Object.entries(fields).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+
+    function recalculate() {
+        const revenu = FINOX.parseNumber(document.getElementById('finRevenu').value) || 0;
+        const benefice = FINOX.parseNumber(document.getElementById('finBenefice').value) || 0;
+        const actifs = FINOX.parseNumber(document.getElementById('finActifs').value) || 0;
+        const passifs = FINOX.parseNumber(document.getElementById('finPassifs').value) || 0;
+        const capitaux = actifs - passifs;
+
+        document.getElementById('finCapitaux').value = formatMoney(capitaux);
+        document.getElementById('finKpiRevenu').textContent = formatMoney(revenu);
+        document.getElementById('finKpiBenefice').textContent = formatMoney(benefice);
+        document.getElementById('finKpiActifs').textContent = formatMoney(actifs);
+        document.getElementById('finKpiCapitaux').textContent = formatMoney(capitaux);
+        document.getElementById('finKpiCapitaux').style.color = capitaux >= 0 ? '#81C784' : '#ef9a9a';
+
+        // Ratios
+        const margeEl = document.getElementById('finRatioMarge');
+        const detteEl = document.getElementById('finRatioDette');
+        const roeEl = document.getElementById('finRatioROE');
+
+        if (revenu > 0) {
+            const marge = (benefice / revenu * 100).toFixed(1);
+            margeEl.textContent = marge + '%';
+            margeEl.className = 'fin-ratio-value ' + (marge >= 15 ? 'fin-ratio-good' : marge >= 5 ? 'fin-ratio-warn' : 'fin-ratio-bad');
+        } else { margeEl.textContent = '-'; margeEl.className = 'fin-ratio-value'; }
+
+        if (actifs > 0) {
+            const dette = (passifs / actifs * 100).toFixed(1);
+            detteEl.textContent = dette + '%';
+            detteEl.className = 'fin-ratio-value ' + (dette <= 50 ? 'fin-ratio-good' : dette <= 75 ? 'fin-ratio-warn' : 'fin-ratio-bad');
+        } else { detteEl.textContent = '-'; detteEl.className = 'fin-ratio-value'; }
+
+        if (capitaux > 0) {
+            const roe = (benefice / capitaux * 100).toFixed(1);
+            roeEl.textContent = roe + '%';
+            roeEl.className = 'fin-ratio-value ' + (roe >= 15 ? 'fin-ratio-good' : roe >= 8 ? 'fin-ratio-warn' : 'fin-ratio-bad');
+        } else { roeEl.textContent = '-'; roeEl.className = 'fin-ratio-value'; }
+    }
+    FINOX.setupAllMoneyInputs();
+    recalculate();
+
+    // Live recalculation
+    document.querySelectorAll('.fin-calc').forEach(el => {
+        el.addEventListener('input', recalculate);
+    });
+
+    window.saveFinances = async function() {
+        const btn = document.querySelector('.fin-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            const data = {
+                revenu_annuel: FINOX.parseNumber(document.getElementById('finRevenu').value) || 0,
+                benefice_net: FINOX.parseNumber(document.getElementById('finBenefice').value) || 0,
+                ebitda: FINOX.parseNumber(document.getElementById('finEbitda').value) || 0,
+                fin_exercice: document.getElementById('finExercice').value.trim(),
+                actifs_totaux: FINOX.parseNumber(document.getElementById('finActifs').value) || 0,
+                passifs_totaux: FINOX.parseNumber(document.getElementById('finPassifs').value) || 0,
+                valeur_marchande: FINOX.parseNumber(document.getElementById('finValeurMarchande').value) || 0,
+                notes: document.getElementById('finNotes').value.trim()
+            };
+
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const hasData = data.revenu_annuel > 0 || data.actifs_totaux > 0;
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, finances: data }, section_corpo_finances_completed: hasData };
+
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Bilan financier sauvegardé', 'success');
+        } catch (err) { FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    };
+
+    console.log('✅ Module Bilan financier chargé');
+})();
+</script>

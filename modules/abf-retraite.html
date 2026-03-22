@@ -1,0 +1,2219 @@
+<!-- ═══════════════════════════════════════════════════════════
+     FINOX CRM — Module ABF Retraite v4.8
+     Planification retraite integree au flow ABF
+     Auto-mappe depuis les modules ABF (contact, emploi, actifs)
+     Moteur: shared/decaissement-engine.js v3.8
+     Nouveautes v4.1: Rendements retraite, revenu max viable, info surplus
+     ═══════════════════════════════════════════════════════════ -->
+
+<style>
+/* ═══════════ LAYOUT ═══════════ */
+.dec-container { max-width: 1200px; margin: 0 auto; padding: 0 8px 40px; }
+.dec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.dec-header-left { display: flex; align-items: center; gap: 12px; }
+.dec-header-title { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, var(--gold), #d4a03d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.dec-header-actions { display: flex; gap: 8px; }
+.dec-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.dec-btn:hover { border-color: var(--gold); background: var(--gold-glow); }
+.dec-btn-primary { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #000; border: none; font-weight: 600; }
+.dec-btn-primary:hover { filter: brightness(1.1); }
+
+/* ═══════════ TABS ═══════════ */
+.dec-tabs { display: flex; gap: 2px; margin-bottom: 20px; background: var(--bg-secondary); border-radius: 12px; padding: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.dec-tab { padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; user-select: none; }
+.dec-tab:hover { color: var(--text-primary); background: var(--bg-hover); }
+.dec-tab.active { background: var(--gold-glow); color: var(--gold); font-weight: 600; }
+.dec-tab-icon { font-size: 15px; }
+.dec-tab-content { display: none; animation: decFadeIn 0.3s ease; }
+.dec-tab-content.active { display: block; }
+@keyframes decFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══════════ CARDS ═══════════ */
+.dec-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.dec-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.dec-card-title { font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.dec-card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ═══════════ KPI GRID ═══════════ */
+.dec-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.dec-kpi { background: linear-gradient(135deg, var(--bg-card), var(--finox-gray)); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+.dec-kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+.dec-kpi.kpi-gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.dec-kpi.kpi-green::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.dec-kpi.kpi-blue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.dec-kpi.kpi-purple::before { background: linear-gradient(90deg, #a855f7, #c084fc); }
+.dec-kpi.kpi-orange::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.dec-kpi.kpi-red::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+.dec-kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 6px; }
+.dec-kpi-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.dec-kpi-sub { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ═══════════ FORM CONTROLS ═══════════ */
+.dec-grid { display: grid; gap: 16px; }
+.dec-grid-2 { grid-template-columns: 1fr 1fr; }
+.dec-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.dec-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.dec-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.dec-succ-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 768px) {
+    .dec-grid-2, .dec-grid-3, .dec-grid-4, .dec-grid-5 { grid-template-columns: 1fr 1fr; }
+    .dec-kpi-grid { grid-template-columns: 1fr 1fr; }
+    .dec-succ-grid { grid-template-columns: 1fr; }
+}
+.dec-field { display: flex; flex-direction: column; gap: 6px; }
+.dec-field label { font-size: 12px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+.dec-field input, .dec-field select {
+    padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border-color);
+    border-radius: 8px; color: var(--text-primary); font-size: 14px; font-family: inherit;
+}
+.dec-field input:focus, .dec-field select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+.dec-field input[type="range"] { padding: 0; background: transparent; border: none; -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--finox-gray); }
+.dec-field input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--gold); cursor: pointer; border: 2px solid var(--bg-primary); }
+.dec-range-row { display: flex; align-items: center; gap: 10px; }
+.dec-range-value { min-width: 60px; text-align: right; font-size: 14px; font-weight: 600; color: var(--gold); }
+.dec-range-hint { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: -4px; }
+
+/* ═══════════ TOGGLE ═══════════ */
+.dec-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+.dec-toggle-label { font-size: 13px; color: var(--text-secondary); }
+.dec-toggle { position: relative; width: 42px; height: 24px; cursor: pointer; }
+.dec-toggle input { display: none; }
+.dec-toggle-track { position: absolute; inset: 0; background: var(--finox-gray); border-radius: 12px; transition: 0.2s; }
+.dec-toggle input:checked + .dec-toggle-track { background: var(--gold); }
+.dec-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: 0.2s; }
+.dec-toggle input:checked ~ .dec-toggle-thumb { left: 21px; }
+
+/* ═══════════ SCENARIO SELECTOR ═══════════ */
+.dec-scenario-bar { display: flex; gap: 6px; background: var(--bg-secondary); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+.dec-scenario-btn { flex: 1; padding: 8px; border-radius: 7px; border: none; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.dec-scenario-btn.active { background: var(--bg-card); color: var(--text-primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.dec-scenario-btn:hover:not(.active) { color: var(--text-primary); }
+
+/* ═══════════ CHART ═══════════ */
+.dec-chart-wrap { position: relative; width: 100%; height: 320px; margin: 12px 0; }
+.dec-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+/* ═══════════ TABLE ═══════════ */
+.dec-table-wrap { overflow-x: auto; margin-top: 12px; border-radius: 10px; border: 1px solid var(--border-color); }
+.dec-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dec-table th { background: var(--bg-secondary); padding: 10px 12px; text-align: left; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 1; }
+.dec-table td { padding: 8px 12px; border-top: 1px solid var(--border-color); color: var(--text-primary); }
+.dec-table tr:hover td { background: var(--bg-hover); }
+.dec-table tr.retirement-row td { border-top: 2px solid var(--gold); background: rgba(201,162,39,0.05); }
+.dec-table .positive { color: #4ade80; }
+.dec-table .negative { color: #f87171; }
+.dec-table .highlight { color: var(--gold); font-weight: 600; }
+
+/* ═══════════ OPTIMIZATION ═══════════ */
+.dec-optim-result { background: linear-gradient(135deg, rgba(201,162,39,0.08), rgba(201,162,39,0.02)); border: 1px solid var(--border-gold); border-radius: 14px; padding: 20px; margin-top: 16px; }
+.dec-optim-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.dec-optim-title { font-size: 16px; font-weight: 700; color: var(--gold); }
+.dec-optim-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.dec-optim-metric { text-align: center; padding: 12px; background: var(--bg-card); border-radius: 10px; }
+.dec-optim-metric-value { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.dec-optim-metric-label { font-size: 11px; color: var(--text-muted); }
+
+/* ═══════════ SMART OPTIMIZER v4.0 ═══════════ */
+.dec-smart-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.dec-smart-col { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; position: relative; }
+.dec-smart-col.optimized { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,162,39,0.1); }
+.dec-smart-col-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.dec-smart-col.optimized .dec-smart-col-title { color: var(--gold); }
+.dec-smart-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+.dec-smart-row:last-child { border-bottom: none; }
+.dec-smart-row-label { color: var(--text-secondary); }
+.dec-smart-row-value { font-weight: 600; color: var(--text-primary); }
+.dec-smart-row-value.better { color: #22c55e; }
+.dec-smart-row-value.worse { color: #f87171; }
+.dec-smart-reasons { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.dec-reason-card { display: flex; gap: 12px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 10px; border-left: 3px solid var(--gold); }
+.dec-reason-card.positive { border-left-color: #22c55e; }
+.dec-reason-card.neutral { border-left-color: #f59e0b; }
+.dec-reason-icon { font-size: 20px; flex-shrink: 0; }
+.dec-reason-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.dec-reason-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+@media (max-width: 768px) { .dec-smart-comparison { grid-template-columns: 1fr; } }
+
+/* ═══════════ EVENTS ═══════════ */
+.dec-event-list { display: flex; flex-direction: column; gap: 8px; }
+.dec-event-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-color); }
+.dec-event-age { min-width: 45px; font-size: 14px; font-weight: 700; color: var(--gold); }
+.dec-event-desc { flex: 1; font-size: 13px; color: var(--text-primary); }
+.dec-event-amount { font-size: 13px; font-weight: 600; }
+.dec-event-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+.dec-event-del:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+/* ═══════════ LOADING ═══════════ */
+.dec-loading { display: flex; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: var(--text-muted); }
+.dec-spinner { width: 24px; height: 24px; border: 3px solid var(--border-color); border-top-color: var(--gold); border-radius: 50%; animation: decSpin 0.8s linear infinite; }
+@keyframes decSpin { to { transform: rotate(360deg); } }
+
+/* ═══════════ SECTION DIVIDER ═══════════ */
+.dec-section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; }
+
+/* ═══════════ PROGRESS BAR ═══════════ */
+.dec-progress { height: 6px; background: var(--finox-gray); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.dec-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px; transition: width 0.3s; width: 0%; }
+
+/* ═══════════ RENTES GOV INFO CARDS ═══════════ */
+.rentes-info-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+.rentes-info-card h3 { font-size: 17px; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+.rentes-info-card .rentes-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.rentes-section { margin-bottom: 16px; }
+.rentes-section-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+.rentes-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.rentes-list li { font-size: 13px; color: var(--text-primary); padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+.rentes-list li::before { content: '\2022'; color: var(--gold); font-weight: 700; }
+.rentes-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+.rentes-table th { background: var(--bg-secondary); padding: 8px 10px; text-align: center; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 10px; letter-spacing: 0.4px; }
+.rentes-table td { padding: 7px 10px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-primary); font-size: 12px; }
+.rentes-table tr:hover td { background: var(--bg-hover); }
+.rentes-table tr.rentes-base-row td { background: rgba(201,162,39,0.08); font-weight: 600; }
+.rentes-table .rentes-negative { color: #f87171; }
+.rentes-table .rentes-positive { color: #4ade80; }
+.rentes-table .rentes-base { color: var(--gold); font-weight: 600; }
+.rentes-notes { background: var(--bg-secondary); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+.rentes-notes-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.rentes-notes ul { list-style: none; padding: 0; margin: 0; }
+.rentes-notes li { font-size: 12px; color: var(--text-muted); padding: 2px 0; }
+.rentes-notes li::before { content: '\2022'; color: var(--gold); margin-right: 6px; font-weight: 700; }
+.rentes-clawback { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.15); border-radius: 10px; padding: 12px 16px; margin-top: 12px; }
+.rentes-clawback-title { font-size: 12px; font-weight: 600; color: #f87171; margin-bottom: 6px; }
+
+/* ═══════════ ABF DATA SUMMARY CHIPS ═══════════ */
+.abf-data-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-color); }
+.abf-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-card); border-radius: 8px; font-size: 12px; }
+.abf-chip-label { color: var(--text-muted); }
+.abf-chip-value { color: var(--text-primary); font-weight: 600; }
+
+/* ═══════════ STRATEGY DESC BOX ═══════════ */
+.dec-strategy-desc { background: var(--bg-secondary); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: center; gap: 10px; }
+.dec-strategy-desc .desc-icon { font-size: 20px; }
+
+/* ═══════════ FERR/ESTATE BADGES ═══════════ */
+.dec-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+.dec-badge-gold { background: rgba(201,162,39,0.15); color: var(--gold); }
+.dec-badge-red { background: rgba(239,68,68,0.12); color: #f87171; }
+.dec-badge-green { background: rgba(34,197,94,0.12); color: #4ade80; }
+.dec-badge-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+.dec-badge-purple { background: rgba(168,85,247,0.12); color: #c084fc; }
+
+/* ═══════════ GAP ANALYSIS v4.5 ═══════════ */
+.dec-gap-card { background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(239,68,68,0.02) 100%); border: 1px solid rgba(239,68,68,0.2); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.dec-gap-card.gap-resolved { background: linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(34,197,94,0.02) 100%); border-color: rgba(34,197,94,0.2); }
+.dec-gap-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.dec-gap-icon { font-size: 28px; }
+.dec-gap-title { font-size: 16px; font-weight: 700; color: #f87171; }
+.dec-gap-card.gap-resolved .dec-gap-title { color: #4ade80; }
+.dec-gap-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.dec-gap-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.dec-gap-metric { text-align: center; padding: 12px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); }
+.dec-gap-metric-value { font-size: 18px; font-weight: 700; }
+.dec-gap-metric-value.red { color: #f87171; }
+.dec-gap-metric-value.green { color: #4ade80; }
+.dec-gap-metric-value.gold { color: var(--gold); }
+.dec-gap-metric-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.dec-gap-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dec-gap-table th { background: var(--bg-secondary); padding: 10px 12px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.dec-gap-table td { padding: 10px 12px; border-top: 1px solid var(--border-color); }
+.dec-gap-table tr:hover td { background: var(--bg-hover); }
+.dec-gap-table tr.gap-achievable td { border-left: 3px solid #4ade80; }
+.dec-gap-table tr.gap-unachievable td { border-left: 3px solid #f87171; opacity: 0.7; }
+.dec-gap-table .gap-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+.gap-badge-yes { background: rgba(34,197,94,0.12); color: #4ade80; }
+.gap-badge-no { background: rgba(239,68,68,0.12); color: #f87171; }
+@media (max-width: 768px) { .dec-gap-metrics { grid-template-columns: 1fr 1fr; } }
+
+/* ═══════════ ACTION PLAN CONSEILLER v4.6 ═══════════ */
+.dec-action-plan { margin-top: 16px; }
+.dec-action-title { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.dec-action-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.dec-action-step { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; position: relative; overflow: hidden; }
+.dec-action-step::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+.dec-action-step.step-rrsp::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.dec-action-step.step-tfsa::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.dec-action-step.step-taxable::before { background: linear-gradient(90deg, #a855f7, #c084fc); }
+.dec-action-step-icon { font-size: 24px; margin-bottom: 8px; }
+.dec-action-step-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+.dec-action-step-amount { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.dec-action-step-sub { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.dec-action-step-detail { font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); }
+.dec-refund-card { background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02)); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px; }
+.dec-refund-icon { font-size: 28px; flex-shrink: 0; }
+.dec-refund-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+.dec-refund-amount { font-weight: 700; color: #60a5fa; }
+.dec-net-cost { background: var(--bg-secondary); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.dec-net-cost-label { font-size: 13px; color: var(--text-secondary); }
+.dec-net-cost-value { font-size: 22px; font-weight: 700; color: var(--gold); }
+.dec-conclusion { border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.dec-conclusion.success { background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.03)); border: 1px solid rgba(34,197,94,0.25); }
+.dec-conclusion.partial { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.03)); border: 1px solid rgba(245,158,11,0.25); }
+.dec-conclusion-icon { font-size: 24px; flex-shrink: 0; }
+.dec-conclusion-text { font-size: 14px; font-weight: 600; line-height: 1.5; }
+.dec-conclusion.success .dec-conclusion-text { color: #4ade80; }
+.dec-conclusion.partial .dec-conclusion-text { color: #fbbf24; }
+.dec-details-toggle { cursor: pointer; font-size: 12px; color: var(--text-muted); padding: 8px 0; display: flex; align-items: center; gap: 6px; user-select: none; }
+.dec-details-toggle:hover { color: var(--text-secondary); }
+.dec-details-content { display: none; margin-bottom: 12px; }
+.dec-details-content.open { display: block; }
+@media (max-width: 768px) {
+    .dec-action-steps { grid-template-columns: 1fr; }
+    .dec-refund-card { flex-direction: column; text-align: center; }
+    .dec-net-cost { flex-direction: column; text-align: center; }
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HTML TEMPLATE — 5 onglets (Dashboard, Pensions, Rentes, Strategie, Rapport) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- ACTIVATION TOGGLE SCREEN (shown when retraite is disabled) -->
+<div id="retraiteActivation" style="display:none;">
+    <div style="max-width:600px;margin:60px auto;text-align:center;">
+        <div style="font-size:64px;margin-bottom:20px;">🏖️</div>
+        <div style="font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--gold),#d4a03d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;">Planification Retraite</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:32px;line-height:1.6;">
+            Cette analyse n'est pas obligatoire pour la vente d'assurance.<br>
+            Activez-la si vous souhaitez offrir une planification retraite compl&egrave;te &agrave; votre client.
+        </div>
+        <button class="dec-btn dec-btn-primary" onclick="toggleRetraiteEnabled(true)" style="padding:14px 32px;font-size:15px;border-radius:12px;">
+            Activer l'analyse retraite
+        </button>
+        <div style="margin-top:24px;">
+            <button class="dec-btn" onclick="skipRetraite()" style="font-size:13px;color:var(--text-muted);">
+                Passer cette etape ➡️
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="dec-container" id="decContainer" style="display:none;">
+    <!-- HEADER -->
+    <div class="dec-header">
+        <div class="dec-header-left">
+            <span style="font-size:28px;">🏖️</span>
+            <div>
+                <div class="dec-header-title">Planification Retraite</div>
+                <div style="font-size:12px;color:var(--text-muted);">Projection, pensions gouvernementales & strategie fiscale</div>
+            </div>
+        </div>
+        <div class="dec-header-actions">
+            <button class="dec-btn" onclick="toggleRetraiteEnabled(false)" title="Desactiver l'analyse retraite" style="color:var(--text-muted);font-size:12px;">Desactiver</button>
+            <button class="dec-btn" onclick="decRecalculate()" title="Recalculer"><span>🔄</span> Recalculer</button>
+        </div>
+    </div>
+
+    <!-- ABF DATA SUMMARY — auto-mapped from previous modules -->
+    <div class="abf-data-summary" id="abfDataSummary">
+        <div class="abf-chip"><span class="abf-chip-label">Age:</span> <span class="abf-chip-value" id="chipAge">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">Retraite:</span> <span class="abf-chip-value" id="chipRetAge">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">Salaire:</span> <span class="abf-chip-value" id="chipSalary">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">REER:</span> <span class="abf-chip-value" id="chipRrsp">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">CELI:</span> <span class="abf-chip-value" id="chipTfsa">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">Non-enr:</span> <span class="abf-chip-value" id="chipTaxable">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">CRI/FRV:</span> <span class="abf-chip-value" id="chipCriFrv">—</span></div>
+        <div class="abf-chip"><span class="abf-chip-label">🏢 Pension:</span> <span class="abf-chip-value" id="chipPension">—</span></div>
+    </div>
+
+    <!-- SCENARIO BAR -->
+    <div class="dec-scenario-bar" id="decScenarioBar">
+        <button class="dec-scenario-btn" data-scenario="pessimiste" onclick="decSetScenario('pessimiste')">🌧️ Pessimiste</button>
+        <button class="dec-scenario-btn active" data-scenario="realiste" onclick="decSetScenario('realiste')">📊 Realiste</button>
+        <button class="dec-scenario-btn" data-scenario="optimiste" onclick="decSetScenario('optimiste')">☀️ Optimiste</button>
+    </div>
+
+    <!-- TABS — 5 onglets seulement -->
+    <div class="dec-tabs" id="decTabs">
+        <div class="dec-tab active" data-tab="dashboard" onclick="decSwitchTab('dashboard')"><span class="dec-tab-icon">📈</span> Dashboard</div>
+        <div class="dec-tab" data-tab="pensions" onclick="decSwitchTab('pensions')"><span class="dec-tab-icon">🏛️</span> Pensions</div>
+        <div class="dec-tab" data-tab="rentes" onclick="decSwitchTab('rentes')"><span class="dec-tab-icon">📊</span> Rentes gouv.</div>
+        <div class="dec-tab" data-tab="strategie" onclick="decSwitchTab('strategie')"><span class="dec-tab-icon">⚡</span> Strategie</div>
+        <div class="dec-tab" data-tab="succession" onclick="decSwitchTab('succession')"><span class="dec-tab-icon">🛡️</span> Succession</div>
+        <div class="dec-tab" data-tab="rapport" onclick="decSwitchTab('rapport')"><span class="dec-tab-icon">📋</span> Rapport</div>
+    </div>
+
+    <!-- ═══════ TAB: DASHBOARD ═══════ -->
+    <div class="dec-tab-content active" id="decTabDashboard">
+        <div class="dec-kpi-grid" id="decKpiGrid"></div>
+        <div id="decGapAnalysisCard" style="display:none;"></div>
+        <div class="dec-card">
+            <div class="dec-card-header">
+                <div class="dec-card-title">📈 Projection des actifs</div>
+                <div style="font-size:11px;color:var(--text-muted);" id="decChartSubtitle"></div>
+            </div>
+            <div class="dec-chart-wrap"><canvas id="decChartProjection"></canvas></div>
+        </div>
+        <div class="dec-card">
+            <div class="dec-card-header"><div class="dec-card-title">💵 Revenus a la retraite</div></div>
+            <div class="dec-chart-wrap"><canvas id="decChartIncome"></canvas></div>
+        </div>
+        <div class="dec-card">
+            <div class="dec-card-header"><div class="dec-card-title">🧾 Impact fiscal</div></div>
+            <div class="dec-chart-wrap"><canvas id="decChartTax"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: PENSIONS (includes Hypotheses) ═══════ -->
+    <div class="dec-tab-content" id="decTabPensions">
+
+        <!-- Hypotheses de projection -->
+        <div class="dec-card">
+            <div class="dec-card-title">⚙️ Hypotheses de projection</div>
+            <div class="dec-card-subtitle">Parametres ajustables pour la simulation (le reste est lu depuis l'ABF)</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-4">
+                <div class="dec-field">
+                    <label>Esperance de vie</label>
+                    <div class="dec-range-row">
+                        <input type="range" id="decLifeExp" min="75" max="100" value="92" oninput="decUpdateRange(this,'decLifeExpVal')">
+                        <span class="dec-range-value" id="decLifeExpVal">92 ans</span>
+                    </div>
+                </div>
+                <div class="dec-field">
+                    <label>Revenu cible retraite ($/an)</label>
+                    <input type="text" id="decTargetIncome" value="50 000" class="money-input" onchange="decRecalculate()">
+                </div>
+                <div class="dec-field">
+                    <label>Taux d'inflation (%)</label>
+                    <input type="number" id="decInflation" value="2.0" step="0.1" min="0" max="5" onchange="decRecalculate()">
+                </div>
+                <div class="dec-field">
+                    <label>Croissance salariale (%/an)</label>
+                    <input type="number" id="decSalaryGrowth" value="2.5" step="0.1" min="0" max="10" onchange="decRecalculate()">
+                </div>
+            </div>
+            <!-- v4.7: Droits de cotisation cumules -->
+            <div style="margin-top:12px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Droits de cotisation REER ($)</label>
+                    <input type="text" id="decRrspRoom" value="0" class="money-input" placeholder="Ex: 50 000" onchange="decRecalculate()">
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Avis de cotisation ARC — espace inutilise cumule</div>
+                </div>
+                <div class="dec-field">
+                    <label>Droits de cotisation CELI ($)</label>
+                    <input type="text" id="decTfsaRoom" value="0" class="money-input" placeholder="Ex: 40 000" onchange="decRecalculate()">
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Espace cumule depuis 2009 — non utilise</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendements a la retraite (v4.1) -->
+        <div class="dec-card">
+            <div class="dec-card-title">📉 Rendements a la retraite</div>
+            <div class="dec-card-subtitle">Optionnel — Reduire les rendements en phase de decaissement (portefeuille plus conservateur)</div>
+            <div style="margin-top:12px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+                    <input type="checkbox" id="decUseRetReturns" onchange="decToggleRetReturns(); decRecalculate();">
+                    Utiliser des rendements differents a la retraite
+                </label>
+            </div>
+            <div id="decRetReturnsFields" style="display:none;margin-top:12px;" class="dec-grid dec-grid-5">
+                <div class="dec-field"><label>REER/FERR (%)</label><input type="number" id="decRetRetRrsp" value="3.5" step="0.1" min="0" max="15" onchange="decRecalculate();"></div>
+                <div class="dec-field"><label>CELI (%)</label><input type="number" id="decRetRetTfsa" value="3.5" step="0.1" min="0" max="15" onchange="decRecalculate();"></div>
+                <div class="dec-field"><label>Non-enr. (%)</label><input type="number" id="decRetRetTaxable" value="3.0" step="0.1" min="0" max="15" onchange="decRecalculate();"></div>
+                <div class="dec-field"><label>CRI (%)</label><input type="number" id="decRetRetCri" value="3.5" step="0.1" min="0" max="15" onchange="decRecalculate();"></div>
+                <div class="dec-field"><label>FRV (%)</label><input type="number" id="decRetRetFrv" value="3.5" step="0.1" min="0" max="15" onchange="decRecalculate();"></div>
+            </div>
+            <div id="decRetReturnsInfo" style="display:none;margin-top:8px;font-size:11px;color:var(--text-muted);">
+                💡 Les rendements du Portrait Financier s'appliquent en accumulation. Ces taux s'appliquent a partir de l'age de retraite.
+            </div>
+        </div>
+
+        <!-- RRQ -->
+        <div class="dec-card">
+            <div class="dec-card-title">🏛️ RRQ — Regime de rentes du Quebec</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Age de debut RRQ</label>
+                    <div class="dec-range-row">
+                        <input type="range" id="decQppAge" min="60" max="70" value="65" oninput="decUpdateRange(this,'decQppAgeVal')">
+                        <span class="dec-range-value" id="decQppAgeVal">65 ans</span>
+                    </div>
+                    <div class="dec-range-hint"><span>60 (-36%)</span><span>65 (base)</span><span>70 (+42%) max</span></div>
+                </div>
+                <div class="dec-field">
+                    <label>Montant estime a 65 ans ($/mois)</label>
+                    <input type="text" id="decQppAmount" value="850" class="money-input" onchange="decRecalculate(); decUpdateRentesTables();">
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Max 2026: ~1 365$/mois (cotisations max depuis 18 ans)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SV -->
+        <div class="dec-card">
+            <div class="dec-card-title">🍁 SV — Securite de la vieillesse</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Age de debut SV</label>
+                    <div class="dec-range-row">
+                        <input type="range" id="decOasAge" min="65" max="70" value="65" oninput="decUpdateRange(this,'decOasAgeVal')">
+                        <span class="dec-range-value" id="decOasAgeVal">65 ans</span>
+                    </div>
+                    <div class="dec-range-hint"><span>65 (base)</span><span>70 (+36%)</span></div>
+                </div>
+                <div class="dec-field">
+                    <label>Montant estime a 65 ans ($/mois)</label>
+                    <input type="text" id="decOasAmount" value="742" class="money-input" onchange="decRecalculate();">
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Max 2026: 742$/mois (40+ ans residence)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phases de depenses a la retraite (P8) -->
+        <div class="dec-card">
+            <div class="dec-card-title">📊 Phases de depenses a la retraite</div>
+            <div class="dec-card-subtitle">Les depenses diminuent naturellement avec l'age (go-go → slow-go → no-go)</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-3">
+                <div class="dec-field">
+                    <label>🏃 Phase active (go-go) jusqu'a</label>
+                    <div class="dec-range-row">
+                        <input type="range" id="decGogoEnd" min="65" max="85" value="75" oninput="decUpdateRange(this,'decGogoEndVal')">
+                        <span class="dec-range-value" id="decGogoEndVal">75 ans</span>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-muted);">100% du revenu cible</div>
+                </div>
+                <div class="dec-field">
+                    <label>🚶 Phase ralentie (slow-go) %</label>
+                    <input type="number" id="decSlowgoRate" value="80" min="50" max="100" step="5" onchange="decRecalculate();">
+                    <div style="font-size:10px;color:var(--text-muted);">% du revenu cible (typ. 75-85%)</div>
+                </div>
+                <div class="dec-field">
+                    <label>🪑 Phase sedentaire (no-go) %</label>
+                    <input type="number" id="decNogoRate" value="60" min="30" max="100" step="5" onchange="decRecalculate();">
+                    <div style="font-size:10px;color:var(--text-muted);">% du revenu cible (typ. 50-65%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planification couple (P6) — visible seulement si couple -->
+        <div class="dec-card" id="decCoupleCard" style="display:none;">
+            <div class="dec-card-title">👫 Planification couple</div>
+            <div class="dec-card-subtitle">Fractionnement du revenu de pension pour optimiser l'impot du menage</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-3">
+                <div class="dec-field">
+                    <label>Revenu estime du conjoint ($/an)</label>
+                    <input type="text" id="decSpouseIncome" value="0" class="money-input" onchange="decRecalculate();">
+                </div>
+                <div class="dec-field">
+                    <label>Age du conjoint</label>
+                    <input type="number" id="decSpouseAge" value="0" min="25" max="100" onchange="decRecalculate();">
+                </div>
+                <div class="dec-field" style="display:flex;align-items:center;padding-top:20px;">
+                    <label class="dec-toggle">
+                        <input type="checkbox" id="decPensionSplitting" onchange="decRecalculate();">
+                        <div class="dec-toggle-track"></div>
+                        <div class="dec-toggle-thumb"></div>
+                    </label>
+                    <span style="margin-left:12px;font-size:13px;">Fractionnement pension (50%)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pension employeur — auto-mappee depuis RRPD dans Portrait Financier -->
+        <div class="dec-card" id="decPensionEmployeurCard" style="display:none;">
+            <div class="dec-card-title">🏢 Pension employeur <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(depuis Portrait Financier)</span></div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:16px;" id="decPensionSummary"></div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: RENTES GOUVERNEMENTALES ═══════ -->
+    <div class="dec-tab-content" id="decTabRentes">
+        <div class="rentes-info-card">
+            <h3>🏛️ RRQ — Regime de rentes du Quebec</h3>
+            <div class="rentes-subtitle">Programme provincial de revenu de retraite base sur les cotisations</div>
+            <div class="rentes-section">
+                <div class="rentes-section-title">Admissibilite</div>
+                <ul class="rentes-list">
+                    <li>Avoir cotise au RRQ pendant au moins une annee</li>
+                    <li>Age minimum: 60 ans</li>
+                    <li>Age maximum pour reporter: 72 ans</li>
+                    <li>Pas de test de revenu — universel pour les cotisants</li>
+                </ul>
+            </div>
+            <div class="rentes-section">
+                <div class="rentes-section-title">Ajustement selon l'age de debut</div>
+                <div class="dec-table-wrap">
+                    <table class="rentes-table"><thead><tr><th>Age</th><th>Ajustement</th><th>Facteur</th><th>Exemple</th></tr></thead>
+                    <tbody id="rrqTableBody"></tbody></table>
+                </div>
+            </div>
+            <div class="rentes-notes">
+                <div class="rentes-notes-title">Notes importantes</div>
+                <ul>
+                    <li>Reduction de 7.2% par annee avant 65 ans (0.6%/mois)</li>
+                    <li>Bonification de 8.4% par annee apres 65 ans (0.7%/mois)</li>
+                    <li>Montant maximum 2026: ~1 364$/mois a 65 ans</li>
+                    <li>Indexe a l'inflation (IPC) chaque janvier</li>
+                    <li>Pas de test de revenu — aucune recuperation</li>
+                </ul>
+            </div>
+        </div>
+        <div class="rentes-info-card">
+            <h3>🍁 PSV — Pension de la Securite de la vieillesse</h3>
+            <div class="rentes-subtitle">Programme federal base sur la residence au Canada</div>
+            <div class="rentes-section">
+                <div class="rentes-section-title">Admissibilite</div>
+                <ul class="rentes-list">
+                    <li>Citoyen canadien ou resident permanent</li>
+                    <li>10+ ans de residence au Canada (pension partielle)</li>
+                    <li>40+ ans de residence au Canada (pension pleine)</li>
+                    <li>Age minimum: 65 ans / Report jusqu'a 70 ans</li>
+                </ul>
+            </div>
+            <div class="rentes-section">
+                <div class="rentes-section-title">Ajustement selon l'age de debut</div>
+                <div class="dec-table-wrap">
+                    <table class="rentes-table"><thead><tr><th>Age</th><th>Ajustement</th><th>Facteur</th><th>Montant</th></tr></thead>
+                    <tbody id="psvTableBody"></tbody></table>
+                </div>
+            </div>
+            <div class="rentes-clawback">
+                <div class="rentes-clawback-title">Recuperation fiscale (clawback)</div>
+                <ul class="rentes-list">
+                    <li>Seuil 2026: 93 454 $ de revenu net</li>
+                    <li>Taux: 15% du revenu au-dessus du seuil</li>
+                    <li>Recuperation complete: ~142 000$+ de revenu</li>
+                </ul>
+            </div>
+            <div class="rentes-notes">
+                <div class="rentes-notes-title">Notes importantes</div>
+                <ul>
+                    <li>Bonification de 0.6% par mois de report (+7.2%/an)</li>
+                    <li>Bonification automatique de 10% a 75 ans</li>
+                    <li>Supplement de revenu garanti (SRG) si revenu faible</li>
+                    <li>Montant maximum 2026: ~727$/mois a 65 ans</li>
+                </ul>
+            </div>
+        </div>
+        <div class="rentes-info-card">
+            <h3>💚 SRG — Supplement de revenu garanti</h3>
+            <div class="rentes-subtitle">Supplement non imposable pour personnes agees a faible revenu</div>
+            <div class="rentes-section">
+                <div class="rentes-section-title">Admissibilite</div>
+                <ul class="rentes-list">
+                    <li>Recevoir la PSV</li>
+                    <li>Revenu annuel sous ~21 624$ (celibataire) ou ~28 560$ (couple)</li>
+                    <li>Resider au Canada</li>
+                </ul>
+            </div>
+            <div class="rentes-notes">
+                <div class="rentes-notes-title">Notes importantes</div>
+                <ul>
+                    <li>Non imposable — ne compte pas dans le revenu</li>
+                    <li>Maximum 2026: ~1 086$/mois (celibataire)</li>
+                    <li>Les retraits REER/FERR reduisent le SRG</li>
+                    <li>Les retraits CELI ne reduisent PAS le SRG</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: STRATEGIE ═══════ -->
+    <div class="dec-tab-content" id="decTabStrategie">
+        <!-- Strategie de decaissement (P1/P4) -->
+        <div class="dec-card">
+            <div class="dec-card-title">🔄 Strategie de decaissement</div>
+            <div class="dec-card-subtitle">Choisissez l'ordre de retrait des comptes a la retraite</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Strategie de retrait</label>
+                    <select id="decWithdrawalStrategy" onchange="decUpdateStrategyDesc(); decRecalculate();">
+                        <option value="proportional">📊 Proportionnelle (defaut)</option>
+                        <option value="rrsp_first">🔥 REER meltdown (vider REER en premier)</option>
+                        <option value="tax_bracket">📐 Lissage fiscal (remplir les tranches basses)</option>
+                        <option value="sequential">📋 Sequentielle (non-enr d'abord)</option>
+                    </select>
+                </div>
+                <div class="dec-field" id="decStrategyDescWrap">
+                    <label>&nbsp;</label>
+                    <div class="dec-strategy-desc" id="decStrategyDesc">
+                        <span class="desc-icon">📊</span>
+                        <span>Retire de chaque compte proportionnellement. Simple mais pas optimal fiscalement.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dec-card">
+            <div class="dec-card-title">🧠 Optimisation intelligente</div>
+            <div class="dec-card-subtitle">Analyse 336+ combinaisons (RRQ × SV × strategie × splitting)</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Objectif d'optimisation</label>
+                    <select id="decOptObjective">
+                        <option value="balanced">⚖️ Equilibre (recommande)</option>
+                        <option value="minimize_tax">💰 Minimiser les impots</option>
+                        <option value="maximize_net">📈 Maximiser le revenu net</option>
+                        <option value="avoid_clawback">🛡️ Eviter recuperation SV</option>
+                        <option value="maximize_estate">🏠 Maximiser la succession</option>
+                    </select>
+                </div>
+                <div class="dec-field" style="display:flex;align-items:flex-end;">
+                    <button class="dec-btn dec-btn-primary" onclick="decRunSmartOptimizer()" style="width:100%;">🧠 Lancer l'optimisation</button>
+                </div>
+            </div>
+            <div id="decOptProgress" style="display:none;margin-top:12px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Analyse en cours... <span id="decOptPercent">0%</span></div>
+                <div class="dec-progress"><div class="dec-progress-bar" id="decOptBar"></div></div>
+            </div>
+            <div id="decOptResult" style="display:none;"></div>
+            <div style="margin-top:8px;font-size:11px;color:var(--text-muted);padding:0 4px;">
+                💡 <strong>Surplus reinvesti:</strong> Quand les retraits obligatoires (FERR/FRV) + pensions depassent le revenu cible, l'excedent est reinvesti dans le CELI (max 7 000$/an) puis non-enregistre, aux memes taux de rendement que ces comptes.
+            </div>
+        </div>
+
+        <!-- Revenu maximum viable (v4.1) -->
+        <div class="dec-card">
+            <div class="dec-card-title">💸 Revenu maximum viable</div>
+            <div class="dec-card-subtitle">Calculer le revenu maximum en utilisant toutes vos economies (arriver a 0$ a la fin)</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-2">
+                <div class="dec-field">
+                    <label>Mode de calcul</label>
+                    <select id="decMaxIncomeMode">
+                        <option value="current">📋 Avec parametres actuels</option>
+                        <option value="optimized">🧠 Avec optimisation (recommande)</option>
+                    </select>
+                </div>
+                <div class="dec-field" style="display:flex;align-items:flex-end;">
+                    <button class="dec-btn dec-btn-primary" onclick="decRunMaxIncome()" style="width:100%;">💸 Calculer le revenu maximum</button>
+                </div>
+            </div>
+            <div id="decMaxIncomeProgress" style="display:none;margin-top:12px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Calcul en cours... <span id="decMaxIncomePct">0%</span></div>
+                <div class="dec-progress"><div class="dec-progress-bar" id="decMaxIncomeBar"></div></div>
+            </div>
+            <div id="decMaxIncomeResult" style="display:none;"></div>
+        </div>
+
+        <div class="dec-card">
+            <div class="dec-card-title">📅 Evenements de vie</div>
+            <div class="dec-card-subtitle">Heritage, vente de propriete, depenses majeures, etc.</div>
+            <div style="margin-top:16px;">
+                <div style="display:grid;grid-template-columns:1.5fr 1fr 0.6fr 0.8fr auto;gap:12px;margin-bottom:12px;align-items:end;">
+                    <div class="dec-field">
+                        <label>Type</label>
+                        <select id="decEventType" onchange="decEventTypeChanged()" style="font-size:13px;">
+                            <option value="" data-sign="+" data-icon="📄">— Choisir —</option>
+                            <option value="vente_propriete" data-sign="+" data-icon="🏠">🏠 Vente propriete</option>
+                            <option value="heritage" data-sign="+" data-icon="💰">💰 Heritage recu</option>
+                            <option value="don_recu" data-sign="+" data-icon="🎁">🎁 Don recu</option>
+                            <option value="don_verse" data-sign="-" data-icon="🎁">🎁 Don verse (negatif)</option>
+                            <option value="prestation_assurance" data-sign="+" data-icon="💎">💎 Prestation assurance</option>
+                            <option value="vente_entreprise" data-sign="+" data-icon="🏢">🏢 Vente entreprise</option>
+                            <option value="indemnite_depart" data-sign="+" data-icon="📦">📦 Indemnite depart</option>
+                            <option value="prime_bonus" data-sign="+" data-icon="🎯">🎯 Prime/Bonus ponctuel</option>
+                            <option value="debut_revenus_locatifs" data-sign="+" data-icon="🏘️">🏘️ Debut revenus locatifs</option>
+                            <option value="fin_revenus_locatifs" data-sign="-" data-icon="🏘️">🏘️ Fin revenus locatifs</option>
+                            <option value="depense_majeure" data-sign="-" data-icon="💸">💸 Depense majeure (negatif)</option>
+                            <option value="autre_entree" data-sign="+" data-icon="📄">📄 Autre entree</option>
+                            <option value="autre_sortie" data-sign="-" data-icon="📄">📄 Autre sortie (negatif)</option>
+                        </select>
+                    </div>
+                    <div class="dec-field"><label>Description</label><input type="text" id="decEventDesc" placeholder="Details..."></div>
+                    <div class="dec-field"><label>Age</label><input type="number" id="decEventAge" value="65" min="25" max="100"></div>
+                    <div class="dec-field"><label>Montant ($)</label><input type="text" id="decEventAmount" value="0" class="money-input"></div>
+                    <div style="display:flex;align-items:flex-end;padding-bottom:1px;"><button class="dec-btn" onclick="decAddEvent()" style="white-space:nowrap;">+ Ajouter</button></div>
+                </div>
+                <div class="dec-event-list" id="decEventList">
+                    <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">Aucun evenement de vie ajoute</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: RAPPORT ═══════ -->
+    <div class="dec-tab-content" id="decTabRapport">
+        <div class="dec-card">
+            <div class="dec-card-header">
+                <div class="dec-card-title">📋 Tableau detaille annee par annee</div>
+                <div class="dec-header-actions">
+                    <button class="dec-btn" onclick="decTogglePhase('all')">Tout</button>
+                    <button class="dec-btn" onclick="decTogglePhase('decaissement')">Retraite seulement</button>
+                </div>
+            </div>
+            <div class="dec-table-wrap" style="max-height:500px;overflow-y:auto;">
+                <table class="dec-table" id="decTable">
+                    <thead><tr><th>Age</th><th>Phase</th><th>REER/FERR</th><th>CELI</th><th>Non-enr.</th><th>CRI/FRV</th><th>Total</th><th>RRQ</th><th>SV</th><th>Pension</th><th>Retraits</th><th>Brut</th><th>Credits</th><th>Impots</th><th>Net</th><th>Taux</th></tr></thead>
+                    <tbody id="decTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB: SUCCESSION ═══════ -->
+    <div class="dec-tab-content" id="decTabSuccession">
+        <!-- Parametres assurance vie -->
+        <div class="dec-card">
+            <div class="dec-card-title">🛡️ Assurance vie — Parametres</div>
+            <div class="dec-card-subtitle">Entrez les parametres de l'assurance vie participative (conjointe dernier deces)</div>
+            <div style="margin-top:16px;" class="dec-grid dec-grid-4">
+                <div class="dec-field">
+                    <label>Prime mensuelle ($)</label>
+                    <input type="text" id="decInsPremium" value="500" class="money-input" onchange="decUpdateAnnualPremium();">
+                </div>
+                <div class="dec-field">
+                    <label>Prime annuelle ($) <span style="font-size:10px;color:var(--text-muted);">auto</span></label>
+                    <input type="text" id="decInsPremiumAnnual" value="6 000" class="money-input" readonly style="background:var(--bg-secondary);cursor:default;">
+                </div>
+                <div class="dec-field">
+                    <label>Capital-deces ($)</label>
+                    <input type="text" id="decInsDeathBenefit" value="500 000" class="money-input">
+                </div>
+                <div class="dec-field">
+                    <label>Age souscription</label>
+                    <input type="number" id="decInsStartAge" value="55" step="1" min="30" max="80">
+                </div>
+            </div>
+            <div style="margin-top:12px;font-size:11px;color:var(--text-muted);padding:0 4px;">
+                💡 La prime est prelevee annuellement des comptes (non-enregistre → CELI → REER) de la retraite jusqu'au deces. Le capital-deces est verse <strong>libre d'impot</strong> aux beneficiaires.
+            </div>
+        </div>
+
+        <!-- Bouton comparer -->
+        <div class="dec-card">
+            <div class="dec-card-title">📊 Comparaison successorale</div>
+            <div class="dec-card-subtitle">3 scenarios cote a cote: placement vs optimise vs assurance vie</div>
+            <div style="margin-top:16px;">
+                <button class="dec-btn dec-btn-primary" onclick="decRunSuccessionComparison()" style="width:100%;">🛡️ Comparer les 3 scenarios de succession</button>
+            </div>
+            <div id="decSuccProgress" style="display:none;margin-top:12px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Analyse en cours... <span id="decSuccPct">0%</span></div>
+                <div class="dec-progress"><div class="dec-progress-bar" id="decSuccBar"></div></div>
+            </div>
+        </div>
+
+        <!-- Resultats -->
+        <div id="decSuccResult" style="display:none;"></div>
+
+        <!-- Chart comparatif -->
+        <div id="decSuccChartWrap" style="display:none;">
+            <div class="dec-card">
+                <div class="dec-card-title">📈 Evolution du patrimoine — 3 scenarios</div>
+                <div style="height:350px;"><canvas id="decChartSuccession"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABF NAV BUTTONS -->
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;">
+        <button class="dec-btn" onclick="saveModuleData()">💾 Sauvegarder</button>
+        <button class="dec-btn dec-btn-primary" onclick="saveAndNext()">Suivant ➡️</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SCRIPT                                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+(async function() {
+    'use strict';
+    console.log('🏖️ Module ABF Retraite v4.8 — Init');
+
+    // ──────────────────────────────────────────
+    // RETRAITE TOGGLE — check activation BEFORE loading heavy deps
+    // ──────────────────────────────────────────
+    let _client = null;
+    if (typeof FINOX !== 'undefined') {
+        await FINOX.loadClientData(true);
+        _client = FINOX.getClientData();
+    }
+
+    const _retraiteEnabled = _client?.abf_data?.retraite_enabled === true;
+    const _activationEl = document.getElementById('retraiteActivation');
+    const _containerEl = document.getElementById('decContainer');
+
+    if (_retraiteEnabled) {
+        if (_activationEl) _activationEl.style.display = 'none';
+        if (_containerEl) _containerEl.style.display = '';
+    } else {
+        if (_activationEl) _activationEl.style.display = '';
+        if (_containerEl) _containerEl.style.display = 'none';
+    }
+
+    window.toggleRetraiteEnabled = async function(enable) {
+        try {
+            const abfData = _client?.abf_data || {};
+            abfData.retraite_enabled = enable;
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfData, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: abfData });
+            // Re-render stepper to show/hide the step
+            if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.updateABFCheckmarks();
+            // Reload the module to reflect the new state
+            FINOX.showNotification(enable ? 'Analyse retraite activee' : 'Analyse retraite desactivee', enable ? 'success' : 'info');
+            FINOX_NAV.loadModule('abf-retraite');
+        } catch (err) {
+            console.error('Toggle retraite error:', err);
+            FINOX.showNotification('Erreur: ' + err.message, 'error');
+        }
+    };
+
+    window.skipRetraite = function() {
+        FINOX_NAV.loadModule('conformite-recommandations');
+    };
+
+    // If not enabled, stop here — don't load Chart.js / engine
+    if (!_retraiteEnabled) return;
+
+    // Load Chart.js
+    if (!window.Chart) {
+        await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4';
+            s.onload = resolve; s.onerror = () => reject('Chart.js failed');
+            document.head.appendChild(s);
+        });
+    }
+    // Load engine
+    if (!window.FINOX_DECAISSEMENT) {
+        await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'shared/decaissement-engine.js';
+            s.onload = resolve; s.onerror = () => reject('Engine failed');
+            document.head.appendChild(s);
+        });
+    }
+    const ENGINE = window.FINOX_DECAISSEMENT;
+
+    // ──────────────────────────────────────────
+    // STATE
+    // ──────────────────────────────────────────
+    let scenario = 'realiste';
+    let projectionData = [];
+    let lifeEvents = [];
+    let reportPhaseFilter = 'all';
+    let charts = {};
+    let client = _client;
+
+    // Auto-mapped data from ABF modules (no user input)
+    let abfMapped = {
+        currentAge: 40, retirementAge: 65, maritalStatus: 'single',
+        currentSalary: 0,
+        rrsp: 0, rrspReturn: 5.0, tfsa: 0, tfsaReturn: 6.0,
+        taxable: 0, taxableReturn: 5.0, cri: 0, criReturn: 4.5, frv: 0, frvReturn: 4.5,
+        rrspContrib: 0, rrspEmployer: 0, tfsaContrib: 0, taxableContrib: 0,
+        // Pension employeur (RRPD) — auto-mapped from Portrait Financier
+        hasEmployerPension: false,
+        employerPensionType: 'aucun',
+        employerPensionAmount: 0,
+        employerPensionStartAge: 65,
+        employerPensionIndexed: false,
+        employerPensionIndexRate: 0.5,
+        employerPensionBridge: false,
+        employerPensionBridgeAmount: 0,
+    };
+
+    // Chart.js dark theme
+    Chart.defaults.color = '#a0a0a0';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.pointStyleWidth = 8;
+    Chart.defaults.plugins.legend.labels.boxHeight = 6;
+
+    async function loadABFData() {
+        try {
+            if (!client) return;
+
+            // === PROFILE (from abf-contact + abf-emploi) ===
+            const dob = client.date_of_birth;
+            if (dob) {
+                abfMapped.currentAge = Math.floor((Date.now() - (FINOX.parseLocalDate ? FINOX.parseLocalDate(dob) : new Date(dob)).getTime()) / 31557600000);
+            }
+            abfMapped.retirementAge = client.age_retraite || 65;
+            abfMapped.maritalStatus = client.has_conjoint ? 'couple' : 'single';
+            abfMapped.currentSalary = client.revenu_emploi || 0;
+
+            // Default target income to 70% of salary
+            const targetField = document.getElementById('decTargetIncome');
+            if (targetField && abfMapped.currentSalary > 0 && (!targetField.value || targetField.value === '50000')) {
+                targetField.value = Math.round(abfMapped.currentSalary * 0.7);
+            }
+
+            // === ACCOUNTS (from abf_actifs / Portrait Financier) ===
+            if (typeof FINOX !== 'undefined' && FINOX.supabase && FINOX.CLIENT_ID) {
+                const { data: actifs } = await FINOX.supabase
+                    .from('abf_actifs')
+                    .select('*')
+                    .eq('client_id', FINOX.CLIENT_ID);
+
+                if (actifs && actifs.length > 0) {
+                    // Reset before aggregation
+                    let rrsp = 0, tfsa = 0, taxable = 0, cri = 0, frv = 0;
+                    let rrspRet = [], tfsaRet = [], taxRet = [], criRet = [], frvRet = [];
+                    let rrspContrib = 0, rrspEmployer = 0, tfsaContrib = 0, taxContrib = 0;
+
+                    actifs.forEach(a => {
+                        const type = (a.type || '').toUpperCase();
+                        const solde = a.valeur || a.valeur_marchande || 0;
+                        const rendement = a.rendement_annuel;
+                        const contribM = (a.contribution_mensuelle || 0) * 12;
+                        const contribE = (a.contribution_employeur || 0) * 12;
+
+                        if (type === 'REER' || type === 'RRCD') {
+                            rrsp += solde;
+                            if (rendement) rrspRet.push(rendement);
+                            rrspContrib += contribM;
+                            rrspEmployer += contribE;
+                        } else if (type === 'CELI' || type === 'CELI APP') {
+                            tfsa += solde;
+                            if (rendement) tfsaRet.push(rendement);
+                            tfsaContrib += contribM;
+                        } else if (type === 'CRI') {
+                            cri += solde;
+                            if (rendement) criRet.push(rendement);
+                        } else if (type === 'FRV' || type === 'FERR') {
+                            frv += solde;
+                            if (rendement) frvRet.push(rendement);
+                        } else if (type === 'NON-ENREGISTRE' || type === 'NON-ENREGISTRÉ' || type === 'COMPTANT') {
+                            taxable += solde;
+                            if (rendement) taxRet.push(rendement);
+                            taxContrib += contribM;
+                        } else if (type === 'RRPD') {
+                            // Auto-map pension employeur from Portrait Financier
+                            abfMapped.hasEmployerPension = true;
+                            abfMapped.employerPensionAmount = a.rrpd_rente_annuelle || 0;
+                            abfMapped.employerPensionStartAge = a.rrpd_age_debut || 65;
+                            abfMapped.employerPensionBridge = a.rrpd_pont_actif === true;
+                            abfMapped.employerPensionBridgeAmount = a.rrpd_pont_montant || 0;
+                            // Detect type from description
+                            const desc = (a.description || '').toLowerCase();
+                            if (desc.includes('rregop')) abfMapped.employerPensionType = 'rregop';
+                            else if (desc.includes('cd') || desc.includes('cotisation')) abfMapped.employerPensionType = 'cd';
+                            else abfMapped.employerPensionType = 'prive';
+                        }
+                    });
+
+                    const avg = arr => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+                    abfMapped.rrsp = rrsp;
+                    abfMapped.tfsa = tfsa;
+                    abfMapped.taxable = taxable;
+                    abfMapped.cri = cri;
+                    abfMapped.frv = frv;
+                    if (avg(rrspRet) != null) abfMapped.rrspReturn = avg(rrspRet);
+                    if (avg(tfsaRet) != null) abfMapped.tfsaReturn = avg(tfsaRet);
+                    if (avg(taxRet) != null) abfMapped.taxableReturn = avg(taxRet);
+                    if (avg(criRet) != null) abfMapped.criReturn = avg(criRet);
+                    if (avg(frvRet) != null) abfMapped.frvReturn = avg(frvRet);
+                    abfMapped.rrspContrib = rrspContrib;
+                    abfMapped.rrspEmployer = rrspEmployer;
+                    abfMapped.tfsaContrib = tfsaContrib;
+                    abfMapped.taxableContrib = taxContrib;
+                }
+                // v4.5: Flag — actifs loaded, RRPD presence is authoritative
+                abfMapped._rrpdChecked = true;
+            }
+
+            updateSummaryChips();
+            updateCoupleVisibility();
+            console.log('✅ Donnees ABF auto-mappees:', abfMapped);
+        } catch (e) {
+            console.warn('⚠️ Erreur chargement ABF:', e.message);
+        }
+    }
+
+    function updateSummaryChips() {
+        const fmt = v => v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+        const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        s('chipAge', abfMapped.currentAge + ' ans');
+        s('chipRetAge', abfMapped.retirementAge + ' ans');
+        s('chipSalary', abfMapped.currentSalary > 0 ? fmt(abfMapped.currentSalary) : '—');
+        s('chipRrsp', abfMapped.rrsp > 0 ? fmt(abfMapped.rrsp) : '0 $');
+        s('chipTfsa', abfMapped.tfsa > 0 ? fmt(abfMapped.tfsa) : '0 $');
+        s('chipTaxable', abfMapped.taxable > 0 ? fmt(abfMapped.taxable) : '0 $');
+        const criFrv = abfMapped.cri + abfMapped.frv;
+        s('chipCriFrv', criFrv > 0 ? fmt(criFrv) : '0 $');
+        // Pension employeur chip
+        s('chipPension', abfMapped.hasEmployerPension ? fmt(abfMapped.employerPensionAmount) + '/an' : '—');
+
+        // Show/update pension employer summary card
+        updatePensionCard();
+    }
+
+    function updatePensionCard() {
+        const card = document.getElementById('decPensionEmployeurCard');
+        const summary = document.getElementById('decPensionSummary');
+        if (!card || !summary) return;
+        if (!abfMapped.hasEmployerPension) { card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        const fmt = v => v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+        const typeLabels = { rregop: 'RREGOP', prive: 'Prive (PD)', cd: 'Cotisation determinee', autre: 'Autre', aucun: '—' };
+        summary.innerHTML = `
+            <div style="font-size:13px;"><span style="color:var(--text-muted);">Type:</span> <strong>${typeLabels[abfMapped.employerPensionType] || '—'}</strong></div>
+            <div style="font-size:13px;"><span style="color:var(--text-muted);">Rente:</span> <strong style="color:var(--gold);">${fmt(abfMapped.employerPensionAmount)}/an</strong></div>
+            <div style="font-size:13px;"><span style="color:var(--text-muted);">Debut:</span> <strong>${abfMapped.employerPensionStartAge} ans</strong></div>
+            ${abfMapped.employerPensionBridge ? `<div style="font-size:13px;"><span style="color:var(--text-muted);">Pont:</span> <strong>${fmt(abfMapped.employerPensionBridgeAmount)}/an</strong></div>` : ''}
+        `;
+    }
+
+    // ──────────────────────────────────────────
+    // RENTES GOV TABLES
+    // ──────────────────────────────────────────
+    function buildRRQTable(rrqBase) {
+        const tbody = document.getElementById('rrqTableBody');
+        if (!tbody) return;
+        const base = rrqBase || 850;
+        const rows = [];
+        for (let age = 60; age <= 72; age++) {
+            let adj, factor;
+            if (age < 65) { adj = (age - 65) * 7.2; factor = 1 + adj / 100; }
+            else if (age === 65) { adj = 0; factor = 1; }
+            else { adj = (age - 65) * 8.4; factor = 1 + adj / 100; }
+            const ex = Math.round(base * factor);
+            const isBase = age === 65;
+            const adjStr = adj === 0 ? '0.0%' : (adj > 0 ? '+' + adj.toFixed(1) + '%' : adj.toFixed(1) + '%');
+            const cls = adj < 0 ? 'rentes-negative' : (adj > 0 ? 'rentes-positive' : 'rentes-base');
+            rows.push(`<tr class="${isBase ? 'rentes-base-row' : ''}"><td>${age} ans</td><td class="${cls}">${adjStr}</td><td>${factor.toFixed(3)}</td><td>${ex} $${isBase ? ' <span style="color:var(--gold);font-size:10px;">← Base</span>' : ''}</td></tr>`);
+        }
+        tbody.innerHTML = rows.join('');
+    }
+    function buildPSVTable() {
+        const tbody = document.getElementById('psvTableBody');
+        if (!tbody) return;
+        const base = 727;
+        const rows = [];
+        for (let age = 65; age <= 70; age++) {
+            const adj = (age - 65) * 7.2;
+            const factor = 1 + adj / 100;
+            const m = Math.round(base * factor);
+            const isBase = age === 65;
+            const adjStr = adj === 0 ? '0.0%' : '+' + adj.toFixed(1) + '%';
+            const cls = adj > 0 ? 'rentes-positive' : 'rentes-base';
+            rows.push(`<tr class="${isBase ? 'rentes-base-row' : ''}"><td>${age} ans</td><td class="${cls}">${adjStr}</td><td>${factor.toFixed(3)}</td><td>${m} $${isBase ? ' <span style="color:var(--gold);font-size:10px;">← Base</span>' : ''}</td></tr>`);
+        }
+        tbody.innerHTML = rows.join('');
+    }
+    window.decUpdateRentesTables = function() { buildRRQTable(getNum('decQppAmount') || 850); };
+
+    // ──────────────────────────────────────────
+    // RESTORE SAVED DATA (hypotheses + pensions only)
+    // ──────────────────────────────────────────
+    function restoreSavedData() {
+        const abfData = client?.abf_data;
+        if (!abfData || !abfData.retraite) return false;
+        const saved = abfData.retraite;
+        console.log('🔄 Restauration donnees retraite');
+
+        // Hypotheses
+        setVal('decLifeExp', saved.life_expectancy || saved.profile?.lifeExpectancy || 92);
+        if (saved.target_income) setVal('decTargetIncome', saved.target_income);
+        else if (saved.accumulation?.targetRetirementIncome) setVal('decTargetIncome', saved.accumulation.targetRetirementIncome);
+        if (saved.inflation_rate != null) setVal('decInflation', saved.inflation_rate);
+        if (saved.salary_growth != null) setVal('decSalaryGrowth', saved.salary_growth);
+        // v4.7: Droits de cotisation
+        if (saved.rrsp_contribution_room != null) setVal('decRrspRoom', saved.rrsp_contribution_room);
+        if (saved.tfsa_contribution_room != null) setVal('decTfsaRoom', saved.tfsa_contribution_room);
+
+        // Pensions (RRQ/SV ages + amounts from form)
+        if (saved.pensions) {
+            if (saved.pensions.qppStartAge) setVal('decQppAge', saved.pensions.qppStartAge);
+            if (saved.pensions.oasStartAge) setVal('decOasAge', saved.pensions.oasStartAge);
+            if (saved.pensions.qppAmountAt65) setVal('decQppAmount', saved.pensions.qppAmountAt65);
+            if (saved.pensions.oasAmountAt65) setVal('decOasAmount', saved.pensions.oasAmountAt65);
+            // Employer pension — restore ONLY if loadABFData() didn't already run
+            // If _rrpdChecked is true, actifs were loaded and RRPD presence is authoritative
+            if (saved.pensions.hasEmployerPension && !abfMapped.hasEmployerPension && !abfMapped._rrpdChecked) {
+                abfMapped.hasEmployerPension = true;
+                abfMapped.employerPensionType = saved.pensions.employerPensionType || 'prive';
+                abfMapped.employerPensionAmount = saved.pensions.employerPensionAmount || 0;
+                abfMapped.employerPensionStartAge = saved.pensions.employerPensionStartAge || 65;
+                abfMapped.employerPensionIndexed = saved.pensions.employerPensionIndexed || false;
+                abfMapped.employerPensionBridge = saved.pensions.employerPensionBridge || false;
+                abfMapped.employerPensionBridgeAmount = saved.pensions.employerPensionBridgeAmount || 0;
+            }
+        }
+
+        // v3.0 — Strategie & options avancees
+        if (saved.withdrawal_strategy) setVal('decWithdrawalStrategy', saved.withdrawal_strategy);
+        if (saved.expense_phases) {
+            setVal('decGogoEnd', saved.expense_phases.gogoEnd || 75);
+            setVal('decSlowgoRate', saved.expense_phases.slowgoRate || 80);
+            setVal('decNogoRate', saved.expense_phases.nogoRate || 60);
+        }
+        if (saved.pension_splitting) {
+            const psEl = document.getElementById('decPensionSplitting');
+            if (psEl) psEl.checked = true;
+        }
+        if (saved.spouse_income) setVal('decSpouseIncome', saved.spouse_income);
+        if (saved.spouse_age) setVal('decSpouseAge', saved.spouse_age);
+
+        // v4.1 — Rendements retraite
+        if (saved.retirement_returns) {
+            const cb = document.getElementById('decUseRetReturns');
+            if (cb) cb.checked = true;
+            decToggleRetReturns();
+            if (saved.retirement_returns.rrsp != null) setVal('decRetRetRrsp', saved.retirement_returns.rrsp);
+            if (saved.retirement_returns.tfsa != null) setVal('decRetRetTfsa', saved.retirement_returns.tfsa);
+            if (saved.retirement_returns.taxable != null) setVal('decRetRetTaxable', saved.retirement_returns.taxable);
+            if (saved.retirement_returns.cri != null) setVal('decRetRetCri', saved.retirement_returns.cri);
+            if (saved.retirement_returns.frv != null) setVal('decRetRetFrv', saved.retirement_returns.frv);
+        }
+
+        // v4.2 — Assurance vie
+        if (saved.insurance) {
+            if (saved.insurance.monthly_premium != null) setVal('decInsPremium', saved.insurance.monthly_premium);
+            if (saved.insurance.death_benefit != null) setVal('decInsDeathBenefit', saved.insurance.death_benefit);
+            if (saved.insurance.start_age != null) setVal('decInsStartAge', saved.insurance.start_age);
+            decUpdateAnnualPremium();
+        }
+
+        // Scenario & events
+        if (saved.scenario) scenario = saved.scenario;
+        if (saved.lifeEvents) lifeEvents = saved.lifeEvents;
+        document.querySelectorAll('#decScenarioBar .dec-scenario-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.scenario === scenario);
+        });
+        return true;
+    }
+
+    // ──────────────────────────────────────────
+    // COLLECT FORM DATA — from abfMapped + hypotheses form
+    // ──────────────────────────────────────────
+    function getFormData() {
+        const lifeExp = getNum('decLifeExp') || 92;
+
+        const profile = {
+            currentAge: abfMapped.currentAge,
+            retirementAge: Math.min(abfMapped.retirementAge, 75),
+            lifeExpectancy: lifeExp,
+            maritalStatus: abfMapped.maritalStatus,
+        };
+
+        const accounts = {
+            rrsp: abfMapped.rrsp, rrspReturn: abfMapped.rrspReturn,
+            tfsa: abfMapped.tfsa, tfsaReturn: abfMapped.tfsaReturn,
+            taxable: abfMapped.taxable, taxableReturn: abfMapped.taxableReturn,
+            cri: abfMapped.cri, criReturn: abfMapped.criReturn,
+            frv: abfMapped.frv, frvReturn: abfMapped.frvReturn,
+        };
+
+        const salaryGrowth = getNum('decSalaryGrowth') || 2.5;
+        const accumulation = {
+            currentSalary: abfMapped.currentSalary,
+            salaryGrowthRate: salaryGrowth,
+            salaryGrowthUntilAge: Math.min(abfMapped.retirementAge - 5, 60),
+            rrspContribution: abfMapped.rrspContrib,
+            rrspContributionGrowth: 2.0,
+            rrspEmployerMatch: abfMapped.rrspEmployer,
+            tfsaContribution: abfMapped.tfsaContrib,
+            tfsaContributionGrowth: 0,
+            taxableContribution: abfMapped.taxableContrib,
+            taxableContributionGrowth: 3.0,
+            hasEmployerPension: false,
+            employerPensionAccrualRate: 2.0,
+            yearsOfServiceAtRetirement: 30,
+            averageSalaryForPension: abfMapped.currentSalary || 70000,
+            targetRetirementIncome: getNum('decTargetIncome') || 50000,
+            // v4.7: Droits de cotisation cumules
+            rrspContributionRoom: getNum('decRrspRoom') || 0,
+            tfsaContributionRoom: getNum('decTfsaRoom') || 0,
+        };
+
+        const pensions = {
+            qppStartAge: getNum('decQppAge'),
+            oasStartAge: getNum('decOasAge'),
+            qppAmountAt65: getNum('decQppAmount'),
+            oasAmountAt65: getNum('decOasAmount') || 742,
+            // Employer pension — auto-mapped from RRPD in Portrait Financier
+            hasEmployerPension: abfMapped.hasEmployerPension,
+            employerPensionType: abfMapped.employerPensionType,
+            employerPensionAmount: abfMapped.employerPensionAmount,
+            employerPensionStartAge: abfMapped.employerPensionStartAge,
+            employerPensionIndexed: abfMapped.employerPensionIndexed,
+            employerPensionIndexRate: abfMapped.employerPensionIndexRate || 0.5,
+            employerPensionSurvivor: 60,
+            employerPensionBridge: abfMapped.employerPensionBridge,
+            employerPensionBridgeAmount: abfMapped.employerPensionBridgeAmount,
+            maritalStatus: profile.maritalStatus,
+        };
+
+        // v3.0 — Options avancees (strategies, phases, splitting)
+        const gogoEnd = getNum('decGogoEnd') || 75;
+        const options = {
+            withdrawalStrategy: document.getElementById('decWithdrawalStrategy')?.value || 'proportional',
+            inflationRate: getNum('decInflation') || 2.0,
+            expensePhases: {
+                gogoEnd: gogoEnd,
+                slowgoEnd: gogoEnd + 10,
+                slowgoRate: getNum('decSlowgoRate') || 80,
+                nogoRate: getNum('decNogoRate') || 60,
+            },
+            pensionSplitting: document.getElementById('decPensionSplitting')?.checked || false,
+            spouseIncome: getNum('decSpouseIncome') || 0,
+            spouseAge: getNum('decSpouseAge') || 0,
+            // v4.1: Rendements differents a la retraite
+            retirementReturns: document.getElementById('decUseRetReturns')?.checked ? {
+                rrsp: getNum('decRetRetRrsp'),
+                tfsa: getNum('decRetRetTfsa'),
+                taxable: getNum('decRetRetTaxable'),
+                cri: getNum('decRetRetCri'),
+                frv: getNum('decRetRetFrv'),
+            } : null,
+        };
+
+        return { profile, accounts, accumulation, pensions, options };
+    }
+
+    // ──────────────────────────────────────────
+    // ABF PERSISTENCE
+    // ──────────────────────────────────────────
+    window.saveModuleData = async function() {
+        try {
+            const { pensions } = getFormData();
+            const currentAbfData = client?.abf_data || {};
+
+            const retraiteData = {
+                // Hypotheses only (NOT duplicating ABF data)
+                life_expectancy: getNum('decLifeExp') || 92,
+                target_income: getNum('decTargetIncome') || 50000,
+                inflation_rate: getNum('decInflation') || 2.0,
+                salary_growth: getNum('decSalaryGrowth') || 2.5,
+                // v4.7: Droits de cotisation
+                rrsp_contribution_room: getNum('decRrspRoom') || 0,
+                tfsa_contribution_room: getNum('decTfsaRoom') || 0,
+                // Pensions
+                pensions,
+                // v3.0 — Strategie & options avancees
+                withdrawal_strategy: document.getElementById('decWithdrawalStrategy')?.value || 'proportional',
+                expense_phases: {
+                    gogoEnd: getNum('decGogoEnd') || 75,
+                    slowgoRate: getNum('decSlowgoRate') || 80,
+                    nogoRate: getNum('decNogoRate') || 60,
+                },
+                pension_splitting: document.getElementById('decPensionSplitting')?.checked || false,
+                spouse_income: getNum('decSpouseIncome') || 0,
+                spouse_age: getNum('decSpouseAge') || 0,
+                // v4.1 — Rendements retraite
+                retirement_returns: document.getElementById('decUseRetReturns')?.checked ? {
+                    rrsp: getNum('decRetRetRrsp'),
+                    tfsa: getNum('decRetRetTfsa'),
+                    taxable: getNum('decRetRetTaxable'),
+                    cri: getNum('decRetRetCri'),
+                    frv: getNum('decRetRetFrv'),
+                } : null,
+                // v4.2 — Assurance vie
+                insurance: {
+                    monthly_premium: getNum('decInsPremium') || 0,
+                    death_benefit: getNum('decInsDeathBenefit') || 0,
+                    start_age: getNum('decInsStartAge') || 55,
+                },
+                // Scenario & events
+                scenario,
+                lifeEvents,
+                last_updated: new Date().toISOString()
+            };
+
+            const abfUpdate = {
+                ...currentAbfData,
+                retraite: retraiteData,
+                section_retraite_completed: true
+            };
+
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            client = FINOX.getClientData();
+
+            FINOX.showNotification('Retraite sauvegarde', 'success');
+            if (typeof FINOX_NAV !== 'undefined') {
+                FINOX_NAV.markAsSaved();
+                FINOX_NAV.updateABFCheckmarks();
+            }
+            return { success: true };
+        } catch (err) {
+            console.error('❌ Erreur sauvegarde:', err);
+            FINOX.showNotification('Erreur: ' + err.message, 'error');
+            return { success: false };
+        }
+    };
+
+    window.saveAndNext = async function() {
+        const r = await saveModuleData();
+        if (r.success) FINOX_NAV.loadModule('conformite-recommandations');
+    };
+
+    // ──────────────────────────────────────────
+    // RECALCULATE
+    // ──────────────────────────────────────────
+    window.decRecalculate = function() {
+        if (typeof ENGINE === 'undefined' || !ENGINE.generateProjectionData) {
+            console.warn('⚠️ Moteur de decaissement non charge — recalcul annule');
+            return;
+        }
+        const { profile, accounts, accumulation, pensions, options } = getFormData();
+        projectionData = ENGINE.generateProjectionData(
+            profile.currentAge, profile.retirementAge, profile.lifeExpectancy,
+            scenario, accounts, pensions, accumulation, lifeEvents, options
+        );
+        renderDashboard();
+        renderGapAnalysis();
+        renderReport();
+    };
+
+    // ──────────────────────────────────────────
+    // RENDER DASHBOARD
+    // ──────────────────────────────────────────
+    function renderDashboard() {
+        if (!projectionData || projectionData.length === 0) return;
+        const retYear = projectionData.find(d => d.phase === 'decaissement');
+        const lastYear = projectionData[projectionData.length - 1];
+        const peakTotal = Math.max(...projectionData.map(d => d.total));
+        const retData = projectionData.filter(d => d.phase === 'decaissement');
+        const avgNet = retData.length > 0 ? Math.round(retData.reduce((s, d) => s + d.netIncome, 0) / retData.length) : 0;
+        const totalTax = retData.reduce((s, d) => s + d.totalTax, 0);
+        const firstNet = retYear ? retYear.netIncome : 0;
+        const fmt = ENGINE.formatCurrencyShort;
+
+        // v4.0 — KPI data
+        const totalCredits = retData.reduce((s, d) => s + (d.totalCredits || 0), 0);
+        const estateTax = lastYear.estateTax || 0;
+        const ferrConversion = projectionData.find(d => d.isRrif && d.age === 71);
+        const ferrAmount = ferrConversion ? ferrConversion.rrsp : 0;
+        const strategyLabel = { proportional: '📊 Prop.', rrsp_first: '🔥 Meltdown', tax_bracket: '📐 Lissage', sequential: '📋 Seq.' };
+        const currentStrat = document.getElementById('decWithdrawalStrategy')?.value || 'proportional';
+        const totalSurplus = retData.reduce((s, d) => s + (d.surplusAmount || 0), 0);
+
+        const kpis = [
+            { label: 'Actifs au pic', value: fmt(peakTotal), sub: 'Maximum atteint', cls: 'kpi-gold' },
+            { label: 'Actifs a la retraite', value: retYear ? fmt(retYear.total) : '—', sub: `A ${retYear ? retYear.age : '—'} ans`, cls: 'kpi-blue' },
+            { label: 'Revenu net 1re annee', value: fmt(firstNet), sub: 'Premiere annee', cls: 'kpi-green' },
+            { label: 'Revenu net moyen', value: fmt(avgNet), sub: 'Moyenne retraite', cls: 'kpi-purple' },
+            { label: 'Impots totaux', value: fmt(totalTax), sub: `${retData.length} ans | ${strategyLabel[currentStrat] || ''}`, cls: 'kpi-orange' },
+            { label: 'Credits d\'impot', value: fmt(totalCredits), sub: 'Fed + QC cumules', cls: 'kpi-green' },
+            { label: 'Actifs a ' + lastYear.age + ' ans', value: fmt(lastYear.total), sub: lastYear.total > 0 ? 'Patrimoine residuel' : '⚠️ Epuise', cls: lastYear.total > 0 ? 'kpi-green' : 'kpi-red' },
+            { label: 'Impot successoral', value: estateTax > 0 ? fmt(estateTax) : '—', sub: estateTax > 0 ? 'Au deces (estime)' : 'Couple: differe', cls: estateTax > 0 ? 'kpi-red' : 'kpi-green' },
+        ];
+        // Surplus KPI (visible seulement s'il y a du surplus)
+        if (totalSurplus > 0) kpis.push({ label: 'Surplus reinvesti', value: fmt(totalSurplus), sub: 'CELI + Non-enr.', cls: 'kpi-purple' });
+        document.getElementById('decKpiGrid').innerHTML = kpis.map(k => `<div class="dec-kpi ${k.cls}"><div class="dec-kpi-label">${k.label}</div><div class="dec-kpi-value">${k.value}</div><div class="dec-kpi-sub">${k.sub}</div></div>`).join('');
+        document.getElementById('decChartSubtitle').textContent = `Scenario ${scenario} — ${projectionData[0].age} a ${lastYear.age} ans`;
+        renderProjectionChart();
+        renderIncomeChart();
+        renderTaxChart();
+    }
+
+    // ──────────────────────────────────────────
+    // CHARTS
+    // ──────────────────────────────────────────
+    function renderProjectionChart() {
+        const ctx = document.getElementById('decChartProjection');
+        if (!ctx) return;
+        if (charts.projection) charts.projection.destroy();
+        const labels = projectionData.map(d => d.age);
+        const retIdx = projectionData.findIndex(d => d.phase === 'decaissement');
+        charts.projection = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [
+                { label: 'REER', data: projectionData.map(d => d.rrsp), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                { label: 'CELI', data: projectionData.map(d => d.tfsa), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                { label: 'Non-enr.', data: projectionData.map(d => d.taxable), borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                { label: 'CRI/FRV', data: projectionData.map(d => d.cri + d.frv), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
+                { label: 'Total', data: projectionData.map(d => d.total), borderColor: '#C9A227', backgroundColor: 'transparent', borderWidth: 2.5, borderDash: [6, 3], tension: 0.3, pointRadius: 0 },
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmtDollar(c.raw)}` } } },
+                scales: { x: { title: { display: true, text: 'Age' }, grid: { display: false } }, y: { title: { display: true, text: 'Actifs ($)' }, ticks: { callback: v => ENGINE.formatCurrencyShort(v) } } }
+            }
+        });
+    }
+    function renderIncomeChart() {
+        const ctx = document.getElementById('decChartIncome');
+        if (!ctx) return;
+        if (charts.income) charts.income.destroy();
+        const ret = projectionData.filter(d => d.phase === 'decaissement');
+        if (ret.length === 0) return;
+        charts.income = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ret.map(d => d.age), datasets: [
+                { label: 'RRQ', data: ret.map(d => d.qpp), backgroundColor: '#3b82f6', stack: 'i' },
+                { label: 'SV', data: ret.map(d => d.oas), backgroundColor: '#22c55e', stack: 'i' },
+                { label: 'SRG', data: ret.map(d => d.gis), backgroundColor: '#10b981', stack: 'i' },
+                { label: 'Pension', data: ret.map(d => d.employerPension), backgroundColor: '#a855f7', stack: 'i' },
+                { label: 'Retraits', data: ret.map(d => d.withdrawal), backgroundColor: '#f59e0b', stack: 'i' },
+                { label: 'Net', data: ret.map(d => d.netIncome), type: 'line', borderColor: '#C9A227', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmtDollar(c.raw)}` } } },
+                scales: { x: { stacked: true, title: { display: true, text: 'Age' }, grid: { display: false } }, y: { stacked: true, ticks: { callback: v => ENGINE.formatCurrencyShort(v) } } }
+            }
+        });
+    }
+    function renderTaxChart() {
+        const ctx = document.getElementById('decChartTax');
+        if (!ctx) return;
+        if (charts.tax) charts.tax.destroy();
+        const ret = projectionData.filter(d => d.phase === 'decaissement');
+        if (ret.length === 0) return;
+        charts.tax = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ret.map(d => d.age), datasets: [
+                { label: 'Federal', data: ret.map(d => d.fedTax), backgroundColor: '#ef4444', stack: 't' },
+                { label: 'Quebec', data: ret.map(d => d.qcTax), backgroundColor: '#f97316', stack: 't' },
+                { label: 'Recup. SV', data: ret.map(d => d.oasClawback), backgroundColor: '#fbbf24', stack: 't' },
+                { label: 'Taux marg.', data: ret.map(d => d.marginalRate), type: 'line', borderColor: '#a855f7', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, yAxisID: 'y1' },
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                plugins: { tooltip: { callbacks: { label: (c) => c.dataset.yAxisID === 'y1' ? `${c.dataset.label}: ${c.raw}%` : `${c.dataset.label}: ${fmtDollar(c.raw)}` } } },
+                scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, ticks: { callback: v => ENGINE.formatCurrencyShort(v) } }, y1: { position: 'right', min: 0, max: 60, grid: { display: false } } }
+            }
+        });
+    }
+
+    // ──────────────────────────────────────────
+    // GAP ANALYSIS + PLAN D'ACTION CONSEILLER (v4.6)
+    // ──────────────────────────────────────────
+    function renderGapAnalysis() {
+        const container = document.getElementById('decGapAnalysisCard');
+        if (!container) return;
+
+        if (!projectionData || projectionData.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        const { profile, accounts, accumulation, pensions, options } = getFormData();
+
+        try {
+            const gapResult = ENGINE.analyzeRetirementGap(
+                profile, scenario, accounts, pensions, accumulation, lifeEvents, options
+            );
+
+            if (!gapResult || !gapResult.hasGap) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            const fmt = ENGINE.formatCurrencyShort;
+            const yearsShort = gapResult.lifeExpectancy - gapResult.depletionAge;
+            const plan = gapResult.actionPlan;
+
+            // ── Section 1: Header + 4 metriques ──
+            let html = `<div class="dec-gap-card">
+                <div class="dec-gap-header">
+                    <div class="dec-gap-icon">⚠️</div>
+                    <div>
+                        <div class="dec-gap-title">Revenu cible non atteignable</div>
+                        <div class="dec-gap-subtitle">Epuisement des actifs a ${gapResult.depletionAge} ans — ${yearsShort} ans avant l'esperance de vie (${gapResult.lifeExpectancy} ans)</div>
+                    </div>
+                </div>
+                <div class="dec-gap-metrics">
+                    <div class="dec-gap-metric">
+                        <div class="dec-gap-metric-value red">${gapResult.depletionAge} ans</div>
+                        <div class="dec-gap-metric-label">Age d'epuisement</div>
+                    </div>
+                    <div class="dec-gap-metric">
+                        <div class="dec-gap-metric-value gold">${fmt(gapResult.targetIncome)}/an</div>
+                        <div class="dec-gap-metric-label">Revenu cible</div>
+                    </div>
+                    <div class="dec-gap-metric">
+                        <div class="dec-gap-metric-value green">${fmt(gapResult.maxSustainableIncome)}/an</div>
+                        <div class="dec-gap-metric-label">Revenu max viable</div>
+                    </div>
+                    <div class="dec-gap-metric">
+                        <div class="dec-gap-metric-value red">-${fmt(gapResult.gapAmount)}/an (${Math.round(gapResult.gapPercentage)}%)</div>
+                        <div class="dec-gap-metric-label">Ecart annuel</div>
+                    </div>
+                </div>`;
+
+            // ── Section 2: Plan d'action conseiller ──
+            if (plan && plan.steps && plan.steps.length > 0) {
+                html += `<div class="dec-action-plan">
+                    <div class="dec-action-title">📋 Plan d'action recommande</div>
+                    <div class="dec-action-steps">`;
+
+                plan.steps.forEach(step => {
+                    const stepClass = 'step-' + step.type;
+                    const monthlyTotal = Math.round(step.requiredAnnual / 12);
+                    html += `<div class="dec-action-step ${stepClass}">
+                        <div class="dec-action-step-icon">${step.icon}</div>
+                        <div class="dec-action-step-label">Cotisation ${step.label}</div>
+                        <div class="dec-action-step-amount">${monthlyTotal}$ <span style="font-size:14px;font-weight:400;color:var(--text-muted);">/mois</span></div>
+                        <div class="dec-action-step-sub">Augmenter de +${Math.round(step.increaseAnnual / 12)}$/mois (${fmt(step.currentAnnual)} → ${fmt(step.requiredAnnual)}/an)</div>
+                        <div class="dec-action-step-detail">${step.atMax ? '⚡ Cotisation maximale atteinte' : (step.roomInfo || 'Plafond: ' + fmt(step.maxAllowed) + '/an')}</div>
+                    </div>`;
+                });
+                html += `</div>`;
+
+                // Carte remboursement d'impot REER
+                if (plan.taxRefund && plan.taxRefund.annualRefund > 0) {
+                    html += `<div class="dec-refund-card">
+                        <div class="dec-refund-icon">💰</div>
+                        <div class="dec-refund-text">
+                            Votre augmentation REER de <span class="dec-refund-amount">${fmt(plan.taxRefund.rrspIncrease)}/an</span>
+                            generera un remboursement d'impot d'environ <span class="dec-refund-amount">${fmt(plan.taxRefund.annualRefund)}</span>
+                            (taux marginal ${plan.taxRefund.marginalRate}%).
+                            ${plan.taxRefund.reinvestTarget ? '<br>👉 <strong>' + plan.taxRefund.reinvestLabel + '</strong>.' : ''}
+                        </div>
+                    </div>`;
+                }
+
+                // Barre cout net
+                html += `<div class="dec-net-cost">
+                    <div class="dec-net-cost-label">💳 Cout net reel mensuel <span style="font-size:11px;">(apres remboursement d'impot)</span></div>
+                    <div class="dec-net-cost-value">${plan.netCost.netMonthlyCost}$/mois</div>
+                </div>`;
+
+                // Conclusion
+                if (plan.success) {
+                    html += `<div class="dec-conclusion success">
+                        <div class="dec-conclusion-icon">✅</div>
+                        <div class="dec-conclusion-text">En suivant ce plan, votre objectif de ${fmt(plan.targetIncome)}/an sera atteint jusqu'a ${gapResult.lifeExpectancy} ans.</div>
+                    </div>`;
+                } else {
+                    html += `<div class="dec-conclusion partial">
+                        <div class="dec-conclusion-icon">⚠️</div>
+                        <div class="dec-conclusion-text">En maximisant toutes les cotisations, le revenu viable maximal serait de ${fmt(plan.maxAchievableIncome)}/an.
+                        Considerez reduire votre objectif ou reporter la retraite.</div>
+                    </div>`;
+                }
+
+                // Note optimiseur
+                if (plan.optimizerUsed && plan.optimizerDesc) {
+                    html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-secondary);border-radius:6px;">
+                        💡 Strategie optimisee: ${plan.optimizerDesc}
+                    </div>`;
+                }
+                html += `</div>`;
+            }
+
+            // ── Section 3: Details collapsibles (table individuelle) ──
+            if (gapResult.adjustments && gapResult.adjustments.length > 0) {
+                const adjRows = gapResult.adjustments.map(adj => {
+                    const rowClass = adj.closesGap ? 'gap-achievable' : 'gap-unachievable';
+                    const badgeClass = adj.closesGap ? 'gap-badge-yes' : 'gap-badge-no';
+                    const badgeText = adj.closesGap ? '✓ Atteint' : '✗ Insuffisant';
+                    const currentVal = adj.currentValue != null ? fmt(adj.currentValue) : '—';
+                    const requiredVal = adj.requiredValue != null ? fmt(adj.requiredValue) : '—';
+                    const effort = adj.increment != null ? (adj.increment >= 0 ? '+' : '') + fmt(adj.increment) : (adj.type === 'delay_retirement' && adj.requiredValue ? '+' + Math.round(adj.requiredValue - profile.retirementAge) + ' ans' : '—');
+                    const resultIncome = adj.resultingIncome != null ? fmt(adj.resultingIncome) + '/an' : '—';
+                    return `<tr class="${rowClass}">
+                        <td><strong>${adj.label}</strong><br><span style="font-size:11px;color:var(--text-muted);">${adj.description}</span></td>
+                        <td style="text-align:right;">${currentVal}</td>
+                        <td style="text-align:right;">${requiredVal}</td>
+                        <td style="text-align:center;font-weight:600;">${effort}</td>
+                        <td style="text-align:right;">${resultIncome}</td>
+                        <td style="text-align:center;"><span class="gap-badge ${badgeClass}">${badgeText}</span></td>
+                    </tr>`;
+                }).join('');
+
+                html += `<div class="dec-details-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.querySelector('span').textContent = this.nextElementSibling.classList.contains('open') ? '▾' : '▸';">
+                    <span>▸</span> Details des ajustements individuels
+                </div>
+                <div class="dec-details-content">
+                    <div style="overflow-x:auto;">
+                        <table class="dec-gap-table">
+                            <thead><tr>
+                                <th>Ajustement</th>
+                                <th style="text-align:right;">Actuel</th>
+                                <th style="text-align:right;">Requis</th>
+                                <th style="text-align:center;">Effort</th>
+                                <th style="text-align:right;">Revenu atteint</th>
+                                <th style="text-align:center;">Statut</th>
+                            </tr></thead>
+                            <tbody>${adjRows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            }
+
+            // Footer
+            html += `<div style="margin-top:12px;font-size:11px;color:var(--text-muted);padding:8px 12px;background:var(--bg-secondary);border-radius:8px;">
+                ℹ️ Hypotheses identiques a la projection actuelle. Plafonds 2026: REER 32 490$, CELI 7 000$/an.
+                Le remboursement d'impot est estime selon le taux marginal combine QC+Fed.
+            </div>`;
+
+            html += `</div>`;
+            container.innerHTML = html;
+        } catch (e) {
+            console.warn('⚠️ Gap analysis error:', e);
+            container.style.display = 'none';
+        }
+    }
+
+    // ──────────────────────────────────────────
+    // RAPPORT TABLE
+    // ──────────────────────────────────────────
+    function renderReport() {
+        const tbody = document.getElementById('decTableBody');
+        if (!tbody) return;
+        const filtered = reportPhaseFilter === 'all' ? projectionData : projectionData.filter(d => d.phase === 'decaissement');
+        const fmt = ENGINE.formatCurrencyShort;
+        tbody.innerHTML = filtered.map((d, idx) => {
+            const isRetStart = d.phase === 'decaissement' && (idx === 0 || filtered[idx - 1]?.phase === 'accumulation');
+            const isLast = idx === filtered.length - 1;
+            // v4.0 — Badges for special events
+            let badges = '';
+            if (d.isRrif && d.age === 71) badges += ' <span class="dec-badge dec-badge-gold">FERR</span>';
+            if (d.estateTax > 0 && isLast) badges += ` <span class="dec-badge dec-badge-red">Succession: ${fmt(d.estateTax)}</span>`;
+            if (d.pensionSplitAmount > 0) badges += ' <span class="dec-badge dec-badge-blue">Split</span>';
+            if (d.surplusAmount > 0) badges += ` <span class="dec-badge dec-badge-purple">Surplus: ${fmt(d.surplusAmount)}</span>`;
+            // Phase label
+            let phaseLabel;
+            if (d.phase === 'accumulation') phaseLabel = '📈 Accum.';
+            else if (d.expensePhase === 'slow-go') phaseLabel = '🚶 Slow-go';
+            else if (d.expensePhase === 'no-go') phaseLabel = '🪑 No-go';
+            else phaseLabel = '🏃 Go-go';
+
+            return `<tr class="${isRetStart ? 'retirement-row' : ''}">
+                <td class="highlight">${d.age}${badges}</td><td>${phaseLabel}</td>
+                <td>${fmt(d.rrsp)}${d.isRrif ? '<span style="font-size:9px;color:var(--gold);"> FERR</span>' : ''}</td>
+                <td>${fmt(d.tfsa)}</td><td>${fmt(d.taxable)}</td><td>${fmt(d.cri + d.frv)}</td><td class="highlight">${fmt(d.total)}</td>
+                <td>${d.qpp > 0 ? fmt(d.qpp) : '—'}</td><td>${d.oas > 0 ? fmt(d.oas) : '—'}</td><td>${d.employerPension > 0 ? fmt(d.employerPension) : '—'}</td>
+                <td>${d.withdrawal > 0 ? fmt(d.withdrawal) : '—'}</td><td>${fmt(d.grossIncome)}</td>
+                <td class="positive">${d.totalCredits > 0 ? fmt(d.totalCredits) : '—'}</td>
+                <td class="negative">${fmt(d.totalTax)}</td>
+                <td class="positive">${fmt(d.netIncome)}</td><td>${d.marginalRate}%</td></tr>`;
+        }).join('');
+    }
+
+    // ──────────────────────────────────────────
+    // TAB SWITCHING
+    // ──────────────────────────────────────────
+    window.decSwitchTab = function(tab) {
+        document.querySelectorAll('#decTabs .dec-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#decTabs .dec-tab[data-tab="${tab}"]`)?.classList.add('active');
+        const map = { dashboard: 'decTabDashboard', pensions: 'decTabPensions', rentes: 'decTabRentes', strategie: 'decTabStrategie', succession: 'decTabSuccession', rapport: 'decTabRapport' };
+        Object.values(map).forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+        if (map[tab]) document.getElementById(map[tab])?.classList.add('active');
+        if (tab === 'dashboard') setTimeout(() => { Object.values(charts).forEach(c => c && c.resize && c.resize()); }, 100);
+        if (tab === 'rentes') decUpdateRentesTables();
+    };
+
+    // ──────────────────────────────────────────
+    // SCENARIO + TOGGLES
+    // ──────────────────────────────────────────
+    window.decSetScenario = function(sc) {
+        scenario = sc;
+        document.querySelectorAll('#decScenarioBar .dec-scenario-btn').forEach(b => b.classList.toggle('active', b.dataset.scenario === sc));
+        decRecalculate();
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+    };
+    window.decTogglePhase = function(phase) { reportPhaseFilter = phase; renderReport(); };
+
+    // ──────────────────────────────────────────
+    // RENDEMENTS RETRAITE TOGGLE (v4.1)
+    // ──────────────────────────────────────────
+    window.decToggleRetReturns = function() {
+        const checked = document.getElementById('decUseRetReturns')?.checked;
+        const fields = document.getElementById('decRetReturnsFields');
+        const info = document.getElementById('decRetReturnsInfo');
+        if (fields) fields.style.display = checked ? 'grid' : 'none';
+        if (info) info.style.display = checked ? 'block' : 'none';
+    };
+
+    // ──────────────────────────────────────────
+    // REVENU MAXIMUM VIABLE (v4.1)
+    // ──────────────────────────────────────────
+    window.decRunMaxIncome = function() {
+        const { profile, accounts, accumulation, pensions, options } = getFormData();
+        const mode = document.getElementById('decMaxIncomeMode').value;
+        const progressEl = document.getElementById('decMaxIncomeProgress');
+        const barEl = document.getElementById('decMaxIncomeBar');
+        const pctEl = document.getElementById('decMaxIncomePct');
+        const resultEl = document.getElementById('decMaxIncomeResult');
+        progressEl.style.display = 'block'; resultEl.style.display = 'none';
+
+        setTimeout(() => {
+            let result;
+            const currentTarget = accumulation.targetRetirementIncome;
+
+            if (mode === 'optimized') {
+                result = ENGINE.calculateMaxIncomeOptimized(
+                    profile, scenario, accounts, pensions, accumulation, lifeEvents, options,
+                    function(pct) { barEl.style.width = pct + '%'; pctEl.textContent = pct + '%'; }
+                );
+            } else {
+                result = ENGINE.calculateMaxSustainableIncome(
+                    profile, scenario, accounts, pensions, accumulation, lifeEvents, options
+                );
+            }
+
+            progressEl.style.display = 'none'; resultEl.style.display = 'block';
+            renderMaxIncomeResult(result, resultEl, currentTarget, mode);
+        }, 50);
+    };
+
+    function renderMaxIncomeResult(result, container, currentTarget, mode) {
+        const fmt = ENGINE.formatCurrencyShort;
+        const maxInc = result.maxIncome;
+        const diff = maxInc - currentTarget;
+        const pctMore = currentTarget > 0 ? Math.round((diff / currentTarget) * 100) : 0;
+
+        let html = `<div class="dec-optim-result">
+            <div class="dec-optim-header">
+                <span style="font-size:24px;">💸</span>
+                <div>
+                    <div class="dec-optim-title">Revenu maximum viable: <span style="color:var(--gold);">${fmt(maxInc)}/an</span></div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Epuise vos actifs a ${fmt(result.finalTotal || 0)} a la fin</div>
+                </div>
+            </div>
+            <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+                    <div style="font-size:11px;color:var(--text-muted);">Revenu cible actuel</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${fmt(currentTarget)}</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+                    <div style="font-size:11px;color:var(--text-muted);">Revenu max viable</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--gold);">${fmt(maxInc)}</div>
+                </div>
+                <div style="text-align:center;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+                    <div style="font-size:11px;color:var(--text-muted);">Marge disponible</div>
+                    <div style="font-size:18px;font-weight:700;color:${diff > 0 ? '#22c55e' : '#f87171'};">${diff > 0 ? '+' : ''}${fmt(diff)} (${pctMore > 0 ? '+' : ''}${pctMore}%)</div>
+                </div>
+            </div>`;
+
+        if (mode === 'optimized' && result.optimalParams) {
+            const p = result.optimalParams;
+            const stratNames = { proportional: 'Proportionnelle', rrsp_first: 'REER meltdown',
+                tax_bracket: 'Lissage fiscal', sequential: 'Sequentielle' };
+            html += `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:8px;font-size:12px;color:var(--text-secondary);">
+                🧠 Parametres optimaux: RRQ ${p.qppStartAge} ans, SV ${p.oasStartAge} ans, ${stratNames[p.strategy] || p.strategy}${p.splitting ? ', Splitting' : ''}
+            </div>`;
+        }
+
+        html += `<div style="margin-top:10px;font-size:11px;color:var(--text-muted);padding:0 4px;">
+            ⚠️ Ce calcul suppose l'epuisement total des actifs a l'esperance de vie. Ne pas utiliser comme seul point de reference — garder une marge de securite est recommande.
+        </div></div>`;
+
+        container.innerHTML = html;
+    }
+
+    // ──────────────────────────────────────────
+    // SUCCESSION COMPARISON v4.2
+    // ──────────────────────────────────────────
+
+    window.decUpdateAnnualPremium = function() {
+        const monthly = getNum('decInsPremium') || 0;
+        const annualEl = document.getElementById('decInsPremiumAnnual');
+        if (annualEl) annualEl.value = FINOX.formatNumber(monthly * 12);
+    };
+
+    window.decRunSuccessionComparison = function() {
+        const { profile, accounts, accumulation, pensions, options } = getFormData();
+        const annualPremium = getNum('decInsPremiumAnnual') || 0;
+        const deathBenefit = getNum('decInsDeathBenefit') || 0;
+
+        if (annualPremium <= 0 || deathBenefit <= 0) {
+            FINOX.showNotification('Entrez une prime et un capital-deces', 'warning');
+            return;
+        }
+
+        const progressEl = document.getElementById('decSuccProgress');
+        const barEl = document.getElementById('decSuccBar');
+        const pctEl = document.getElementById('decSuccPct');
+        progressEl.style.display = 'block';
+        document.getElementById('decSuccResult').style.display = 'none';
+        document.getElementById('decSuccChartWrap').style.display = 'none';
+
+        const compOptions = Object.assign({}, options, {
+            insuranceAnnualPremium: annualPremium,
+            insuranceDeathBenefit: deathBenefit,
+            insuranceStartAge: getNum('decInsStartAge') || 55,
+        });
+
+        setTimeout(() => {
+            const result = ENGINE.runSuccessionComparison(
+                profile, scenario, accounts, pensions, accumulation, lifeEvents, compOptions,
+                function(pct) { barEl.style.width = pct + '%'; pctEl.textContent = pct + '%'; }
+            );
+            progressEl.style.display = 'none';
+            renderSuccessionResult(result, annualPremium, deathBenefit);
+            renderSuccessionChart(result);
+        }, 50);
+    };
+
+    function renderSuccessionResult(result, annualPremium, deathBenefit) {
+        const container = document.getElementById('decSuccResult');
+        container.style.display = 'block';
+        const fmt = ENGINE.formatCurrencyShort;
+        const b = result.base.estate;
+        const o = result.optimized.estate;
+        const ins = result.insurance.estate;
+
+        // Determiner le gagnant
+        const best = Math.max(b.netEstate, o.netEstate, ins.netEstate);
+        const bestLabel = best === ins.netEstate ? '🛡️ Assurance' : best === o.netEstate ? '🧠 Optimise' : '📋 Base';
+
+        // v4.4: Details des primes pour sous-titre
+        const insStartAge = ins.premiumStartAge || 0;
+        const insYears = ins.premiumYears || 0;
+
+        let html = `<div class="dec-card">
+            <div class="dec-card-title">🏆 Resultat: ${bestLabel} gagne avec ${fmt(best)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">🛡️ Assurance: ${fmt(annualPremium)}/an des ${insStartAge} ans (${insYears} ans de cotisation) | Capital-deces: ${fmt(deathBenefit)}</div>
+            <div class="dec-succ-grid" style="margin-top:16px;">`;
+
+        html += renderSuccColumn('📋 Scenario de base', b, null, false, best === b.netEstate);
+        html += renderSuccColumn('🧠 Scenario optimise', o, result.optimized.params, false, best === o.netEstate);
+        html += renderSuccColumn('🛡️ Avec assurance vie', ins, { annualPremium, deathBenefit }, true, best === ins.netEstate);
+
+        html += `</div>`;
+
+        // Gain assurance vs base / vs optimise
+        const gainVsBase = ins.netEstate - b.netEstate;
+        const gainVsOpt = ins.netEstate - o.netEstate;
+        const totalPremiums = ins.totalPremiumsPaid || 0;
+        const roi = totalPremiums > 0 ? Math.round(((deathBenefit - totalPremiums) / totalPremiums) * 100) : 0;
+
+        html += `<div class="dec-succ-grid" style="margin-top:16px;">
+            <div style="text-align:center;padding:14px;background:var(--bg-secondary);border-radius:10px;">
+                <div style="font-size:11px;color:var(--text-muted);">Gain vs Base</div>
+                <div style="font-size:20px;font-weight:700;color:${gainVsBase > 0 ? '#22c55e' : '#f87171'};">${gainVsBase > 0 ? '+' : ''}${fmt(gainVsBase)}</div>
+            </div>
+            <div style="text-align:center;padding:14px;background:var(--bg-secondary);border-radius:10px;">
+                <div style="font-size:11px;color:var(--text-muted);">Gain vs Optimise</div>
+                <div style="font-size:20px;font-weight:700;color:${gainVsOpt > 0 ? '#22c55e' : '#f87171'};">${gainVsOpt > 0 ? '+' : ''}${fmt(gainVsOpt)}</div>
+            </div>
+            <div style="text-align:center;padding:14px;background:var(--bg-secondary);border-radius:10px;">
+                <div style="font-size:11px;color:var(--text-muted);">ROI assurance</div>
+                <div style="font-size:20px;font-weight:700;color:var(--gold);">${roi}%</div>
+                <div style="font-size:10px;color:var(--text-muted);">${fmt(totalPremiums)} primes → ${fmt(deathBenefit)} capital</div>
+            </div>
+        </div>`;
+
+        html += `<div style="margin-top:12px;font-size:11px;color:var(--text-muted);padding:0 4px;">
+            ⚠️ Estimation a titre indicatif. Les rendements de l'assurance participative et la valeur de rachat ne sont pas modelises. Consulter l'illustration de la compagnie d'assurance pour les chiffres exacts.
+        </div></div>`;
+
+        container.innerHTML = html;
+    }
+
+    function renderSuccColumn(title, estate, params, isInsurance, isWinner) {
+        const fmt = ENGINE.formatCurrencyShort;
+        const border = isWinner ? 'border:2px solid var(--gold);' : 'border:1px solid var(--border);';
+
+        let html = `<div style="padding:16px;background:var(--bg-secondary);border-radius:12px;${border}">
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:12px;">${title}${isWinner ? ' 🏆' : ''}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Actifs au deces</span><span style="font-weight:600;">${fmt(estate.totalAssets)}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Impot successoral</span><span style="font-weight:600;color:#f87171;">-${fmt(estate.estateTax)}</span></div>`;
+
+        if (isInsurance) {
+            html += `<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Capital-deces</span><span style="font-weight:600;color:#22c55e;">+${fmt(estate.deathBenefit)}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Primes payees</span><span style="font-weight:600;color:#f97316;">${fmt(estate.totalPremiumsPaid)}</span></div>`;
+            // v4.4: Detail des primes — age, duree, ventilation
+            if (estate.premiumYears > 0) {
+                html += `<div style="margin-top:4px;font-size:10px;color:var(--text-muted);background:var(--bg-primary);padding:6px 8px;border-radius:6px;">
+                    📅 Souscription: ${estate.premiumStartAge} ans | Duree: ${estate.premiumYears} ans (${estate.premiumStartAge}-${estate.premiumEndAge} ans)<br>
+                    💰 ${estate.premiumYears} ans × ${fmt(params.annualPremium)}/an = ${fmt(estate.totalPremiumsPaid)}
+                </div>`;
+            }
+        }
+
+        html += `<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;">
+                    <span style="font-weight:700;color:var(--text-primary);">Patrimoine net</span>
+                    <span style="font-weight:700;font-size:16px;color:var(--gold);">${fmt(estate.netEstate)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Impots en retraite</span><span>${fmt(estate.lifetimeTax)}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-muted);">Revenu net moyen</span><span>${fmt(estate.avgNetIncome)}</span></div>`;
+
+        if (params && !isInsurance && params.qppStartAge) {
+            const stratNames = { proportional: 'Prop.', rrsp_first: 'Meltdown', tax_bracket: 'Lissage', sequential: 'Seq.' };
+            html += `<div style="margin-top:4px;font-size:10px;color:var(--text-muted);background:var(--bg-primary);padding:6px 8px;border-radius:6px;">
+                RRQ ${params.qppStartAge} | SV ${params.oasStartAge} | ${stratNames[params.strategy] || params.strategy}${params.splitting ? ' | Split' : ''}
+            </div>`;
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    function renderSuccessionChart(result) {
+        const wrap = document.getElementById('decSuccChartWrap');
+        wrap.style.display = 'block';
+        const ctx = document.getElementById('decChartSuccession');
+        if (!ctx) return;
+        if (charts.succession) charts.succession.destroy();
+
+        const baseSim = result.base.simulation;
+        const optSim = result.optimized.simulation;
+        const insSim = result.insurance.simulation;
+        const labels = baseSim.map(d => d.age);
+
+        charts.succession = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [
+                { label: 'Base', data: baseSim.map(d => d.total), borderColor: '#6b7280', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0, borderDash: [4, 4] },
+                { label: 'Optimise', data: optSim.map(d => d.total), borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+                { label: 'Assurance', data: insSim.map(d => d.total), borderColor: '#22c55e', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0 },
+            ]},
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${ENGINE.formatCurrencyShort(c.raw)}` } } },
+                scales: {
+                    x: { title: { display: true, text: 'Age' }, grid: { display: false } },
+                    y: { title: { display: true, text: 'Actifs totaux ($)' }, ticks: { callback: v => ENGINE.formatCurrencyShort(v) } }
+                }
+            }
+        });
+    }
+
+    // ──────────────────────────────────────────
+    // SMART OPTIMIZER v4.0
+    // ──────────────────────────────────────────
+    var lastSmartResult = null;
+
+    window.decRunSmartOptimizer = function() {
+        const { profile, accounts, accumulation, pensions, options } = getFormData();
+        const objective = document.getElementById('decOptObjective').value;
+        const progressEl = document.getElementById('decOptProgress');
+        const barEl = document.getElementById('decOptBar');
+        const percentEl = document.getElementById('decOptPercent');
+        const resultEl = document.getElementById('decOptResult');
+        progressEl.style.display = 'block'; resultEl.style.display = 'none';
+
+        setTimeout(() => {
+            const result = ENGINE.runSmartOptimizer(
+                profile, scenario, accounts, pensions, accumulation, lifeEvents, objective,
+                function(pct) { barEl.style.width = pct + '%'; percentEl.textContent = pct + '%'; },
+                options
+            );
+            progressEl.style.display = 'none'; resultEl.style.display = 'block';
+            lastSmartResult = result;
+            renderSmartOptResult(result, resultEl);
+        }, 50);
+    };
+
+    function renderSmartOptResult(result, container) {
+        const fmt = ENGINE.formatCurrencyShort;
+        const comp = result.comparison;
+        const imp = result.isImproved;
+
+        let html = `<div class="dec-optim-result">
+            <div class="dec-optim-header">
+                <span style="font-size:24px;">${imp ? '🧠' : '✅'}</span>
+                <div>
+                    <div class="dec-optim-title">${imp ? 'Optimisation trouvee!' : 'Configuration deja optimale'}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">${result.combinationsTested} combinaisons testees</div>
+                </div>
+            </div>`;
+
+        if (imp) {
+            // Comparison grid
+            html += '<div class="dec-smart-comparison">';
+            ['current', 'optimized'].forEach(function(key) {
+                const c = comp[key];
+                const isOpt = key === 'optimized';
+                html += `<div class="dec-smart-col ${isOpt ? 'optimized' : ''}">`;
+                html += `<div class="dec-smart-col-title">${isOpt ? '🧠 ' : '📋 '}${c.label}</div>`;
+
+                // Params
+                html += `<div class="dec-smart-row"><span class="dec-smart-row-label">RRQ</span><span class="dec-smart-row-value">${c.params.rrq}</span></div>`;
+                html += `<div class="dec-smart-row"><span class="dec-smart-row-label">SV</span><span class="dec-smart-row-value">${c.params.sv}</span></div>`;
+                html += `<div class="dec-smart-row"><span class="dec-smart-row-label">Strategie</span><span class="dec-smart-row-value">${c.params.strategy}</span></div>`;
+                html += `<div class="dec-smart-row"><span class="dec-smart-row-label">Splitting</span><span class="dec-smart-row-value">${c.params.splitting}</span></div>`;
+                html += '<div style="height:8px;"></div>';
+
+                // Metrics with color coding
+                const other = key === 'current' ? comp.optimized : comp.current;
+                const pairs = [
+                    ['Impots vie', c.metrics.lifetimeTax, other.metrics.lifetimeTax, true],
+                    ['Revenu net moy.', c.metrics.avgNetIncome, other.metrics.avgNetIncome, false],
+                    ['Patrimoine final', c.metrics.finalWealth, other.metrics.finalWealth, false],
+                    ['Impot succession', c.metrics.estateTax, other.metrics.estateTax, true],
+                    ['Recup. SV totale', c.metrics.totalClawback, other.metrics.totalClawback, true],
+                ];
+
+                pairs.forEach(function(p) {
+                    const label = p[0], val = p[1], otherVal = p[2], lowerIsBetter = p[3];
+                    let cls = '';
+                    if (val !== otherVal) {
+                        const isBetter = lowerIsBetter ? val < otherVal : val > otherVal;
+                        cls = isBetter ? ' better' : ' worse';
+                    }
+                    html += `<div class="dec-smart-row"><span class="dec-smart-row-label">${label}</span><span class="dec-smart-row-value${cls}">${fmt(val)}</span></div>`;
+                });
+
+                html += '</div>';
+            });
+            html += '</div>';
+
+            // Reasons
+            if (result.reasons && result.reasons.length > 0) {
+                html += '<div class="dec-smart-reasons">';
+                result.reasons.forEach(function(r) {
+                    html += `<div class="dec-reason-card ${r.impact || ''}">`;
+                    html += `<div class="dec-reason-icon">${r.icon}</div>`;
+                    html += `<div><div class="dec-reason-title">${r.title}</div>`;
+                    html += `<div class="dec-reason-text">${r.text}</div></div></div>`;
+                });
+                html += '</div>';
+            }
+
+            // Apply button
+            html += `<div style="margin-top:16px;text-align:center;">
+                <button class="dec-btn dec-btn-primary" onclick="decApplySmartOptimization()" style="padding:12px 32px;font-size:14px;">✅ Appliquer l'optimisation</button>
+            </div>`;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.decApplySmartOptimization = function() {
+        if (!lastSmartResult || !lastSmartResult.isImproved) return;
+        const p = lastSmartResult.optimal;
+
+        // Appliquer RRQ/SV ages
+        setVal('decQppAge', p.qppStartAge);
+        setVal('decOasAge', p.oasStartAge);
+
+        // Appliquer strategie
+        setVal('decWithdrawalStrategy', p.strategy);
+        decUpdateStrategyDesc();
+
+        // Appliquer splitting
+        const splEl = document.getElementById('decPensionSplitting');
+        if (splEl) splEl.checked = p.splitting;
+
+        updateRangeDisplays();
+        decRecalculate();
+
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+
+        // Update button
+        const btn = document.querySelector('#decOptResult .dec-btn-primary');
+        if (btn) { btn.textContent = '✅ Applique!'; btn.disabled = true; btn.style.opacity = '0.7'; }
+    };
+
+    // ──────────────────────────────────────────
+    // LIFE EVENTS
+    // ──────────────────────────────────────────
+    window.decEventTypeChanged = function() {
+        const sel = document.getElementById('decEventType');
+        const opt = sel.options[sel.selectedIndex];
+        const sign = opt.getAttribute('data-sign');
+        const amountField = document.getElementById('decEventAmount');
+        // Auto-set negative for outflow types
+        if (sign === '-' && amountField.value >= 0) {
+            amountField.value = amountField.value > 0 ? -Math.abs(amountField.value) : -1000;
+        } else if (sign === '+' && amountField.value < 0) {
+            amountField.value = Math.abs(amountField.value);
+        }
+    };
+    window.decAddEvent = function() {
+        const age = getNum('decEventAge');
+        const typeSelect = document.getElementById('decEventType');
+        const typeVal = typeSelect.value;
+        const typeText = typeSelect.options[typeSelect.selectedIndex]?.text || '';
+        const typeIcon = typeSelect.options[typeSelect.selectedIndex]?.getAttribute('data-icon') || '📄';
+        const desc = document.getElementById('decEventDesc').value.trim();
+        const amount = getNum('decEventAmount');
+        if (!typeVal || amount === 0) return;
+
+        const label = desc ? `${typeText} — ${desc}` : typeText;
+        lifeEvents.push({ age, description: label, type: typeVal, icon: typeIcon, amount, taxable: amount > 0, capitalGainPercent: 0, account: 'taxable' });
+        typeSelect.value = ''; document.getElementById('decEventDesc').value = ''; document.getElementById('decEventAmount').value = '0'; FINOX.setupAllMoneyInputs(document.getElementById('decEventAmount').parentElement);
+        renderEvents(); decRecalculate();
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+    };
+    window.decRemoveEvent = function(idx) {
+        lifeEvents.splice(idx, 1); renderEvents(); decRecalculate();
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+    };
+    function renderEvents() {
+        const list = document.getElementById('decEventList');
+        if (lifeEvents.length === 0) { list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">Aucun evenement ajoute</div>'; return; }
+        list.innerHTML = lifeEvents.map((e, i) => `<div class="dec-event-item">
+            <div class="dec-event-age">${e.age} ans</div>
+            <div class="dec-event-desc">${e.icon || '📄'} ${e.description}</div>
+            <div class="dec-event-amount" style="color:${e.amount >= 0 ? '#22c55e' : '#f87171'};">${e.amount >= 0 ? '+' : ''}${ENGINE.formatCurrencyShort(Math.abs(e.amount))}</div>
+            <button class="dec-event-del" onclick="decRemoveEvent(${i})">✕</button>
+        </div>`).join('');
+    }
+
+    // ──────────────────────────────────────────
+    // STRATEGY DESCRIPTION (P1/P4)
+    // ──────────────────────────────────────────
+    const STRATEGY_DESCS = {
+        proportional: { icon: '📊', text: 'Retire de chaque compte proportionnellement. Simple mais pas optimal fiscalement.' },
+        rrsp_first: { icon: '🔥', text: 'Vide le REER/FERR en priorite pour reduire l\'impot au deces et eviter le clawback SV. Ideal si gros REER.' },
+        tax_bracket: { icon: '📐', text: 'Remplit les tranches d\'imposition basses avec le REER, puis utilise le CELI/non-enr. Minimise l\'impot annuel.' },
+        sequential: { icon: '📋', text: 'Non-enregistre d\'abord, puis REER, FRV, CELI en dernier. Preserve la croissance a l\'abri de l\'impot.' },
+    };
+    window.decUpdateStrategyDesc = function() {
+        const strat = document.getElementById('decWithdrawalStrategy')?.value || 'proportional';
+        const desc = STRATEGY_DESCS[strat] || STRATEGY_DESCS.proportional;
+        const el = document.getElementById('decStrategyDesc');
+        if (el) el.innerHTML = `<span class="desc-icon">${desc.icon}</span><span>${desc.text}</span>`;
+    };
+
+    // ──────────────────────────────────────────
+    // COUPLE CARD VISIBILITY (P6)
+    // ──────────────────────────────────────────
+    function updateCoupleVisibility() {
+        const coupleCard = document.getElementById('decCoupleCard');
+        if (coupleCard) coupleCard.style.display = abfMapped.maritalStatus === 'couple' ? 'block' : 'none';
+    }
+
+    // ──────────────────────────────────────────
+    // HELPERS
+    // ──────────────────────────────────────────
+    function getNum(id) {
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        if (el.classList.contains('money-input')) return FINOX.parseNumber(el.value) || 0;
+        return Number(el.value) || 0;
+    }
+    function setVal(id, val) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.classList.contains('money-input') && val != null && val !== '') {
+            const num = typeof val === 'string' ? FINOX.parseNumber(val) : val;
+            el.value = num ? FINOX.formatNumber(num) : '0';
+        } else {
+            el.value = val;
+        }
+    }
+    function fmtDollar(v) { if (v == null || isNaN(v)) return '—'; return v.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }); }
+    window.decUpdateRange = function(input, displayId) {
+        const d = document.getElementById(displayId);
+        if (d) d.textContent = input.value + ' ans';
+        decRecalculate();
+    };
+    function updateRangeDisplays() {
+        [['decLifeExp', 'decLifeExpVal'], ['decQppAge', 'decQppAgeVal'], ['decOasAge', 'decOasAgeVal'], ['decGogoEnd', 'decGogoEndVal']].forEach(([iId, dId]) => {
+            const el = document.getElementById(iId), disp = document.getElementById(dId);
+            if (el && disp) disp.textContent = el.value + ' ans';
+        });
+    }
+
+    // Change listeners
+    const container = document.getElementById('decContainer');
+    if (container) {
+        container.addEventListener('input', (e) => { if (e.target.matches('input, select')) { if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved(); } });
+        container.addEventListener('change', (e) => { if (e.target.matches('input[type="checkbox"], select')) { if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved(); } });
+    }
+
+    // Cleanup
+    if (typeof FINOX !== 'undefined' && FINOX.registerCleanup) {
+        FINOX.registerCleanup(() => { Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} }); charts = {}; });
+    }
+
+    // ──────────────────────────────────────────
+    // INIT
+    // ──────────────────────────────────────────
+    await loadABFData();
+    const hasSaved = restoreSavedData();
+    updateCoupleVisibility();
+    updateRangeDisplays();
+    decUpdateStrategyDesc();
+    FINOX.setupAllMoneyInputs(document.getElementById('decContainer'));
+    buildRRQTable(getNum('decQppAmount') || 850);
+    buildPSVTable();
+    renderEvents();
+    decRecalculate();
+
+    console.log('✅ Module ABF Retraite v4.8 charge (audit: QPP cap 70, validation, guard, tooltips)');
+})();
+</script>

@@ -1,0 +1,960 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-IMPOTS-DECES
+     Calculateur d'impôts au décès (gain en capital)
+     AMÉLIORÉ - Visuel moderne avec explications
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Enlever les flèches des inputs number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Person Tabs — style intégré */
+.person-tabs-container { margin-bottom: 0; }
+.person-tabs { display: flex; gap: 4px; margin-bottom: 0; }
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+.person-tab .tab-icon { font-size: 16px; }
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+.conjoint-tab { display: none; }
+.conjoint-tab.visible { display: flex; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Info Banner */
+.info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.08), rgba(255, 193, 7, 0.03));
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    border-radius: 16px;
+    margin-bottom: 24px;
+}
+
+.info-banner-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #FF9800, #FFB74D);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.info-banner-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #FF9800;
+    margin: 0 0 8px 0;
+}
+
+.info-banner-content p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Main Calculator Container */
+.impots-calculator {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 152, 0, 0.15);
+    overflow: hidden;
+}
+
+/* Calculator Header */
+.impots-calc-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: rgba(255, 152, 0, 0.08);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.impots-calc-header-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.impots-calc-header-text h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.impots-calc-header-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+/* Input Grid */
+.impots-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.impots-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.impots-input-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.impots-input-label .label-icon {
+    font-size: 14px;
+}
+
+.impots-input-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.impots-input {
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    background: var(--finox-dark, #121212);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    text-align: right;
+    transition: all 0.2s;
+}
+
+.impots-input:focus {
+    border-color: #FF9800;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+.impots-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Taux marginal special */
+.impots-input.taux-input {
+    width: 100px;
+    text-align: center;
+}
+
+.taux-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.taux-preset-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 6px;
+    color: #FF9800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.taux-preset-btn:hover {
+    background: rgba(255, 152, 0, 0.2);
+}
+
+/* Result Section */
+.impots-result-section {
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.12), rgba(255, 152, 0, 0.04));
+}
+
+.impots-result-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.impots-result-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.impots-result-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.impots-result-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.impots-result-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.impots-result-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #FF9800, #FFB74D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.impots-result-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Breakdown Toggle */
+.impots-breakdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 10px;
+    color: #FF9800;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.impots-breakdown-toggle:hover {
+    background: rgba(255, 152, 0, 0.15);
+}
+
+.impots-breakdown-toggle svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s;
+}
+
+.impots-breakdown-toggle.open svg {
+    transform: rotate(180deg);
+}
+
+/* Breakdown Content */
+.impots-breakdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.impots-breakdown-content.open {
+    max-height: 400px;
+}
+
+.impots-breakdown-inner {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.impots-calc-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    border-left: 3px solid var(--border-color);
+}
+
+.impots-calc-step.highlight {
+    background: rgba(255, 152, 0, 0.08);
+    border-left-color: #FF9800;
+}
+
+.impots-calc-step-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.impots-calc-step-label .step-icon {
+    font-size: 16px;
+}
+
+.impots-calc-step-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.impots-calc-step.highlight .impots-calc-step-value {
+    color: #FF9800;
+}
+
+.impots-calc-formula {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 152, 0, 0.05);
+    border: 1px dashed rgba(255, 152, 0, 0.3);
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.impots-calc-formula span {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.impots-calc-formula strong {
+    color: #FF9800;
+    font-weight: 700;
+}
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.nav-btn-save:hover { border-color: #FF9800; color: #FF9800; }
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Toggle Switch */
+.impots-toggle-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px; margin-bottom: 20px;
+    background: rgba(255,152,0,0.05);
+    border: 1px solid rgba(255,152,0,0.15);
+    border-radius: 14px;
+}
+.impots-toggle-switch {
+    width: 44px; height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px; position: relative;
+    cursor: pointer; transition: all 0.3s; flex-shrink: 0;
+}
+.impots-toggle-switch::after {
+    content: ''; position: absolute;
+    width: 16px; height: 16px;
+    background: #666; border-radius: 50%;
+    top: 4px; left: 4px; transition: all 0.3s;
+}
+.impots-toggle-switch.active { background: #FF9800; }
+.impots-toggle-switch.active::after { left: 24px; background: #fff; }
+.impots-toggle-label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.impots-disabled-msg {
+    display: flex; align-items: center; gap: 12px;
+    padding: 32px; color: var(--text-muted); font-size: 14px;
+    justify-content: center; opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .impots-input-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .impots-result-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+
+
+<!-- Info Banner -->
+<div class="info-banner">
+    <div class="info-banner-icon">📊</div>
+    <div class="info-banner-content">
+        <h3>Pourquoi calculer les impôts au décès?</h3>
+        <p>Au décès, les actifs (REER, FERR, immeubles locatifs, placements non enregistrés) sont considérés comme vendus à leur juste valeur marchande. Le gain en capital réalisé génère une facture fiscale qui doit être prévue dans le besoin d'assurance vie.</p>
+    </div>
+</div>
+
+<!-- Person Tabs -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="impotsTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchImpotsTab('client')">
+            <span class="tab-icon">💰</span>
+            <span id="impotsTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchImpotsTab('conjoint')">
+            <span class="tab-icon">💰</span>
+            <span id="impotsTabConjointName">Conjoint</span>
+        </div>
+    </div>
+    <div class="tab-content-wrapper">
+
+<!-- ========== CLIENT TAB ========== -->
+<div class="tab-content active" id="impotsClientContent">
+    <div class="impots-toggle-row">
+        <div class="impots-toggle-switch" id="impotsToggleClient" onclick="toggleImpotsPersonne('client')"></div>
+        <span class="impots-toggle-label" id="impotsToggleLabelClient">Activer le calcul d'impôts au décès</span>
+    </div>
+    <div id="impotsDisabledClient" class="impots-disabled-msg">
+        <span style="font-size:24px;">🔒</span>
+        <span>Impôts au décès désactivés — Aucun gain en capital à déclarer</span>
+    </div>
+    <div class="impots-calculator" id="impotsCalcClient" style="display:none;">
+        <div class="impots-calc-header">
+            <div class="impots-calc-header-icon">📈</div>
+            <div class="impots-calc-header-text">
+                <h4>Calcul du gain en capital</h4>
+                <p>Entrez les valeurs pour estimer l'impôt au décès</p>
+            </div>
+        </div>
+
+        <div class="impots-input-grid">
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">💵</span>
+                    Prix de Base Rajusté (PBR)
+                </label>
+                <span class="impots-input-hint">Coût d'acquisition original</span>
+                <input type="text" class="impots-input money-input" id="pbrClient" placeholder="0 $" oninput="calculateImpotsClient()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">🏷️</span>
+                    Juste Valeur Marchande (JVM)
+                </label>
+                <span class="impots-input-hint">Valeur estimée au décès</span>
+                <input type="text" class="impots-input money-input" id="jvmClient" placeholder="0 $" oninput="calculateImpotsClient()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">📝</span>
+                    Dépenses de disposition
+                </label>
+                <span class="impots-input-hint">Frais de vente, commissions</span>
+                <input type="text" class="impots-input money-input" id="depenseClient" placeholder="0 $" oninput="calculateImpotsClient()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">📊</span>
+                    Taux marginal d'imposition
+                </label>
+                <span class="impots-input-hint">Taux combiné fédéral + provincial</span>
+                <input type="number" class="impots-input taux-input" id="tauxMarginalClient" value="53" min="0" max="100" oninput="calculateImpotsClient()">
+                <div class="taux-presets">
+                    <button type="button" class="taux-preset-btn" onclick="setTauxClient(47.46)">47.46%</button>
+                    <button type="button" class="taux-preset-btn" onclick="setTauxClient(50.23)">50.23%</button>
+                    <button type="button" class="taux-preset-btn" onclick="setTauxClient(53.31)">53.31%</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="impots-result-section">
+            <div class="impots-result-main">
+                <div class="impots-result-box">
+                    <div class="impots-result-icon">🧾</div>
+                    <div class="impots-result-info">
+                        <span class="impots-result-label">Impôts estimés au décès</span>
+                        <span class="impots-result-value" id="impotDecesClient">0 $</span>
+                        <span class="impots-result-note">Ce montant sera ajouté au besoin d'assurance vie</span>
+                    </div>
+                </div>
+                <button class="impots-breakdown-toggle" onclick="toggleImpotsBreakdown('client')">
+                    <span>Voir le détail</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="impots-breakdown-content" id="impotsBreakdownClient">
+            <div class="impots-breakdown-inner">
+                <div class="impots-calc-step">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">1️⃣</span>
+                        Gain en capital brut (JVM - PBR - Dépenses)
+                    </span>
+                    <span class="impots-calc-step-value" id="gainCapitalClient">0 $</span>
+                </div>
+                <div class="impots-calc-step">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">2️⃣</span>
+                        Gain imposable (50% du gain)
+                    </span>
+                    <span class="impots-calc-step-value" id="gainImposableClient">0 $</span>
+                </div>
+                <div class="impots-calc-step highlight">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">3️⃣</span>
+                        Impôt au taux marginal
+                    </span>
+                    <span class="impots-calc-step-value" id="impotCalcClient">0 $</span>
+                </div>
+                <div class="impots-calc-formula">
+                    <span>Formule:</span>
+                    <strong>(JVM - PBR - Dépenses) × 50% × Taux = Impôt</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CONJOINT TAB ========== -->
+<div class="tab-content" id="impotsConjointContent">
+    <div class="impots-toggle-row">
+        <div class="impots-toggle-switch" id="impotsToggleConjoint" onclick="toggleImpotsPersonne('conjoint')"></div>
+        <span class="impots-toggle-label" id="impotsToggleLabelConjoint">Activer le calcul d'impôts au décès</span>
+    </div>
+    <div id="impotsDisabledConjoint" class="impots-disabled-msg">
+        <span style="font-size:24px;">🔒</span>
+        <span>Impôts au décès désactivés — Aucun gain en capital à déclarer</span>
+    </div>
+    <div class="impots-calculator" id="impotsCalcConjoint" style="display:none;">
+        <div class="impots-calc-header">
+            <div class="impots-calc-header-icon">📈</div>
+            <div class="impots-calc-header-text">
+                <h4>Calcul du gain en capital</h4>
+                <p>Entrez les valeurs pour estimer l'impôt au décès</p>
+            </div>
+        </div>
+
+        <div class="impots-input-grid">
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">💵</span>
+                    Prix de Base Rajusté (PBR)
+                </label>
+                <span class="impots-input-hint">Coût d'acquisition original</span>
+                <input type="text" class="impots-input money-input" id="pbrConjoint" placeholder="0 $" oninput="calculateImpotsConjoint()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">🏷️</span>
+                    Juste Valeur Marchande (JVM)
+                </label>
+                <span class="impots-input-hint">Valeur estimée au décès</span>
+                <input type="text" class="impots-input money-input" id="jvmConjoint" placeholder="0 $" oninput="calculateImpotsConjoint()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">📝</span>
+                    Dépenses de disposition
+                </label>
+                <span class="impots-input-hint">Frais de vente, commissions</span>
+                <input type="text" class="impots-input money-input" id="depenseConjoint" placeholder="0 $" oninput="calculateImpotsConjoint()">
+            </div>
+            <div class="impots-input-group">
+                <label class="impots-input-label">
+                    <span class="label-icon">📊</span>
+                    Taux marginal d'imposition
+                </label>
+                <span class="impots-input-hint">Taux combiné fédéral + provincial</span>
+                <input type="number" class="impots-input taux-input" id="tauxMarginalConjoint" value="53" min="0" max="100" oninput="calculateImpotsConjoint()">
+                <div class="taux-presets">
+                    <button type="button" class="taux-preset-btn" onclick="setTauxConjoint(47.46)">47.46%</button>
+                    <button type="button" class="taux-preset-btn" onclick="setTauxConjoint(50.23)">50.23%</button>
+                    <button type="button" class="taux-preset-btn" onclick="setTauxConjoint(53.31)">53.31%</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="impots-result-section">
+            <div class="impots-result-main">
+                <div class="impots-result-box">
+                    <div class="impots-result-icon">🧾</div>
+                    <div class="impots-result-info">
+                        <span class="impots-result-label">Impôts estimés au décès</span>
+                        <span class="impots-result-value" id="impotDecesConjoint">0 $</span>
+                        <span class="impots-result-note">Ce montant sera ajouté au besoin d'assurance vie</span>
+                    </div>
+                </div>
+                <button class="impots-breakdown-toggle" onclick="toggleImpotsBreakdown('conjoint')">
+                    <span>Voir le détail</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="impots-breakdown-content" id="impotsBreakdownConjoint">
+            <div class="impots-breakdown-inner">
+                <div class="impots-calc-step">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">1️⃣</span>
+                        Gain en capital brut (JVM - PBR - Dépenses)
+                    </span>
+                    <span class="impots-calc-step-value" id="gainCapitalConjoint">0 $</span>
+                </div>
+                <div class="impots-calc-step">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">2️⃣</span>
+                        Gain imposable (50% du gain)
+                    </span>
+                    <span class="impots-calc-step-value" id="gainImposableConjoint">0 $</span>
+                </div>
+                <div class="impots-calc-step highlight">
+                    <span class="impots-calc-step-label">
+                        <span class="step-icon">3️⃣</span>
+                        Impôt au taux marginal
+                    </span>
+                    <span class="impots-calc-step-value" id="impotCalcConjoint">0 $</span>
+                </div>
+                <div class="impots-calc-formula">
+                    <span>Formule:</span>
+                    <strong>(JVM - PBR - Dépenses) × 50% × Taux = Impôt</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div><!-- /tab-content-wrapper -->
+</div><!-- /person-tabs-container -->
+<script>
+(async function() {
+    console.log('💰 Module ABF Impôts Décès - Init (Amélioré)');
+    let isSaving = false;
+    
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS WINDOW
+    // ==========================================
+    
+    window.switchImpotsTab = function(tab) {
+        document.querySelectorAll('#impotsTabs .person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#impotsTabs .person-tab[data-tab="${tab}"]`)?.classList.add('active');
+        
+        document.getElementById('impotsClientContent').classList.remove('active');
+        document.getElementById('impotsConjointContent').classList.remove('active');
+        
+        if (tab === 'client') {
+            document.getElementById('impotsClientContent').classList.add('active');
+        } else if (tab === 'conjoint') {
+            document.getElementById('impotsConjointContent').classList.add('active');
+        }
+    };
+    
+    window.toggleImpotsBreakdown = function(person) {
+        const content = document.getElementById(`impotsBreakdown${person === 'client' ? 'Client' : 'Conjoint'}`);
+        const resultSection = content.previousElementSibling;
+        const btn = resultSection.querySelector('.impots-breakdown-toggle');
+        content.classList.toggle('open');
+        btn.classList.toggle('open');
+    };
+    
+    // Toggle on/off par personne
+    window.toggleImpotsPersonne = function(person) {
+        const cap = person === 'client' ? 'Client' : 'Conjoint';
+        const toggle = document.getElementById(`impotsToggle${cap}`);
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
+
+        document.getElementById(`impotsCalc${cap}`).style.display = isActive ? '' : 'none';
+        document.getElementById(`impotsDisabled${cap}`).style.display = isActive ? 'none' : 'flex';
+
+        // Si désactivé, reset l'affichage à 0
+        if (!isActive) {
+            document.getElementById(`impotDeces${cap}`).textContent = '0 $';
+        } else {
+            // Recalculer
+            if (person === 'client') calculateImpotsClient();
+            else calculateImpotsConjoint();
+        }
+
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.setTauxClient = function(taux) {
+        document.getElementById('tauxMarginalClient').value = taux;
+        calculateImpotsClient();
+    };
+
+    window.setTauxConjoint = function(taux) {
+        document.getElementById('tauxMarginalConjoint').value = taux;
+        calculateImpotsConjoint();
+    };
+    
+    window.calculateImpotsClient = function() {
+        const pbr = FINOX.parseNumber(document.getElementById('pbrClient').value) || 0;
+        const jvm = FINOX.parseNumber(document.getElementById('jvmClient').value) || 0;
+        const depenses = FINOX.parseNumber(document.getElementById('depenseClient').value) || 0;
+        const taux = parseFloat(document.getElementById('tauxMarginalClient').value) || 53;
+        
+        const gain = Math.max(0, jvm - pbr - depenses);
+        const gainImposable = gain * 0.5;
+        const impot = Math.round(gainImposable * (taux / 100));
+        
+        document.getElementById('gainCapitalClient').textContent = FINOX.formatCurrency(gain);
+        document.getElementById('gainImposableClient').textContent = FINOX.formatCurrency(gainImposable);
+        document.getElementById('impotCalcClient').textContent = FINOX.formatCurrency(impot);
+        document.getElementById('impotDecesClient').textContent = FINOX.formatCurrency(impot);
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.calculateImpotsConjoint = function() {
+        const pbr = FINOX.parseNumber(document.getElementById('pbrConjoint').value) || 0;
+        const jvm = FINOX.parseNumber(document.getElementById('jvmConjoint').value) || 0;
+        const depenses = FINOX.parseNumber(document.getElementById('depenseConjoint').value) || 0;
+        const taux = parseFloat(document.getElementById('tauxMarginalConjoint').value) || 53;
+        
+        const gain = Math.max(0, jvm - pbr - depenses);
+        const gainImposable = gain * 0.5;
+        const impot = Math.round(gainImposable * (taux / 100));
+        
+        document.getElementById('gainCapitalConjoint').textContent = FINOX.formatCurrency(gain);
+        document.getElementById('gainImposableConjoint').textContent = FINOX.formatCurrency(gainImposable);
+        document.getElementById('impotCalcConjoint').textContent = FINOX.formatCurrency(impot);
+        document.getElementById('impotDecesConjoint').textContent = FINOX.formatCurrency(impot);
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.saveAndNext = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Impôts au décès sauvegardés', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-besoins-vie');
+        } else {
+            FINOX.showNotification('Erreur: ' + result.error, 'error');
+        }
+    };
+    
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    // Afficher conjoint
+    if (client.has_conjoint) {
+        document.querySelector('.conjoint-tab').classList.add('visible');
+    }
+    
+    // Noms
+    const clientName = client.first_name || 'Client';
+    const conjointName = client.conjoint_first_name || 'Conjoint';
+    document.getElementById('impotsTabClientName').textContent = clientName;
+    document.getElementById('impotsTabConjointName').textContent = conjointName;
+    document.getElementById('impotsToggleLabelClient').textContent = `Activer le calcul d'impôts au décès pour ${clientName}`;
+    document.getElementById('impotsToggleLabelConjoint').textContent = `Activer le calcul d'impôts au décès pour ${conjointName}`;
+
+    // Charger valeurs sauvegardées depuis abf_data
+    const abfData = client.abf_data || {};
+
+    if (abfData.impots_client) {
+        document.getElementById('pbrClient').value = abfData.impots_client.pbr ? FINOX.formatNumber(abfData.impots_client.pbr) : '';
+        document.getElementById('jvmClient').value = abfData.impots_client.jvm ? FINOX.formatNumber(abfData.impots_client.jvm) : '';
+        document.getElementById('depenseClient').value = abfData.impots_client.depenses ? FINOX.formatNumber(abfData.impots_client.depenses) : '';
+        document.getElementById('tauxMarginalClient').value = abfData.impots_client.taux || 53;
+        // Restaurer toggle
+        if (abfData.impots_client.active) {
+            document.getElementById('impotsToggleClient').classList.add('active');
+            document.getElementById('impotsCalcClient').style.display = '';
+            document.getElementById('impotsDisabledClient').style.display = 'none';
+        }
+    }
+
+    if (abfData.impots_conjoint) {
+        document.getElementById('pbrConjoint').value = abfData.impots_conjoint.pbr ? FINOX.formatNumber(abfData.impots_conjoint.pbr) : '';
+        document.getElementById('jvmConjoint').value = abfData.impots_conjoint.jvm ? FINOX.formatNumber(abfData.impots_conjoint.jvm) : '';
+        document.getElementById('depenseConjoint').value = abfData.impots_conjoint.depenses ? FINOX.formatNumber(abfData.impots_conjoint.depenses) : '';
+        document.getElementById('tauxMarginalConjoint').value = abfData.impots_conjoint.taux || 53;
+        // Restaurer toggle
+        if (abfData.impots_conjoint.active) {
+            document.getElementById('impotsToggleConjoint').classList.add('active');
+            document.getElementById('impotsCalcConjoint').style.display = '';
+            document.getElementById('impotsDisabledConjoint').style.display = 'none';
+        }
+    }
+
+    // Setup money input formatting
+    FINOX.setupAllMoneyInputs();
+
+    // Calculs initiaux (seulement si toggle actif)
+    if (abfData.impots_client?.active) calculateImpotsClient();
+    if (abfData.impots_conjoint?.active) calculateImpotsConjoint();
+    
+    // ==========================================
+    // 3. FONCTION DE SAUVEGARDE SQL
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) return { success: true };
+        isSaving = true;
+        
+        const currentAbfData = client.abf_data || {};
+
+        const clientActive = document.getElementById('impotsToggleClient').classList.contains('active');
+        const conjointActive = document.getElementById('impotsToggleConjoint').classList.contains('active');
+
+        const impotClient = clientActive ? FINOX.parseNumber(document.getElementById('impotDecesClient').textContent) : 0;
+        const impotConjoint = conjointActive ? FINOX.parseNumber(document.getElementById('impotDecesConjoint').textContent) : 0;
+
+        const abfUpdate = {
+            ...currentAbfData,
+            impots_client: {
+                active: clientActive,
+                pbr: FINOX.parseNumber(document.getElementById('pbrClient').value) || 0,
+                jvm: FINOX.parseNumber(document.getElementById('jvmClient').value) || 0,
+                depenses: FINOX.parseNumber(document.getElementById('depenseClient').value) || 0,
+                taux: parseFloat(document.getElementById('tauxMarginalClient').value) || 53,
+                impot_estime: impotClient
+            },
+            impots_conjoint: {
+                active: conjointActive,
+                pbr: FINOX.parseNumber(document.getElementById('pbrConjoint').value) || 0,
+                jvm: FINOX.parseNumber(document.getElementById('jvmConjoint').value) || 0,
+                depenses: FINOX.parseNumber(document.getElementById('depenseConjoint').value) || 0,
+                taux: parseFloat(document.getElementById('tauxMarginalConjoint').value) || 53,
+                impot_estime: impotConjoint
+            }
+        };
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            await FINOX.loadClientData(true);
+            
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+    
+    console.log('✅ Module ABF Impôts Décès chargé (Amélioré)');
+})();
+</script>

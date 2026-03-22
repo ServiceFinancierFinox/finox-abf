@@ -1,0 +1,2501 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: CONFORMITE-PREAVIS v1.0
+     Préavis de Remplacement AMF
+     Formulaire multi-étapes, auto-remplissage ABF, sauvegarde SQL
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Liste des préavis */
+.preavis-list-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.preavis-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.preavis-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 220px;
+}
+
+.preavis-card:hover { border-color: var(--gold); }
+.preavis-card.active {
+    border-color: var(--gold);
+    background: rgba(232, 180, 77, 0.1);
+}
+
+.preavis-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.preavis-card-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.preavis-card-status {
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.preavis-card-status.draft {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.preavis-card-status.complete {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.preavis-card-info {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.preavis-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.preavis-card-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.preavis-card-btn.edit {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+}
+
+.preavis-card-btn.delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.preavis-add-btn {
+    background: transparent;
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 14px 24px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.preavis-add-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+/* Formulaire principal */
+.preavis-form-container { margin-top: 20px; display: none; }
+.preavis-form-container.visible { display: block; }
+
+.preavis-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.preavis-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preavis-form-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.preavis-form-number {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.preavis-form-status {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.preavis-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.preavis-close-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+
+/* Stepper */
+.preavis-stepper {
+    display: flex;
+    background: var(--bg-primary);
+    padding: 12px 16px;
+    gap: 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preavis-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.preavis-step:hover { background: rgba(255,255,255,0.05); }
+.preavis-step.active {
+    background: rgba(232, 180, 77, 0.15);
+    color: var(--gold);
+}
+.preavis-step.complete { color: #10b981; }
+
+.preavis-step-number {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.preavis-step.active .preavis-step-number {
+    background: var(--gold);
+    color: #000;
+}
+
+.preavis-step.complete .preavis-step-number {
+    background: #10b981;
+    color: white;
+}
+
+.preavis-step-label { font-weight: 500; }
+
+/* Step Content */
+.preavis-step-content {
+    display: none;
+    padding: 24px;
+}
+
+.preavis-step-content.active { display: block; }
+
+.preavis-section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+/* Info Box */
+.preavis-info-box {
+    background: rgba(232, 180, 77, 0.1);
+    border: 1px solid rgba(232, 180, 77, 0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.preavis-info-box.warning {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.preavis-info-icon { font-size: 18px; flex-shrink: 0; }
+.preavis-info-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Preneur Selector */
+.preavis-preneur-selector { margin-bottom: 20px; }
+.preavis-selector-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: block;
+}
+
+.preavis-selector-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.preavis-selector-option {
+    cursor: pointer;
+}
+
+.preavis-selector-option input { display: none; }
+
+.preavis-selector-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.preavis-selector-option input:checked + .preavis-selector-box {
+    border-color: var(--gold);
+    background: rgba(232, 180, 77, 0.1);
+}
+
+.preavis-selector-icon { font-size: 18px; }
+.preavis-selector-name { font-size: 13px; color: var(--text-primary); }
+
+.preavis-preneur-row {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: none;
+}
+
+.preavis-preneur-row.visible { display: block; }
+
+.preavis-no-preneur {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 8px;
+    color: #f59e0b;
+    font-size: 13px;
+}
+
+/* Fields Grid */
+.preavis-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.preavis-fields-grid.three-cols {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.preavis-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.preavis-field.wide { grid-column: span 2; }
+
+.preavis-field label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.preavis-field input,
+.preavis-field select,
+.preavis-field textarea {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+    transition: border-color 0.2s;
+}
+
+.preavis-field input:focus,
+.preavis-field select:focus,
+.preavis-field textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.preavis-field input[readonly] {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.preavis-autofill-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Assurés sections */
+.preavis-assures-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.preavis-assures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.preavis-assures-header.warning .preavis-assures-title { color: #ef4444; }
+.preavis-assures-header.success .preavis-assures-title { color: #10b981; }
+
+.preavis-assures-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.preavis-add-assure-btn {
+    font-size: 11px;
+    color: var(--gold);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.preavis-assure-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.preavis-assure-row input {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 12px;
+}
+
+.preavis-remove-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.6;
+}
+
+.preavis-remove-btn:hover { opacity: 1; }
+
+/* AI Assistant Styles */
+.preavis-ai-section {
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.1), rgba(232, 180, 77, 0.02));
+    border: 1px solid rgba(232, 180, 77, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.preavis-ai-summary {
+    background: var(--bg-primary);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.preavis-ai-summary-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preavis-ai-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.preavis-ai-summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.preavis-ai-summary-card-header {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.preavis-ai-summary-card-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.preavis-ai-context {
+    background: var(--bg-primary);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.preavis-ai-context-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.preavis-ai-context-description {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.preavis-ai-context-field {
+    margin-bottom: 14px;
+}
+
+.preavis-ai-context-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.preavis-ai-context-field label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+}
+
+.preavis-dictation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+}
+.preavis-dictation-btn:hover {
+    background: var(--bg-hover);
+}
+.preavis-dictation-btn.recording {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+    animation: preavis-pulse-mic 1.2s infinite;
+}
+@keyframes preavis-pulse-mic {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,.4); }
+    50% { box-shadow: 0 0 0 6px rgba(220,53,69,0); }
+}
+
+.preavis-ai-context-field textarea {
+    width: 100%;
+    min-height: 70px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+}
+.preavis-ai-context-field textarea.dictating {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220,53,69,.15);
+}
+
+.preavis-ai-generate-section {
+    text-align: center;
+    padding: 20px;
+}
+
+.preavis-ai-generate-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--gold), #c9a040);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.preavis-ai-generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232, 180, 77, 0.4);
+}
+
+.preavis-ai-generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.preavis-ai-generate-btn.loading {
+    background: rgba(232, 180, 77, 0.3);
+}
+
+.preavis-ai-btn-icon { font-size: 18px; }
+
+.preavis-ai-generate-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 12px;
+}
+
+.preavis-ai-result {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 20px;
+    display: none;
+}
+
+.preavis-ai-result.visible { display: block; }
+
+.preavis-ai-result-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #10b981;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preavis-ai-result-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Comparison Grid */
+.preavis-comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+    .preavis-comparison-grid { grid-template-columns: 1fr; }
+}
+
+.preavis-comparison-col {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.preavis-comparison-col.current {
+    border: 1px solid var(--border-color);
+}
+
+.preavis-comparison-col.proposed {
+    border: 1px solid rgba(232, 180, 77, 0.3);
+    background: rgba(232, 180, 77, 0.03);
+}
+
+.preavis-comparison-header {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preavis-comparison-col.current .preavis-comparison-header { color: var(--text-secondary); }
+.preavis-comparison-col.proposed .preavis-comparison-header { color: var(--gold); }
+
+.preavis-comparison-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.preavis-comparison-field label {
+    font-size: 10px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.preavis-comparison-field input,
+.preavis-comparison-field select {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 12px;
+}
+
+/* Nature multiselect */
+.preavis-nature-multiselect {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.preavis-nature-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.preavis-nature-option input { width: 12px; height: 12px; }
+
+/* Clause Card */
+.preavis-clause-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.preavis-clause-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.preavis-clause-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.preavis-clause-warning {
+    font-size: 10px;
+    padding: 4px 8px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-radius: 4px;
+}
+
+.preavis-clause-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.preavis-clause-dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.preavis-clause-date label {
+    font-size: 10px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.preavis-clause-date input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+.preavis-clause-checkboxes {
+    display: flex;
+    gap: 20px;
+}
+
+.preavis-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.preavis-checkbox input { width: 14px; height: 14px; }
+
+/* Motif Questions */
+.preavis-motif-question {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.preavis-motif-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.preavis-motif-number {
+    background: var(--gold);
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.preavis-motif-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.preavis-motif-answer {
+    width: 100%;
+    min-height: 100px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+/* Comments Section */
+.preavis-comments-section { margin-top: 20px; }
+.preavis-comments-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.preavis-comments-textarea {
+    width: 100%;
+    min-height: 80px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+/* Form Actions */
+.preavis-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+.preavis-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.preavis-btn.primary {
+    background: var(--gold);
+    border: none;
+    color: #000;
+}
+
+.preavis-btn.secondary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.preavis-btn:hover { transform: translateY(-1px); }
+
+.preavis-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* Bouton complété dans header */
+.preavis-btn-complete {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.preavis-btn-complete:hover { border-color: var(--gold); color: var(--gold); }
+.preavis-btn-complete.completed {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #10b981;
+}
+</style>
+
+<!-- Liste des préavis -->
+<div class="preavis-list-container">
+    <div class="preavis-list" id="preavisListCards">
+        <!-- Cartes générées dynamiquement -->
+    </div>
+    <button class="preavis-add-btn" onclick="createNewPreavis()">
+        <span>+</span> Nouveau préavis
+    </button>
+</div>
+
+<!-- Formulaire principal -->
+<div class="preavis-form-container" id="preavisFormContainer">
+    <div class="preavis-form">
+        <!-- Header -->
+        <div class="preavis-form-header">
+            <div class="preavis-form-header-left">
+                <span class="preavis-form-number" id="preavisCurrentNumber">Nouveau préavis</span>
+                <span class="preavis-form-status" id="preavisCurrentStatus">Brouillon</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="preavis-btn-complete" id="btnMarkComplete" onclick="togglePreavisComplete()" title="Marquer comme complété">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>
+                </button>
+                <button class="preavis-close-btn" onclick="closePreavisForm()">✕</button>
+            </div>
+        </div>
+
+        <!-- Stepper -->
+        <div class="preavis-stepper">
+            <div class="preavis-step active" data-step="0" onclick="showPreavisStep(0)">
+                <span class="preavis-step-number">1</span>
+                <span class="preavis-step-label">Général</span>
+            </div>
+            <div class="preavis-step" data-step="1" onclick="showPreavisStep(1)">
+                <span class="preavis-step-number">2</span>
+                <span class="preavis-step-label">Contrats</span>
+            </div>
+            <div class="preavis-step" data-step="2" onclick="showPreavisStep(2)">
+                <span class="preavis-step-number">3</span>
+                <span class="preavis-step-label">🤖 Assistant IA</span>
+            </div>
+            <div class="preavis-step" data-step="3" onclick="showPreavisStep(3)">
+                <span class="preavis-step-number">4</span>
+                <span class="preavis-step-label">Clauses</span>
+            </div>
+            <div class="preavis-step" data-step="4" onclick="showPreavisStep(4)">
+                <span class="preavis-step-number">5</span>
+                <span class="preavis-step-label">Motifs</span>
+            </div>
+        </div>
+
+        <!-- Step 0: Général -->
+        <div class="preavis-step-content active" id="preavisStep0">
+            <div class="preavis-section-title">
+                <span>👤</span> Partie 1 - Renseignements généraux
+            </div>
+
+            <div class="preavis-info-box">
+                <span class="preavis-info-icon">💡</span>
+                <span class="preavis-info-text">Sélectionnez le preneur parmi les personnes de la fiche client. Les informations seront remplies automatiquement.</span>
+            </div>
+
+            <!-- Sélecteur preneur -->
+            <div class="preavis-preneur-selector">
+                <label class="preavis-selector-label">Sélectionner le preneur :</label>
+                <div class="preavis-selector-options">
+                    <label class="preavis-selector-option">
+                        <input type="checkbox" id="preavisPreneurClient" onchange="updatePreavisPreneur()">
+                        <span class="preavis-selector-box">
+                            <span class="preavis-selector-icon">👤</span>
+                            <span class="preavis-selector-name" id="preavisPreneurClientName">Client</span>
+                        </span>
+                    </label>
+                    <label class="preavis-selector-option" id="preavisConjointOption" style="display:none;">
+                        <input type="checkbox" id="preavisPreneurConjoint" onchange="updatePreavisPreneur()">
+                        <span class="preavis-selector-box">
+                            <span class="preavis-selector-icon">👥</span>
+                            <span class="preavis-selector-name" id="preavisPreneurConjointName">Conjoint</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Ligne Preneur Client -->
+            <div class="preavis-preneur-row" id="preavisPreneurClientRow">
+                <div class="preavis-fields-grid">
+                    <div class="preavis-field wide">
+                        <label><span class="field-icon">👤</span> Preneur - Client <span class="preavis-autofill-badge">Auto</span></label>
+                        <input type="text" id="preavisPreneurClientNom" readonly placeholder="-">
+                    </div>
+                    <div class="preavis-field">
+                        <label>Date de naissance</label>
+                        <input type="text" id="preavisPreneurClientDDN" readonly placeholder="-">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ligne Preneur Conjoint -->
+            <div class="preavis-preneur-row" id="preavisPreneurConjointRow">
+                <div class="preavis-fields-grid">
+                    <div class="preavis-field wide">
+                        <label><span class="field-icon">👥</span> Preneur - Conjoint <span class="preavis-autofill-badge">Auto</span></label>
+                        <input type="text" id="preavisPreneurConjointNom" readonly placeholder="-">
+                    </div>
+                    <div class="preavis-field">
+                        <label>Date de naissance</label>
+                        <input type="text" id="preavisPreneurConjointDDN" readonly placeholder="-">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message si aucun preneur -->
+            <div class="preavis-no-preneur" id="preavisNoPreneurMsg">
+                <span>⚠️</span>
+                <span>Veuillez sélectionner au moins un preneur ci-dessus</span>
+            </div>
+
+            <div class="preavis-fields-grid">
+                <div class="preavis-field wide">
+                    <label><span class="field-icon">👥</span> Assuré (si différent du preneur)</label>
+                    <input type="text" id="preavisAssureNom" placeholder="Nom et prénom">
+                </div>
+                <div class="preavis-field">
+                    <label>Date de naissance</label>
+                    <input type="date" id="preavisAssureDDN">
+                </div>
+            </div>
+
+            <!-- Autres assurés -->
+            <div class="preavis-assures-section">
+                <div class="preavis-assures-header">
+                    <span class="preavis-assures-title">👨‍👩‍👧 Autres assurés couverts</span>
+                    <button class="preavis-add-assure-btn" onclick="addPreavisAssure('autres')">+ Ajouter</button>
+                </div>
+                <div id="preavisAutresAssures"></div>
+            </div>
+
+            <!-- Assurés résiliés -->
+            <div class="preavis-assures-section">
+                <div class="preavis-assures-header warning">
+                    <span class="preavis-assures-title">⚠️ Assurés résiliés (perdront leur couverture)</span>
+                    <button class="preavis-add-assure-btn" onclick="addPreavisAssure('resilies')">+ Ajouter</button>
+                </div>
+                <div id="preavisAssuresResilies"></div>
+            </div>
+
+            <!-- Assurés additionnels -->
+            <div class="preavis-assures-section">
+                <div class="preavis-assures-header success">
+                    <span class="preavis-assures-title">✅ Assurés additionnels (nouveaux)</span>
+                    <button class="preavis-add-assure-btn" onclick="addPreavisAssure('additionnels')">+ Ajouter</button>
+                </div>
+                <div id="preavisAssuresAdditionnels"></div>
+            </div>
+        </div>
+
+        <!-- Step 1: Contrats -->
+        <div class="preavis-step-content" id="preavisStep1">
+            <div class="preavis-section-title">
+                <span>📊</span> Comparaison des contrats
+            </div>
+
+            <div class="preavis-fields-grid three-cols">
+                <div class="preavis-field">
+                    <label>N° de police remplacée</label>
+                    <input type="text" id="preavisNumPoliceRemplacee" placeholder="Ex: POL-123456">
+                </div>
+                <div class="preavis-field">
+                    <label>Date entrée en vigueur (actuel)</label>
+                    <input type="date" id="preavisDateVigueurActuel" onchange="calculateClauseDates()">
+                </div>
+                <div class="preavis-field">
+                    <label>N° du préavis (= N° proposition)</label>
+                    <input type="text" id="preavisNumero" placeholder="Numéro de proposition" oninput="updatePreavisNumeroHeader()">
+                </div>
+            </div>
+
+            <div class="preavis-comparison-grid">
+                <!-- Contrat Actuel -->
+                <div class="preavis-comparison-col current">
+                    <div class="preavis-comparison-header">
+                        <span>📄</span> Contrat ACTUEL (remplacé)
+                    </div>
+                    <div class="preavis-comparison-fields">
+                        <div class="preavis-comparison-field">
+                            <label>Assureur</label>
+                            <select id="preavisAssureurActuel" onchange="if(this.value==='Autre'){document.getElementById('preavisAssureurActuelAutre').style.display='block'}else{document.getElementById('preavisAssureurActuelAutre').style.display='none'}">
+                                <option value="">Sélectionnez...</option>
+                                <option value="Assomption Vie">Assomption Vie</option>
+                                <option value="Beneva">Beneva</option>
+                                <option value="BMO">BMO</option>
+                                <option value="Canada Vie">Canada Vie</option>
+                                <option value="Chevaliers de Colomb">Chevaliers de Colomb</option>
+                                <option value="Combined">Combined</option>
+                                <option value="CPP">CPP</option>
+                                <option value="Desjardins">Desjardins</option>
+                                <option value="Emma">Emma</option>
+                                <option value="Empire Vie">Empire Vie</option>
+                                <option value="Équitable">Équitable</option>
+                                <option value="Foresters">Foresters</option>
+                                <option value="Humania">Humania</option>
+                                <option value="iA Groupe Financier">iA Groupe Financier</option>
+                                <option value="Ivari">Ivari</option>
+                                <option value="Manuvie">Manuvie</option>
+                                <option value="Primerica">Primerica</option>
+                                <option value="RBC">RBC</option>
+                                <option value="Securian">Securian</option>
+                                <option value="Sun Life">Sun Life</option>
+                                <option value="UV Assurance">UV Assurance</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <input type="text" id="preavisAssureurActuelAutre" placeholder="Nom de l'assureur..." style="display:none;margin-top:6px;">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Nature de l'assurance</label>
+                            <div class="preavis-nature-multiselect">
+                                <label class="preavis-nature-option"><input type="checkbox" name="natureActuel" value="Vie temporaire"> Vie temp.</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="natureActuel" value="Vie permanente"> Vie perm.</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="natureActuel" value="Invalidité"> Invalidité</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="natureActuel" value="Maladie grave"> Mal. grave</label>
+                            </div>
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Montant de prestation</label>
+                            <input type="text" class="money-input" id="preavisMontantActuel" placeholder="Ex: 500 000 $">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Prime annuelle</label>
+                            <input type="text" class="money-input" id="preavisPrimeActuel" placeholder="Ex: 1 200 $ /an">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Période d'indemnisation</label>
+                            <input type="text" id="preavisPeriodeActuel" placeholder="Ex: 2 ans, 65 ans">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Délai de carence</label>
+                            <input type="text" id="preavisCarenceActuel" placeholder="Ex: 90 jours">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contrat Proposé -->
+                <div class="preavis-comparison-col proposed">
+                    <div class="preavis-comparison-header">
+                        <span>✨</span> Contrat PROPOSÉ (nouveau)
+                    </div>
+                    <div class="preavis-comparison-fields">
+                        <div class="preavis-comparison-field">
+                            <label>Assureur</label>
+                            <select id="preavisAssureurPropose" onchange="if(this.value==='Autre'){document.getElementById('preavisAssureurProposeAutre').style.display='block'}else{document.getElementById('preavisAssureurProposeAutre').style.display='none'}">
+                                <option value="">Sélectionnez...</option>
+                                <option value="Assomption Vie">Assomption Vie</option>
+                                <option value="Beneva">Beneva</option>
+                                <option value="BMO">BMO</option>
+                                <option value="Canada Vie">Canada Vie</option>
+                                <option value="Chevaliers de Colomb">Chevaliers de Colomb</option>
+                                <option value="Combined">Combined</option>
+                                <option value="CPP">CPP</option>
+                                <option value="Desjardins">Desjardins</option>
+                                <option value="Emma">Emma</option>
+                                <option value="Empire Vie">Empire Vie</option>
+                                <option value="Équitable">Équitable</option>
+                                <option value="Foresters">Foresters</option>
+                                <option value="Humania">Humania</option>
+                                <option value="iA Groupe Financier">iA Groupe Financier</option>
+                                <option value="Ivari">Ivari</option>
+                                <option value="Manuvie">Manuvie</option>
+                                <option value="Primerica">Primerica</option>
+                                <option value="RBC">RBC</option>
+                                <option value="Securian">Securian</option>
+                                <option value="Sun Life">Sun Life</option>
+                                <option value="UV Assurance">UV Assurance</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                            <input type="text" id="preavisAssureurProposeAutre" placeholder="Nom de l'assureur..." style="display:none;margin-top:6px;">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Nature de l'assurance</label>
+                            <div class="preavis-nature-multiselect">
+                                <label class="preavis-nature-option"><input type="checkbox" name="naturePropose" value="Vie temporaire"> Vie temp.</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="naturePropose" value="Vie permanente"> Vie perm.</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="naturePropose" value="Invalidité"> Invalidité</label>
+                                <label class="preavis-nature-option"><input type="checkbox" name="naturePropose" value="Maladie grave"> Mal. grave</label>
+                            </div>
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Montant de prestation</label>
+                            <input type="text" class="money-input" id="preavisMontantPropose" placeholder="Ex: 500 000 $">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Prime annuelle</label>
+                            <input type="text" class="money-input" id="preavisPrimePropose" placeholder="Ex: 980 $ /an">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Période d'indemnisation</label>
+                            <input type="text" id="preavisPeriodePropose" placeholder="Ex: 2 ans, 65 ans">
+                        </div>
+                        <div class="preavis-comparison-field">
+                            <label>Délai de carence</label>
+                            <input type="text" id="preavisCarencePropose" placeholder="Ex: 90 jours">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preavis-comments-section">
+                <label class="preavis-comments-label">📝 Commentaires (primes fixes/garanties, etc.)</label>
+                <textarea class="preavis-comments-textarea" id="preavisCommentairesContrats" placeholder="Notes sur les primes, garanties, etc."></textarea>
+            </div>
+        </div>
+
+        <!-- Step 2: Assistant IA -->
+        <div class="preavis-step-content" id="preavisStep2">
+            <div class="preavis-section-title">
+                <span>🤖</span> Assistant IA - Génération automatique
+            </div>
+
+            <div class="preavis-info-box">
+                <span class="preavis-info-icon">🚀</span>
+                <span class="preavis-info-text">L'assistant IA génère automatiquement les 7 sections du préavis AMF basé sur les informations saisies. <strong>Assurez-vous d'avoir complété l'étape Contrats.</strong></span>
+            </div>
+
+            <!-- Résumé des données -->
+            <div class="preavis-ai-summary">
+                <div class="preavis-ai-summary-title">📋 Résumé des informations saisies</div>
+                <div class="preavis-ai-summary-grid">
+                    <div class="preavis-ai-summary-card">
+                        <div class="preavis-ai-summary-card-header">👤 Preneur</div>
+                        <div class="preavis-ai-summary-card-value" id="aiSummaryPreneur">-</div>
+                    </div>
+                    <div class="preavis-ai-summary-card">
+                        <div class="preavis-ai-summary-card-header">📄 Contrat actuel</div>
+                        <div class="preavis-ai-summary-card-value" id="aiSummaryActuel">-</div>
+                    </div>
+                    <div class="preavis-ai-summary-card">
+                        <div class="preavis-ai-summary-card-header">✨ Contrat proposé</div>
+                        <div class="preavis-ai-summary-card-value" id="aiSummaryPropose">-</div>
+                    </div>
+                    <div class="preavis-ai-summary-card">
+                        <div class="preavis-ai-summary-card-header">💰 Comparaison primes</div>
+                        <div class="preavis-ai-summary-card-value" id="aiSummaryPrimes">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contexte additionnel -->
+            <div class="preavis-ai-context">
+                <div class="preavis-ai-context-title">📝 Contexte additionnel pour l'IA</div>
+                <p class="preavis-ai-context-description">Décrivez la situation en texte libre — l'IA organisera automatiquement les informations dans les bonnes sections.</p>
+
+                <div class="preavis-ai-context-field">
+                    <div class="preavis-ai-context-label-row">
+                        <label>Contexte et directives</label>
+                        <button type="button" class="preavis-dictation-btn" id="btnDictation" onclick="toggleDictation()" title="Dicter avec le micro">
+                            <span id="dictationIcon">🎙️</span>
+                            <span id="dictationLabel">Dicter</span>
+                        </button>
+                    </div>
+                    <textarea id="aiContexteLibre" rows="6" placeholder="Ex: Le client a acheté une maison plus chère et a besoin de plus de couverture. L'assureur actuel a refusé la modification. Le contrat proposé inclut l'exonération des primes et la garantie d'assurabilité. Le client veut stabiliser ses primes avant la retraite..."></textarea>
+                </div>
+            </div>
+
+            <!-- Bouton de génération -->
+            <div class="preavis-ai-generate-section">
+                <button class="preavis-ai-generate-btn" id="btnGeneratePreavisAI" onclick="generatePreavisWithAI()">
+                    <span class="preavis-ai-btn-icon">🤖</span>
+                    <span id="btnGenerateText">Générer les 7 sections avec l'IA</span>
+                </button>
+                <p class="preavis-ai-generate-note">L'IA générera les réponses aux sections Clauses et Motifs. Vous pourrez ensuite les réviser dans les onglets suivants.</p>
+            </div>
+
+            <!-- Résultat -->
+            <div class="preavis-ai-result" id="aiResultContainer">
+                <div class="preavis-ai-result-title">✅ Sections générées avec succès!</div>
+                <div class="preavis-ai-result-text">Les réponses ont été automatiquement insérées dans les onglets "Clauses" et "Motifs". Cliquez sur "Suivant" pour les réviser et les ajuster.</div>
+            </div>
+        </div>
+
+        <!-- Step 3: Clauses -->
+        <div class="preavis-step-content" id="preavisStep3">
+            <div class="preavis-section-title">
+                <span>⚖️</span> Clauses importantes
+            </div>
+
+            <div class="preavis-info-box warning">
+                <span class="preavis-info-icon">⚠️</span>
+                <span class="preavis-info-text"><strong>AVIS IMPORTANT:</strong> En remplaçant une assurance, certaines périodes de protection recommencent à courir.</span>
+            </div>
+
+            <!-- Clause d'incontestabilité -->
+            <div class="preavis-clause-card">
+                <div class="preavis-clause-header">
+                    <div class="preavis-clause-title">
+                        <span>🛡️</span> Clause d'incontestabilité
+                    </div>
+                    <span class="preavis-clause-warning">⚠️ Période recommence</span>
+                </div>
+                <div class="preavis-clause-description">
+                    Si le décès survient dans les <strong>2 ans</strong> suivant l'entrée en vigueur, l'assureur peut refuser le capital si des renseignements sont incomplets.
+                </div>
+                <div class="preavis-clause-dates">
+                    <div class="preavis-clause-date">
+                        <label>📄 Expiration contrat ACTUEL</label>
+                        <input type="date" id="preavisIncontestActuel">
+                    </div>
+                    <div class="preavis-clause-date">
+                        <label>✨ Expiration contrat PROPOSÉ</label>
+                        <input type="date" id="preavisIncontestPropose">
+                    </div>
+                </div>
+                <div class="preavis-clause-checkboxes">
+                    <label class="preavis-checkbox">
+                        <input type="checkbox" id="preavisIncontestNA">
+                        <span>Ne s'applique pas</span>
+                    </label>
+                    <label class="preavis-checkbox">
+                        <input type="checkbox" id="preavisIncontestLu">
+                        <span>Lu et expliqué au client</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Clause de suicide -->
+            <div class="preavis-clause-card">
+                <div class="preavis-clause-header">
+                    <div class="preavis-clause-title">
+                        <span>⚠️</span> Clause de suicide
+                    </div>
+                    <span class="preavis-clause-warning">⚠️ Période recommence</span>
+                </div>
+                <div class="preavis-clause-description">
+                    Si le décès est causé par suicide dans les <strong>2 ans</strong>, le capital ne sera généralement pas versé.
+                </div>
+                <div class="preavis-clause-dates">
+                    <div class="preavis-clause-date">
+                        <label>📄 Expiration contrat ACTUEL</label>
+                        <input type="date" id="preavisSuicideActuel">
+                    </div>
+                    <div class="preavis-clause-date">
+                        <label>✨ Expiration contrat PROPOSÉ</label>
+                        <input type="date" id="preavisSuicidePropose">
+                    </div>
+                </div>
+                <div class="preavis-clause-checkboxes">
+                    <label class="preavis-checkbox">
+                        <input type="checkbox" id="preavisSuicideNA">
+                        <span>Ne s'applique pas</span>
+                    </label>
+                    <label class="preavis-checkbox">
+                        <input type="checkbox" id="preavisSuicideLu">
+                        <span>Lu et expliqué au client</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Motifs -->
+        <div class="preavis-step-content" id="preavisStep4">
+            <div class="preavis-section-title">
+                <span>📝</span> Partie 2 - Motifs du remplacement
+            </div>
+
+            <div class="preavis-info-box">
+                <span class="preavis-info-icon">💡</span>
+                <span class="preavis-info-text">Expliquez chaque point de façon <strong>complète et objective</strong>.</span>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.1</span>
+                    <span class="preavis-motif-text">En quoi le contrat <strong>actuel</strong> ne répond pas aux besoins?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif21" placeholder="Expliquez les lacunes du contrat actuel..."></textarea>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.2</span>
+                    <span class="preavis-motif-text">En quoi le contrat <strong>proposé</strong> répond mieux aux besoins?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif22" placeholder="Expliquez les avantages du nouveau contrat..."></textarea>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.3</span>
+                    <span class="preavis-motif-text">Quels sont les <strong>désavantages</strong> du remplacement?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif23" placeholder="Exclusions, primes, perte de garanties..."></textarea>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.4</span>
+                    <span class="preavis-motif-text">Pourquoi une <strong>modification</strong> n'est pas envisagée?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif24" placeholder="Pourquoi ne pas modifier le contrat existant..."></textarea>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.5</span>
+                    <span class="preavis-motif-text">Quels sont les <strong>impacts financiers</strong>?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif25" placeholder="Frais de rachat, valeurs, impact fiscal..."></textarea>
+            </div>
+
+            <div class="preavis-motif-question">
+                <div class="preavis-motif-header">
+                    <span class="preavis-motif-number">2.6</span>
+                    <span class="preavis-motif-text">Différences entre les <strong>garanties complémentaires</strong>?</span>
+                </div>
+                <textarea class="preavis-motif-answer" id="preavisMotif26" placeholder="Exonération, garantie assurabilité, avenants..."></textarea>
+            </div>
+
+            <div class="preavis-comments-section">
+                <label class="preavis-comments-label">📝 Commentaires additionnels</label>
+                <textarea class="preavis-comments-textarea" id="preavisCommentairesMotifs" placeholder="Tout autre commentaire..."></textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="preavis-form-actions">
+            <button class="preavis-btn secondary" onclick="preavisPrevStep()">← Précédent</button>
+            <div class="preavis-btn-group">
+                <button class="preavis-btn secondary" onclick="savePreavisManual()">💾 Sauvegarder</button>
+                <button class="preavis-btn secondary" onclick="exportPreavisPDF()">📄 Exporter PDF AMF</button>
+                <button class="preavis-btn secondary" onclick="sendDocuSign()" style="background:rgba(255,208,54,.12);border-color:rgba(255,208,54,.4);color:#fcd34d;">✍️ Envoyer DocuSign</button>
+                <button class="preavis-btn primary" onclick="preavisNextStep()">Suivant →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton Sauvegarder -->
+<div style="display: flex; justify-content: center; padding: 20px 0; margin-top: 20px; border-top: 1px dashed var(--border-color);">
+    <button class="preavis-btn primary" onclick="savePreavisManual()" style="padding: 14px 40px; font-size: 14px;">
+        💾 Sauvegarder
+    </button>
+</div>
+
+<script>
+(async function() {
+    console.log('📋 Module Préavis de Remplacement v1.0 - Init');
+    
+    // ==========================================
+    // VARIABLES
+    // ==========================================
+    let client = null;
+    let abfData = {};
+    let preavisList = [];
+    let currentPreavisIndex = -1;
+    let currentPreavisStep = 0;
+    
+    // ==========================================
+    // CHARGEMENT INITIAL
+    // ==========================================
+    client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    abfData = client.abf_data || {};
+    preavisList = abfData.preavis_list || [];
+    
+    // Noms client/conjoint
+    const clientName = `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client';
+    const conjointName = `${client.conjoint_first_name || ''} ${client.conjoint_last_name || ''}`.trim();
+    const hasConjoint = client.has_conjoint && conjointName;
+    
+    document.getElementById('preavisPreneurClientName').textContent = clientName;
+    if (hasConjoint) {
+        document.getElementById('preavisPreneurConjointName').textContent = conjointName;
+        document.getElementById('preavisConjointOption').style.display = 'block';
+    }
+    
+    // ==========================================
+    // FONCTIONS UTILITAIRES
+    // ==========================================
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return dateStr;
+    }
+    
+    function getSelectedNatures(name) {
+        return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(cb => cb.value);
+    }
+    
+    function setSelectedNatures(name, values) {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+            cb.checked = values && values.includes(cb.value);
+        });
+    }
+    
+    // ==========================================
+    // GESTION PRENEUR
+    // ==========================================
+    window.updatePreavisPreneur = function() {
+        const clientChecked = document.getElementById('preavisPreneurClient')?.checked;
+        const conjointChecked = document.getElementById('preavisPreneurConjoint')?.checked;
+        
+        const clientRow = document.getElementById('preavisPreneurClientRow');
+        const conjointRow = document.getElementById('preavisPreneurConjointRow');
+        const noPreneurMsg = document.getElementById('preavisNoPreneurMsg');
+        
+        if (clientRow) clientRow.classList.toggle('visible', clientChecked);
+        if (conjointRow) conjointRow.classList.toggle('visible', conjointChecked);
+        if (noPreneurMsg) noPreneurMsg.style.display = (!clientChecked && !conjointChecked) ? 'flex' : 'none';
+        
+        if (clientChecked) {
+            document.getElementById('preavisPreneurClientNom').value = clientName;
+            document.getElementById('preavisPreneurClientDDN').value = formatDateDisplay(client.date_of_birth);
+        }
+        
+        if (conjointChecked && hasConjoint) {
+            document.getElementById('preavisPreneurConjointNom').value = conjointName;
+            document.getElementById('preavisPreneurConjointDDN').value = formatDateDisplay(client.conjoint_dob);
+        }
+    };
+    
+    window.calculateClauseDates = function() {
+        const dateVigueur = document.getElementById('preavisDateVigueurActuel')?.value;
+        if (!dateVigueur) return;
+        
+        const date = new Date(dateVigueur);
+        date.setFullYear(date.getFullYear() + 2);
+        const expiration = date.toISOString().split('T')[0];
+        
+        document.getElementById('preavisIncontestActuel').value = expiration;
+        document.getElementById('preavisSuicideActuel').value = expiration;
+    };
+    
+    window.updatePreavisNumeroHeader = function() {
+        const numero = document.getElementById('preavisNumero')?.value?.trim();
+        document.getElementById('preavisCurrentNumber').textContent = numero ? `Préavis #${numero}` : 'Nouveau préavis';
+        
+        if (currentPreavisIndex >= 0 && preavisList[currentPreavisIndex]) {
+            preavisList[currentPreavisIndex].numero = numero;
+            renderPreavisList();
+        }
+    };
+    
+    window.addPreavisAssure = function(type) {
+        const containerId = type === 'autres' ? 'preavisAutresAssures' : 
+                           type === 'resilies' ? 'preavisAssuresResilies' : 'preavisAssuresAdditionnels';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const row = document.createElement('div');
+        row.className = 'preavis-assure-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Nom et prénom">
+            <input type="text" placeholder="${type === 'autres' ? 'Lien' : 'Type protection'}">
+            <input type="text" placeholder="${type === 'autres' ? 'Date naissance' : 'Montant'}">
+            <button class="preavis-remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(row);
+    };
+    
+    // ==========================================
+    // NAVIGATION STEPS
+    // ==========================================
+    window.showPreavisStep = function(step) {
+        savePreavisData();
+        currentPreavisStep = step;
+        
+        document.querySelectorAll('.preavis-step-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.preavis-step').forEach(el => el.classList.remove('active', 'complete'));
+        
+        document.getElementById('preavisStep' + step)?.classList.add('active');
+        document.querySelectorAll('.preavis-step')[step]?.classList.add('active');
+        
+        document.querySelectorAll('.preavis-step').forEach((el, i) => {
+            if (i < step) {
+                el.classList.add('complete');
+                el.querySelector('.preavis-step-number').textContent = '✓';
+            } else {
+                el.querySelector('.preavis-step-number').textContent = i + 1;
+            }
+        });
+        
+        // Mettre à jour le résumé IA si on est sur l'onglet IA
+        if (step === 4) {
+            updateAISummary();
+        }
+    };
+    
+    window.preavisNextStep = function() {
+        if (currentPreavisStep < 4) showPreavisStep(currentPreavisStep + 1);
+    };
+    
+    window.preavisPrevStep = function() {
+        if (currentPreavisStep > 0) showPreavisStep(currentPreavisStep - 1);
+    };
+    
+    // ==========================================
+    // ASSISTANT IA
+    // ==========================================
+    const CLAUDE_WORKER_URL = 'https://claudelettreexplicative.dany-michaud.workers.dev';
+    
+    function updateAISummary() {
+        // Preneur
+        const clientNom = document.getElementById('preavisPreneurClientNom')?.value || '';
+        const conjointNom = document.getElementById('preavisPreneurConjointNom')?.value || '';
+        let preneurNom = '-';
+        if (clientNom && conjointNom) preneurNom = `${clientNom} et ${conjointNom}`;
+        else if (clientNom) preneurNom = clientNom;
+        else if (conjointNom) preneurNom = conjointNom;
+        
+        // Contrats
+        const assureurActuel = document.getElementById('preavisAssureurActuel')?.value || '-';
+        const natureActuel = getSelectedNatures('natureActuel').join(', ') || '-';
+        const montantActuel = document.getElementById('preavisMontantActuel')?.value || '-';
+        const primeActuel = document.getElementById('preavisPrimeActuel')?.value || '-';
+        
+        const assureurPropose = document.getElementById('preavisAssureurPropose')?.value || '-';
+        const naturePropose = getSelectedNatures('naturePropose').join(', ') || '-';
+        const montantPropose = document.getElementById('preavisMontantPropose')?.value || '-';
+        const primePropose = document.getElementById('preavisPrimePropose')?.value || '-';
+        
+        // Mise à jour
+        document.getElementById('aiSummaryPreneur').textContent = preneurNom;
+        document.getElementById('aiSummaryActuel').innerHTML = `${assureurActuel}<br><small style="color:var(--text-muted)">${natureActuel} - ${montantActuel}</small>`;
+        document.getElementById('aiSummaryPropose').innerHTML = `${assureurPropose}<br><small style="color:var(--text-muted)">${naturePropose} - ${montantPropose}</small>`;
+        document.getElementById('aiSummaryPrimes').innerHTML = `Actuel: ${primeActuel}<br>Proposé: ${primePropose}`;
+    }
+    
+    // ==========================================
+    // DICTÉE VOCALE
+    // ==========================================
+    let _dictRecognition = null;
+    let _dictating = false;
+
+    window.toggleDictation = function() {
+        if (_dictating) { stopDictation(); return; }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            FINOX.showNotification('Votre navigateur ne supporte pas la dictée vocale. Utilisez Chrome ou Edge.', 'error');
+            return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'fr-CA';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        const textarea = document.getElementById('aiContexteLibre');
+        const btn = document.getElementById('btnDictation');
+        const label = document.getElementById('dictationLabel');
+        const baseText = textarea.value;
+
+        recognition.onstart = () => {
+            _dictating = true;
+            btn.classList.add('recording');
+            label.textContent = 'Arrêter';
+            textarea.classList.add('dictating');
+            textarea.focus();
+        };
+
+        recognition.onresult = (e) => {
+            let interim = '', final = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                const t = e.results[i][0].transcript;
+                if (e.results[i].isFinal) final += t; else interim += t;
+            }
+            // Append finalized text, show interim in real-time
+            if (final) {
+                const sep = textarea.value && !textarea.value.endsWith(' ') && !textarea.value.endsWith('\n') ? ' ' : '';
+                textarea.value += sep + final;
+            }
+            // Show interim as a preview (optional visual feedback)
+            if (interim) {
+                textarea.placeholder = interim + '...';
+            }
+        };
+
+        recognition.onerror = (e) => {
+            if (e.error === 'no-speech') return; // silence, not an error
+            console.warn('Speech recognition error:', e.error);
+            if (e.error === 'not-allowed') {
+                FINOX.showNotification('Accès au micro refusé. Vérifiez les permissions du navigateur.', 'error');
+            }
+            stopDictation();
+        };
+
+        recognition.onend = () => {
+            // Auto-restart if still in dictation mode (browser stops after silence)
+            if (_dictating) {
+                try { recognition.start(); } catch(e) { stopDictation(); }
+            }
+        };
+
+        try {
+            recognition.start();
+            _dictRecognition = recognition;
+        } catch(e) {
+            FINOX.showNotification('Erreur démarrage micro: ' + e.message, 'error');
+        }
+    }
+
+    function stopDictation() {
+        _dictating = false;
+        if (_dictRecognition) {
+            try { _dictRecognition.stop(); } catch(e) {}
+            _dictRecognition = null;
+        }
+        const btn = document.getElementById('btnDictation');
+        const label = document.getElementById('dictationLabel');
+        const textarea = document.getElementById('aiContexteLibre');
+        if (btn) btn.classList.remove('recording');
+        if (label) label.textContent = 'Dicter';
+        if (textarea) {
+            textarea.classList.remove('dictating');
+            textarea.placeholder = 'Ex: Le client a acheté une maison plus chère et a besoin de plus de couverture...';
+        }
+        savePreavisData();
+    }
+
+    function buildPreavisPrompt() {
+        // Collecter toutes les données
+        const preneurClientNom = document.getElementById('preavisPreneurClientNom')?.value || '';
+        const preneurConjointNom = document.getElementById('preavisPreneurConjointNom')?.value || '';
+        const preneur = [preneurClientNom, preneurConjointNom].filter(Boolean).join(' et ') || 'Non spécifié';
+        
+        const assureurActuel = document.getElementById('preavisAssureurActuel')?.value || 'Non spécifié';
+        const natureActuel = getSelectedNatures('natureActuel').join(', ') || 'Non spécifié';
+        const montantActuel = document.getElementById('preavisMontantActuel')?.value || 'Non spécifié';
+        const primeActuel = document.getElementById('preavisPrimeActuel')?.value || 'Non spécifié';
+        const periodeActuel = document.getElementById('preavisPeriodeActuel')?.value || '';
+        const carenceActuel = document.getElementById('preavisCarenceActuel')?.value || '';
+        
+        const assureurPropose = document.getElementById('preavisAssureurPropose')?.value || 'Non spécifié';
+        const naturePropose = getSelectedNatures('naturePropose').join(', ') || 'Non spécifié';
+        const montantPropose = document.getElementById('preavisMontantPropose')?.value || 'Non spécifié';
+        const primePropose = document.getElementById('preavisPrimePropose')?.value || 'Non spécifié';
+        const periodePropose = document.getElementById('preavisPeriodePropose')?.value || '';
+        const carencePropose = document.getElementById('preavisCarencePropose')?.value || '';
+        
+        const commentairesContrats = document.getElementById('preavisCommentairesContrats')?.value || '';
+        
+        // Contexte IA
+        const contexteLibre = document.getElementById('aiContexteLibre')?.value || '';
+
+        return `Tu es un conseiller en sécurité financière au Québec. Génère les 7 sections du préavis de remplacement AMF.
+
+═══════════════════════════════════════════════════════════════
+DONNÉES DU DOSSIER
+═══════════════════════════════════════════════════════════════
+
+PRENEUR: ${preneur}
+
+CONTRAT ACTUEL (à remplacer):
+- Assureur: ${assureurActuel}
+- Nature: ${natureActuel}
+- Montant assuré: ${montantActuel}
+- Prime annuelle: ${primeActuel}
+${periodeActuel ? `- Période d'indemnisation: ${periodeActuel}` : ''}
+${carenceActuel ? `- Délai de carence: ${carenceActuel}` : ''}
+
+CONTRAT PROPOSÉ (nouveau):
+- Assureur: ${assureurPropose}
+- Nature: ${naturePropose}
+- Montant assuré: ${montantPropose}
+- Prime annuelle: ${primePropose}
+${periodePropose ? `- Période d'indemnisation: ${periodePropose}` : ''}
+${carencePropose ? `- Délai de carence: ${carencePropose}` : ''}
+
+${commentairesContrats ? `COMMENTAIRES SUR LES CONTRATS:\n${commentairesContrats}` : ''}
+
+═══════════════════════════════════════════════════════════════
+CONTEXTE ADDITIONNEL
+═══════════════════════════════════════════════════════════════
+
+${contexteLibre ? `${contexteLibre}\n` : '(Aucun contexte additionnel fourni)'}
+
+═══════════════════════════════════════════════════════════════
+FORMAT DE RÉPONSE REQUIS
+═══════════════════════════════════════════════════════════════
+
+Génère EXACTEMENT 7 sections numérotées avec ce format précis:
+
+[SECTION_1]
+(2 à 5 phrases) Description des deux contrats, type d'assurance, montants, primes, pourquoi le contrat actuel ne répond plus aux besoins.
+[/SECTION_1]
+
+[SECTION_2]
+(2 à 5 phrases) En quoi le contrat actuel ne répond pas aux besoins du client.
+[/SECTION_2]
+
+[SECTION_3]
+(2 à 5 phrases) En quoi le contrat proposé répond mieux aux besoins.
+[/SECTION_3]
+
+[SECTION_4]
+(2 à 5 phrases) Désavantages du remplacement (période d'incontestabilité qui recommence, perte potentielle de capital, prime plus élevée si applicable, etc.).
+[/SECTION_4]
+
+[SECTION_5]
+(2 à 5 phrases) Pourquoi une modification au contrat actuel n'est pas envisagée.
+[/SECTION_5]
+
+[SECTION_6]
+(2 à 5 phrases) Impacts financiers du remplacement (frais de rachat, valeurs, augmentation/diminution de prime, impact fiscal).
+[/SECTION_6]
+
+[SECTION_7]
+(2 à 5 phrases) Différences dans les garanties complémentaires. Si aucune: "Aucun des deux contrats n'inclut de garanties complémentaires."
+[/SECTION_7]
+
+═══════════════════════════════════════════════════════════════
+RÈGLES IMPORTANTES
+═══════════════════════════════════════════════════════════════
+- Chaque section: 2 à 5 phrases professionnelles et claires
+- Style conforme au standard AMF québécois
+- Montants formatés avec $ (ex: 300 000 $)
+- Si une info manque: "Non mentionné" ou formulation appropriée
+- Ne jamais inventer d'information
+- Utilise EXACTEMENT les balises [SECTION_X] et [/SECTION_X]`;
+    }
+    
+    const AI_SYSTEM_PROMPT = `Tu es un conseiller en sécurité financière chevronné au Québec avec expertise en conformité AMF.
+
+Tu rédiges des préavis de remplacement conformes aux exigences de l'Autorité des marchés financiers.
+
+Ton style:
+- Professionnel, clair et objectif
+- Phrases concises (2-5 par section)
+- Langage conforme au standard AMF
+- Montants bien formatés (ex: 500 000 $)
+
+Tu respectes strictement le format demandé avec les balises [SECTION_X] et [/SECTION_X].`;
+    
+    window.generatePreavisWithAI = async function() {
+        const btn = document.getElementById('btnGeneratePreavisAI');
+        const btnText = document.getElementById('btnGenerateText');
+        const resultContainer = document.getElementById('aiResultContainer');
+        
+        // Vérifier qu'on a les données minimales
+        const assureurActuel = document.getElementById('preavisAssureurActuel')?.value;
+        const assureurPropose = document.getElementById('preavisAssureurPropose')?.value;
+        
+        if (!assureurActuel || !assureurPropose) {
+            FINOX.showNotification('Veuillez compléter les informations des contrats avant de générer.', 'warning');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.classList.add('loading');
+        btnText.textContent = 'Génération en cours...';
+        resultContainer.classList.remove('visible');
+        
+        try {
+            const prompt = buildPreavisPrompt();
+            console.log('📋 Prompt préavis IA:', prompt.substring(0, 500) + '...');
+            
+            const response = await fetch(CLAUDE_WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, systemPrompt: AI_SYSTEM_PROMPT })
+            });
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
+            
+            const aiResponse = result.content?.[0]?.text;
+            if (!aiResponse) throw new Error('Réponse vide');
+            
+            console.log('📋 Réponse IA:', aiResponse);
+            
+            // Parser et mapper les sections
+            const sections = parseAISections(aiResponse);
+            
+            // Remplir les champs
+            if (sections[1]) document.getElementById('preavisCommentairesContrats').value = sections[1];
+            if (sections[2]) document.getElementById('preavisMotif21').value = sections[2];
+            if (sections[3]) document.getElementById('preavisMotif22').value = sections[3];
+            if (sections[4]) document.getElementById('preavisMotif23').value = sections[4];
+            if (sections[5]) document.getElementById('preavisMotif24').value = sections[5];
+            if (sections[6]) document.getElementById('preavisMotif25').value = sections[6];
+            if (sections[7]) document.getElementById('preavisMotif26').value = sections[7];
+            
+            // Sauvegarder
+            savePreavisData();
+            
+            resultContainer.classList.add('visible');
+            FINOX.showNotification('7 sections générées avec succès!', 'success');
+            
+        } catch (error) {
+            console.error('Erreur génération IA:', error);
+            FINOX.showNotification('Erreur: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btnText.textContent = 'Générer les 7 sections avec l\'IA';
+        }
+    };
+    
+    function parseAISections(text) {
+        const sections = {};
+        
+        for (let i = 1; i <= 7; i++) {
+            const regex = new RegExp(`\\[SECTION_${i}\\]([\\s\\S]*?)\\[\\/SECTION_${i}\\]`, 'i');
+            const match = text.match(regex);
+            if (match && match[1]) {
+                sections[i] = match[1].trim();
+            }
+        }
+        
+        // Fallback: si les balises n'ont pas fonctionné, essayer de parser autrement
+        if (Object.keys(sections).length === 0) {
+            console.log('⚠️ Balises non trouvées, parsing alternatif...');
+            
+            // Essayer avec des numéros (1., 2., etc.)
+            const lines = text.split('\n');
+            let currentSection = 0;
+            let currentContent = [];
+            
+            lines.forEach(line => {
+                const sectionMatch = line.match(/^(\d+)\.\s*/);
+                if (sectionMatch) {
+                    if (currentSection > 0 && currentContent.length > 0) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = parseInt(sectionMatch[1]);
+                    currentContent = [line.replace(/^\d+\.\s*/, '')];
+                } else if (currentSection > 0) {
+                    currentContent.push(line);
+                }
+            });
+            
+            if (currentSection > 0 && currentContent.length > 0) {
+                sections[currentSection] = currentContent.join('\n').trim();
+            }
+        }
+        
+        console.log('📋 Sections parsées:', Object.keys(sections));
+        return sections;
+    }
+    
+    // ==========================================
+    // GESTION LISTE PRÉAVIS
+    // ==========================================
+    function renderPreavisList() {
+        const container = document.getElementById('preavisListCards');
+        if (!container) return;
+        
+        if (preavisList.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">Aucun préavis. Cliquez sur "Nouveau préavis" pour commencer.</div>';
+            return;
+        }
+        
+        container.innerHTML = preavisList.map((p, idx) => `
+            <div class="preavis-card ${idx === currentPreavisIndex ? 'active' : ''}" onclick="openPreavisForm(${idx})">
+                <div class="preavis-card-header">
+                    <span class="preavis-card-title">${p.numero ? 'Préavis #' + p.numero : 'Nouveau préavis'}</span>
+                    <span class="preavis-card-status ${p.status}">${p.status === 'draft' ? 'Brouillon' : 'Complété'}</span>
+                </div>
+                <div class="preavis-card-info">
+                    ${p.data?.assureurActuel || 'Assureur'} → ${p.data?.assureurPropose || 'Nouvel assureur'}
+                </div>
+                <div class="preavis-card-actions">
+                    <button class="preavis-card-btn edit" onclick="event.stopPropagation(); openPreavisForm(${idx})">✏️ Modifier</button>
+                    <button class="preavis-card-btn delete" onclick="event.stopPropagation(); deletePreavis(${idx})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    window.createNewPreavis = function() {
+        const newPreavis = {
+            id: Date.now(),
+            numero: '',
+            status: 'draft',
+            dateCreation: new Date().toISOString(),
+            data: {}
+        };
+        
+        preavisList.push(newPreavis);
+        currentPreavisIndex = preavisList.length - 1;
+        
+        renderPreavisList();
+        openPreavisForm(currentPreavisIndex);
+    };
+    
+    window.openPreavisForm = function(index) {
+        currentPreavisIndex = index;
+        currentPreavisStep = 0;
+        
+        const preavis = preavisList[index];
+        if (!preavis) return;
+        
+        document.getElementById('preavisCurrentNumber').textContent = preavis.numero ? `Préavis #${preavis.numero}` : 'Nouveau préavis';
+        
+        // Mettre à jour le statut et le bouton
+        const statusEl = document.getElementById('preavisCurrentStatus');
+        const btn = document.getElementById('btnMarkComplete');
+        
+        if (preavis.status === 'complete') {
+            statusEl.textContent = 'Complété';
+            statusEl.style.background = 'rgba(16, 185, 129, 0.2)';
+            statusEl.style.color = '#10b981';
+            btn.classList.add('completed');
+            btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        } else {
+            statusEl.textContent = 'Brouillon';
+            statusEl.style.background = 'rgba(245, 158, 11, 0.2)';
+            statusEl.style.color = '#f59e0b';
+            btn.classList.remove('completed');
+            btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>';
+        }
+        
+        loadPreavisData(preavis);
+        
+        document.getElementById('preavisFormContainer').classList.add('visible');
+        showPreavisStep(0);
+        renderPreavisList();
+    };
+    
+    window.closePreavisForm = function() {
+        savePreavisData();
+        document.getElementById('preavisFormContainer').classList.remove('visible');
+        currentPreavisIndex = -1;
+        renderPreavisList();
+        saveToDatabase();
+    };
+    
+    window.deletePreavis = async function(index) {
+        if (!(await FINOX.confirm('Supprimer ce préavis?'))) return;
+        preavisList.splice(index, 1);
+        if (currentPreavisIndex === index) closePreavisForm();
+        else if (currentPreavisIndex > index) currentPreavisIndex--;
+        renderPreavisList();
+        saveToDatabase();
+    };
+    
+    // ==========================================
+    // CHARGEMENT/SAUVEGARDE DONNÉES PRÉAVIS
+    // ==========================================
+    function loadPreavisData(preavis) {
+        const d = preavis.data || {};
+        
+        // Preneur
+        document.getElementById('preavisPreneurClient').checked = d.preneurClient || false;
+        document.getElementById('preavisPreneurConjoint').checked = d.preneurConjoint || false;
+        document.getElementById('preavisPreneurClientNom').value = d.preneurClientNom || '';
+        document.getElementById('preavisPreneurClientDDN').value = d.preneurClientDDN || '';
+        document.getElementById('preavisPreneurConjointNom').value = d.preneurConjointNom || '';
+        document.getElementById('preavisPreneurConjointDDN').value = d.preneurConjointDDN || '';
+        updatePreavisPreneur();
+        
+        // Assuré
+        document.getElementById('preavisAssureNom').value = d.assureNom || '';
+        document.getElementById('preavisAssureDDN').value = d.assureDDN || '';
+        
+        // Contrats
+        document.getElementById('preavisNumPoliceRemplacee').value = d.numPoliceRemplacee || '';
+        document.getElementById('preavisDateVigueurActuel').value = d.dateVigueurActuel || '';
+        document.getElementById('preavisNumero').value = preavis.numero || '';
+        document.getElementById('preavisAssureurActuel').value = d.assureurActuel || '';
+        setSelectedNatures('natureActuel', d.natureActuel || []);
+        document.getElementById('preavisMontantActuel').value = d.montantActuel || '';
+        document.getElementById('preavisPrimeActuel').value = d.primeActuel || '';
+        document.getElementById('preavisPeriodeActuel').value = d.periodeActuel || '';
+        document.getElementById('preavisCarenceActuel').value = d.carenceActuel || '';
+        document.getElementById('preavisAssureurPropose').value = d.assureurPropose || '';
+        setSelectedNatures('naturePropose', d.naturePropose || []);
+        document.getElementById('preavisMontantPropose').value = d.montantPropose || '';
+        document.getElementById('preavisPrimePropose').value = d.primePropose || '';
+        document.getElementById('preavisPeriodePropose').value = d.periodePropose || '';
+        document.getElementById('preavisCarencePropose').value = d.carencePropose || '';
+        document.getElementById('preavisCommentairesContrats').value = d.commentairesContrats || '';
+        
+        // Clauses
+        document.getElementById('preavisIncontestActuel').value = d.incontestActuel || '';
+        document.getElementById('preavisIncontestPropose').value = d.incontestPropose || '';
+        document.getElementById('preavisIncontestNA').checked = d.incontestNA || false;
+        document.getElementById('preavisIncontestLu').checked = d.incontestLu || false;
+        document.getElementById('preavisSuicideActuel').value = d.suicideActuel || '';
+        document.getElementById('preavisSuicidePropose').value = d.suicidePropose || '';
+        document.getElementById('preavisSuicideNA').checked = d.suicideNA || false;
+        document.getElementById('preavisSuicideLu').checked = d.suicideLu || false;
+        
+        // Motifs
+        document.getElementById('preavisMotif21').value = d.motif21 || '';
+        document.getElementById('preavisMotif22').value = d.motif22 || '';
+        document.getElementById('preavisMotif23').value = d.motif23 || '';
+        document.getElementById('preavisMotif24').value = d.motif24 || '';
+        document.getElementById('preavisMotif25').value = d.motif25 || '';
+        document.getElementById('preavisMotif26').value = d.motif26 || '';
+        document.getElementById('preavisCommentairesMotifs').value = d.commentairesMotifs || '';
+        
+        // Contexte IA
+        document.getElementById('aiContexteLibre').value = d.aiContexteLibre || d.aiRaisonPrincipale || '';
+    }
+    
+    function savePreavisData() {
+        if (currentPreavisIndex < 0) return;
+        const preavis = preavisList[currentPreavisIndex];
+        if (!preavis) return;
+        
+        const d = preavis.data;
+        
+        // Preneur
+        d.preneurClient = document.getElementById('preavisPreneurClient')?.checked || false;
+        d.preneurConjoint = document.getElementById('preavisPreneurConjoint')?.checked || false;
+        d.preneurClientNom = document.getElementById('preavisPreneurClientNom')?.value || '';
+        d.preneurClientDDN = document.getElementById('preavisPreneurClientDDN')?.value || '';
+        d.preneurConjointNom = document.getElementById('preavisPreneurConjointNom')?.value || '';
+        d.preneurConjointDDN = document.getElementById('preavisPreneurConjointDDN')?.value || '';
+        
+        // Assuré
+        d.assureNom = document.getElementById('preavisAssureNom')?.value || '';
+        d.assureDDN = document.getElementById('preavisAssureDDN')?.value || '';
+        
+        // Contrats
+        preavis.numero = document.getElementById('preavisNumero')?.value || '';
+        d.numPoliceRemplacee = document.getElementById('preavisNumPoliceRemplacee')?.value || '';
+        d.dateVigueurActuel = document.getElementById('preavisDateVigueurActuel')?.value || '';
+        d.assureurActuel = document.getElementById('preavisAssureurActuel')?.value || '';
+        d.natureActuel = getSelectedNatures('natureActuel');
+        d.montantActuel = document.getElementById('preavisMontantActuel')?.value || '';
+        d.primeActuel = document.getElementById('preavisPrimeActuel')?.value || '';
+        d.periodeActuel = document.getElementById('preavisPeriodeActuel')?.value || '';
+        d.carenceActuel = document.getElementById('preavisCarenceActuel')?.value || '';
+        d.assureurPropose = document.getElementById('preavisAssureurPropose')?.value || '';
+        d.naturePropose = getSelectedNatures('naturePropose');
+        d.montantPropose = document.getElementById('preavisMontantPropose')?.value || '';
+        d.primePropose = document.getElementById('preavisPrimePropose')?.value || '';
+        d.periodePropose = document.getElementById('preavisPeriodePropose')?.value || '';
+        d.carencePropose = document.getElementById('preavisCarencePropose')?.value || '';
+        d.commentairesContrats = document.getElementById('preavisCommentairesContrats')?.value || '';
+        
+        // Clauses
+        d.incontestActuel = document.getElementById('preavisIncontestActuel')?.value || '';
+        d.incontestPropose = document.getElementById('preavisIncontestPropose')?.value || '';
+        d.incontestNA = document.getElementById('preavisIncontestNA')?.checked || false;
+        d.incontestLu = document.getElementById('preavisIncontestLu')?.checked || false;
+        d.suicideActuel = document.getElementById('preavisSuicideActuel')?.value || '';
+        d.suicidePropose = document.getElementById('preavisSuicidePropose')?.value || '';
+        d.suicideNA = document.getElementById('preavisSuicideNA')?.checked || false;
+        d.suicideLu = document.getElementById('preavisSuicideLu')?.checked || false;
+        
+        // Motifs
+        d.motif21 = document.getElementById('preavisMotif21')?.value || '';
+        d.motif22 = document.getElementById('preavisMotif22')?.value || '';
+        d.motif23 = document.getElementById('preavisMotif23')?.value || '';
+        d.motif24 = document.getElementById('preavisMotif24')?.value || '';
+        d.motif25 = document.getElementById('preavisMotif25')?.value || '';
+        d.motif26 = document.getElementById('preavisMotif26')?.value || '';
+        d.commentairesMotifs = document.getElementById('preavisCommentairesMotifs')?.value || '';
+        
+        // Contexte IA
+        d.aiContexteLibre = document.getElementById('aiContexteLibre')?.value || '';
+        
+        renderPreavisList();
+    }
+    
+    // ==========================================
+    // SAUVEGARDE SQL
+    // ==========================================
+    async function saveToDatabase() {
+        const updatedAbf = { ...abfData, preavis_list: preavisList };
+        
+        try {
+            await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            abfData = updatedAbf;
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+        }
+    }
+    
+    window.savePreavisManual = function() {
+        savePreavisData();
+        saveToDatabase();
+        FINOX.showNotification('Préavis sauvegardé!', 'success');
+    };
+    
+    // ==========================================
+    // EXPORT PDF AMF via Worker Cloudflare
+    // ==========================================
+    
+    // URL du Worker PDF FINOX
+    const FINOX_PDF_WORKER_URL = 'https://amfpreavis.dany-michaud.workers.dev';
+    
+    window.exportPreavisPDF = async function() {
+        if (currentPreavisIndex < 0) {
+            FINOX.showNotification('Aucun préavis sélectionné', 'warning');
+            return;
+        }
+        
+        savePreavisData();
+        
+        const preavis = preavisList[currentPreavisIndex];
+        if (!preavis) {
+            FINOX.showNotification('Préavis non trouvé', 'error');
+            return;
+        }
+        
+        // Vérifier les données minimales
+        if (!preavis.data.assureurActuel && !preavis.data.assureurPropose) {
+            FINOX.showNotification('Veuillez compléter les informations des contrats avant d\'exporter', 'warning');
+            return;
+        }
+        
+        FINOX.showNotification('Génération du PDF AMF en cours...', 'info');
+        
+        try {
+            // Collecter les données du conseiller
+            const conseiller = JSON.parse(localStorage.getItem('finox_conseiller') || '{}');
+            
+            // Préparer les données pour l'export
+            const exportData = {
+                ...preavis,
+                conseiller: conseiller
+            };
+            
+            console.log('📄 Envoi au Worker PDF:', exportData);
+            
+            // Appeler le Worker Cloudflare
+            const response = await fetch(`${FINOX_PDF_WORKER_URL}/preavis`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(exportData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
+            }
+            
+            // Télécharger le PDF
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Preavis_AMF_${preavis.numero || 'draft'}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            FINOX.showNotification('✅ PDF AMF téléchargé avec succès!', 'success');
+            
+        } catch (error) {
+            console.error('Erreur export PDF:', error);
+            FINOX.showNotification('Erreur: ' + error.message, 'error');
+            
+            // Proposer le fallback JSON
+            if (await FINOX.confirm('Le Worker PDF n\'est pas encore déployé.\n\nVoulez-vous télécharger les données JSON à la place?')) {
+                downloadPreavisJSON();
+            }
+        }
+    };
+    
+    function downloadPreavisJSON() {
+        const preavis = preavisList[currentPreavisIndex];
+        const conseiller = JSON.parse(localStorage.getItem('finox_conseiller') || '{}');
+        
+        const exportData = {
+            ...preavis,
+            conseiller: conseiller,
+            exportDate: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `preavis_data_${preavis.numero || 'draft'}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        FINOX.showNotification('Données JSON exportées.', 'info');
+    }
+    
+    window.togglePreavisComplete = async function() {
+        if (currentPreavisIndex < 0) return;
+        
+        const preavis = preavisList[currentPreavisIndex];
+        if (!preavis) return;
+        
+        // Toggle le statut
+        preavis.status = preavis.status === 'complete' ? 'draft' : 'complete';
+        
+        // Mettre à jour l'affichage
+        const btn = document.getElementById('btnMarkComplete');
+        const statusEl = document.getElementById('preavisCurrentStatus');
+        
+        if (preavis.status === 'complete') {
+            btn.classList.add('completed');
+            btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            statusEl.textContent = 'Complété';
+            statusEl.style.background = 'rgba(16, 185, 129, 0.2)';
+            statusEl.style.color = '#10b981';
+        } else {
+            btn.classList.remove('completed');
+            btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>';
+            statusEl.textContent = 'Brouillon';
+            statusEl.style.background = 'rgba(245, 158, 11, 0.2)';
+            statusEl.style.color = '#f59e0b';
+        }
+        
+        renderPreavisList();
+        await saveToDatabase();
+        FINOX.showNotification(preavis.status === 'complete' ? 'Préavis marqué complété!' : 'Préavis remis en brouillon', 'success');
+    };
+    
+    // saveModuleData pour auto-save via navigation
+    window.saveModuleData = async function() {
+        try {
+            if (currentPreavisIndex >= 0) savePreavisData();
+            await saveToDatabase();
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ==========================================
+    // DOCUSIGN INTEGRATION
+    // ==========================================
+    window.sendDocuSign = async function() {
+        if (currentPreavisIndex < 0) {
+            FINOX.showNotification('Aucun préavis sélectionné', 'warning');
+            return;
+        }
+
+        savePreavisData();
+        const preavis = preavisList[currentPreavisIndex];
+        if (!preavis) return;
+
+        if (!preavis.data.assureurActuel && !preavis.data.assureurPropose) {
+            FINOX.showNotification('Veuillez compléter les informations des contrats', 'warning');
+            return;
+        }
+
+        // Get client data
+        const clientData = await FINOX.loadClientData();
+        if (!clientData) {
+            FINOX.showNotification('Données client non disponibles', 'error');
+            return;
+        }
+
+        const clientEmail = clientData.email;
+        const clientName = ((clientData.first_name || clientData.prenom || '') + ' ' + (clientData.last_name || clientData.nom || '')).trim();
+
+        if (!clientEmail) {
+            FINOX.showNotification('Le client n\'a pas d\'adresse email. Ajoutez-la dans Gestion Contact.', 'warning');
+            return;
+        }
+
+        // Check if conjoint should also sign
+        let conjointEmail = null;
+        let conjointName = null;
+        if (preavis.data.preneurConjoint && preavis.data.preneurConjointNom) {
+            conjointName = preavis.data.preneurConjointNom;
+            conjointEmail = clientData.conjoint_email || null;
+        }
+
+        // Build confirmation message
+        let confirmMsg = `Envoyer le préavis AMF ${preavis.numero || 'brouillon'} via DocuSign pour signature?\n\n`;
+        confirmMsg += `📧 Client: ${clientName} (${clientEmail})`;
+        if (conjointName && conjointEmail) {
+            confirmMsg += `\n📧 Conjoint: ${conjointName} (${conjointEmail})`;
+        } else if (conjointName && !conjointEmail) {
+            confirmMsg += `\n⚠️ Conjoint: ${conjointName} (pas d'email — ne sera pas inclus)`;
+        }
+        confirmMsg += '\n\nLe client recevra un email DocuSign avec le PDF à signer (initiales + signature).';
+
+        if (!(await FINOX.confirm(confirmMsg))) return;
+
+        FINOX.showNotification('⏳ Envoi via DocuSign en cours...', 'info');
+
+        try {
+            // Send preavis data to Edge Function (PDF generated server-side)
+            const profile = FINOX.getUserProfile() || await FINOX.loadUserProfile();
+            const conseiller = {
+                firstName: profile?.first_name || '',
+                lastName: profile?.last_name || '',
+                email: profile?.email || '',
+                phone: profile?.phone || '',
+                amf: profile?.numero_amf || '',
+            };
+
+            const { data, error } = await FINOX.supabase.functions.invoke('docusign-send-preavis', {
+                body: {
+                    preavisData: { ...preavis, conseiller },
+                    preavisNumero: preavis.numero || null,
+                    clientEmail,
+                    clientName: clientName.trim(),
+                    conjointEmail: conjointEmail || undefined,
+                    conjointName: conjointName || undefined,
+                    clientId: FINOX.CLIENT_ID,
+                    organizationId: clientData.organization_id,
+                },
+            });
+
+            if (error) {
+                // Extract detailed error message from FunctionsHttpError
+                let msg = error.message || 'Erreur inconnue';
+                try {
+                    if (error.context) {
+                        const errBody = await error.context.json();
+                        msg = errBody.error || errBody.message || msg;
+                    }
+                } catch (_) {}
+                console.error('DocuSign function error details:', msg);
+                throw new Error(msg);
+            }
+
+            if (data && data.success) {
+                FINOX.showNotification('✅ ' + data.message, 'success');
+                FINOX.addTimelineEntry('docusign_envoye', 'Préavis envoyé via DocuSign', `${preavis.numero || 'brouillon'} — envoyé à ${clientEmail}`);
+            } else {
+                throw new Error((data && data.error) || 'Erreur DocuSign');
+            }
+        } catch (err) {
+            console.error('DocuSign error:', err);
+            FINOX.showNotification('❌ Erreur DocuSign: ' + err.message, 'error');
+        }
+    };
+
+    // ==========================================
+    // INITIALISATION
+    // ==========================================
+    renderPreavisList();
+
+    // Activer le formatage monétaire sur les inputs
+    FINOX.setupAllMoneyInputs();
+
+    // Limiter les champs date à 4 chiffres pour l'année
+    FINOX.setupAllDateInputs();
+
+    console.log('✅ Module Préavis de Remplacement v1.0 chargé');
+})();
+</script>

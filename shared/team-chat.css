@@ -1,0 +1,1441 @@
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * FINOX OS — Team Chat Module CSS
+ * ═══════════════════════════════════════════════════════════════
+ * Bulle flottante + volet déroulant depuis la droite
+ */
+
+/* ==========================================
+   FLOATING BUBBLE
+========================================== */
+.tc-bubble {
+    position: fixed;
+    bottom: 22px;
+    right: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border: none;
+    color: #000;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(201, 162, 39, 0.3),
+                0 0 30px rgba(201, 162, 39, 0.08);
+}
+
+.tc-bubble:hover {
+    transform: scale(1.12);
+    box-shadow: 0 6px 28px rgba(201, 162, 39, 0.45),
+                0 0 40px rgba(201, 162, 39, 0.12);
+}
+
+.tc-bubble.open {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
+
+/* Badge */
+.tc-bubble-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid var(--bg-primary);
+    animation: tcBadgePulse 2s ease-in-out infinite;
+}
+
+.tc-bubble-badge.hidden { display: none; }
+
+@keyframes tcBadgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* Pulse animation on new message */
+.tc-bubble.has-new::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    animation: tcRipple 1.5s ease-out infinite;
+}
+
+@keyframes tcRipple {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ==========================================
+   CHAT PANEL — Slide from right
+========================================== */
+.tc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9996;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.tc-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tc-panel {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 400px;
+    height: 100vh;
+    background: rgba(14, 14, 20, 0.97);
+    backdrop-filter: blur(30px) saturate(1.4);
+    -webkit-backdrop-filter: blur(30px) saturate(1.4);
+    border-left: 1px solid rgba(201, 162, 39, 0.15);
+    z-index: 9997;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.tc-panel.open {
+    right: 0;
+}
+
+.tc-panel.pinned {
+    box-shadow: none;
+    border-left: 1px solid rgba(201, 162, 39, 0.25);
+}
+
+/* ==========================================
+   PANEL HEADER
+========================================== */
+.tc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.1);
+    flex-shrink: 0;
+}
+
+.tc-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tc-header-left h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tc-header-left .tc-online-count {
+    font-size: 11px;
+    color: var(--success);
+    background: rgba(34, 197, 94, 0.12);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.tc-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tc-header-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tc-header-btn:hover {
+    background: rgba(201, 162, 39, 0.15);
+    color: var(--gold);
+}
+
+/* Back button for conversation view */
+.tc-back-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.tc-back-btn:hover {
+    background: rgba(201, 162, 39, 0.15);
+    color: var(--gold);
+}
+
+/* ==========================================
+   MY STATUS BAR
+========================================== */
+.tc-my-status {
+    padding: 6px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    flex-shrink: 0;
+    position: relative;
+}
+
+.tc-status-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tc-status-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(201, 162, 39, 0.15);
+}
+
+.tc-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+}
+
+/* Status dropdown */
+.tc-status-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 16px;
+    right: 16px;
+    margin-top: 4px;
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 162, 39, 0.12);
+    border-radius: 10px;
+    padding: 4px;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    animation: tcMenuIn 0.15s ease-out;
+}
+
+.tc-status-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.tc-status-option:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.tc-status-option.active {
+    background: rgba(201, 162, 39, 0.08);
+    color: var(--gold);
+}
+
+/* ==========================================
+   CHANNEL LIST VIEW
+========================================== */
+.tc-channels {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+
+.tc-channel-section {
+    margin-bottom: 16px;
+}
+
+.tc-channel-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    padding: 8px 8px 4px;
+}
+
+.tc-channel-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.tc-channel-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tc-channel-item.active {
+    background: rgba(201, 162, 39, 0.08);
+    border: 1px solid rgba(201, 162, 39, 0.12);
+}
+
+.tc-channel-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(201, 162, 39, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Online indicator on avatar */
+.tc-channel-icon .tc-presence-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(14, 14, 20, 0.97);
+}
+
+.tc-presence-dot.online { background: var(--success); }
+.tc-presence-dot.away { background: var(--warning); }
+.tc-presence-dot.busy { background: var(--danger); }
+.tc-presence-dot.offline { background: var(--text-muted); }
+
+.tc-channel-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tc-channel-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tc-channel-preview {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.tc-channel-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.tc-channel-time {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.tc-channel-unread {
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--gold);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+}
+
+/* ==========================================
+   CONVERSATION VIEW
+========================================== */
+.tc-conversation {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tc-conv-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.1);
+    flex-shrink: 0;
+}
+
+.tc-conv-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.tc-conv-title h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tc-conv-title small {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Messages area */
+.tc-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tc-messages-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.tc-messages-empty span:first-child {
+    font-size: 36px;
+}
+
+/* Date separator */
+.tc-date-sep {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 8px;
+}
+
+.tc-date-sep::before,
+.tc-date-sep::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tc-date-sep span {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Message bubble */
+.tc-msg {
+    display: flex;
+    gap: 8px;
+    max-width: 85%;
+    animation: tcMsgIn 0.25s ease-out;
+}
+
+.tc-msg.mine {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+}
+
+.tc-msg.mine + .tc-msg.mine,
+.tc-msg:not(.mine) + .tc-msg:not(.mine) {
+    margin-top: 0;
+}
+
+@keyframes tcMsgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tc-msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(201, 162, 39, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+.tc-msg.grouped .tc-msg-avatar {
+    visibility: hidden;
+}
+
+.tc-msg-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tc-msg-sender {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    padding-left: 2px;
+}
+
+.tc-msg.mine .tc-msg-sender {
+    display: none;
+}
+
+.tc-msg.grouped .tc-msg-sender {
+    display: none;
+}
+
+.tc-msg-content {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-primary);
+    word-wrap: break-word;
+    position: relative;
+}
+
+.tc-msg:not(.mine) .tc-msg-content {
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom-left-radius: 4px;
+}
+
+.tc-msg.mine .tc-msg-content {
+    background: rgba(201, 162, 39, 0.15);
+    border-bottom-right-radius: 4px;
+}
+
+.tc-msg.grouped:not(.mine) .tc-msg-content {
+    border-top-left-radius: 4px;
+}
+
+.tc-msg.grouped.mine .tc-msg-content {
+    border-top-right-radius: 4px;
+}
+
+.tc-msg-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 0 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tc-msg:hover .tc-msg-time {
+    opacity: 1;
+}
+
+.tc-msg.mine .tc-msg-time {
+    text-align: right;
+}
+
+.tc-msg-actions {
+    display: inline;
+    margin-left: 6px;
+}
+
+.tc-msg-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0 2px;
+    vertical-align: middle;
+}
+
+.tc-msg:hover .tc-msg-actions button {
+    opacity: 0.5;
+}
+
+.tc-msg:hover .tc-msg-actions button:hover {
+    opacity: 1;
+}
+
+/* System message */
+.tc-msg-system {
+    text-align: center;
+    padding: 8px 16px;
+    margin: 8px 0;
+}
+
+.tc-msg-system span {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px 12px;
+    border-radius: 10px;
+}
+
+/* Client share card */
+.tc-client-card {
+    background: rgba(201, 162, 39, 0.06);
+    border: 1px solid rgba(201, 162, 39, 0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.tc-client-card:hover {
+    background: rgba(201, 162, 39, 0.1);
+    border-color: rgba(201, 162, 39, 0.25);
+}
+
+.tc-client-card-icon {
+    font-size: 20px;
+}
+
+.tc-client-card-info {
+    flex: 1;
+}
+
+.tc-client-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tc-client-card-detail {
+    font-size: 11px;
+    color: var(--gold);
+}
+
+/* Meet link card */
+.tc-meet-card {
+    background: rgba(66, 133, 244, 0.08);
+    border: 1px solid rgba(66, 133, 244, 0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tc-meet-card:hover {
+    background: rgba(66, 133, 244, 0.15);
+}
+
+.tc-meet-card-icon {
+    font-size: 22px;
+}
+
+.tc-meet-card-text {
+    flex: 1;
+}
+
+.tc-meet-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tc-meet-card-link {
+    font-size: 11px;
+    color: var(--info);
+}
+
+.tc-meet-join {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    background: #4285f4;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tc-meet-join:hover {
+    background: #5a9cf5;
+}
+
+/* ==========================================
+   INPUT AREA
+========================================== */
+.tc-input-area {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(201, 162, 39, 0.1);
+    flex-shrink: 0;
+}
+
+/* Reply preview */
+.tc-reply-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 2px solid var(--gold);
+    border-radius: 0 6px 6px 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.tc-reply-preview .tc-reply-close {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.tc-reply-preview .tc-reply-close:hover {
+    opacity: 1;
+}
+
+.tc-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.tc-input-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.tc-input-action {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tc-input-action:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.tc-input-action.tc-meet-btn:hover {
+    color: #4285f4;
+    background: rgba(66, 133, 244, 0.1);
+}
+
+.tc-input-action.tc-share-btn:hover {
+    color: var(--gold);
+    background: rgba(201, 162, 39, 0.1);
+}
+
+.tc-input-wrap {
+    flex: 1;
+    position: relative;
+}
+
+.tc-input {
+    width: 100%;
+    padding: 9px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    max-height: 100px;
+    overflow-y: auto;
+    line-height: 1.4;
+}
+
+.tc-input:focus {
+    border-color: rgba(201, 162, 39, 0.3);
+}
+
+.tc-input::placeholder {
+    color: var(--text-muted);
+}
+
+.tc-send-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    background: var(--gold);
+    color: #000;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.tc-send-btn:hover {
+    background: var(--gold-light);
+    transform: scale(1.05);
+}
+
+.tc-send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================
+   NEW CHANNEL MODAL
+========================================== */
+.tc-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.tc-modal {
+    background: rgba(22, 22, 30, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(201, 162, 39, 0.12);
+    border-radius: 16px;
+    padding: 22px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
+}
+
+.tc-modal h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tc-modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+
+.tc-modal-input:focus {
+    border-color: rgba(201, 162, 39, 0.3);
+}
+
+/* Member selection */
+.tc-member-list {
+    max-height: 380px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 162, 39, 0.15) transparent;
+}
+
+.tc-member-list::-webkit-scrollbar { width: 4px; }
+.tc-member-list::-webkit-scrollbar-track { background: transparent; }
+.tc-member-list::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.15); border-radius: 4px; }
+.tc-member-list::-webkit-scrollbar-thumb:hover { background: rgba(201, 162, 39, 0.3); }
+
+.tc-member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.tc-member-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tc-member-item.selected {
+    background: rgba(201, 162, 39, 0.08);
+}
+
+.tc-member-item input[type="checkbox"] {
+    accent-color: var(--gold);
+}
+
+.tc-member-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(201, 162, 39, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.tc-member-name {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.tc-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.tc-modal-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tc-modal-btn.cancel {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+}
+
+.tc-modal-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tc-modal-btn.primary {
+    background: var(--gold);
+    color: #000;
+}
+
+.tc-modal-btn.primary:hover {
+    background: var(--gold-light);
+}
+
+/* ==========================================
+   TYPING INDICATOR
+========================================== */
+.tc-typing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    min-height: 20px;
+}
+
+.tc-typing-dots {
+    display: flex;
+    gap: 3px;
+}
+
+.tc-typing-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: tcTypingBounce 1.2s ease-in-out infinite;
+}
+
+.tc-typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.tc-typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes tcTypingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+}
+
+/* ==========================================
+   EMOJI PICKER (simple)
+========================================== */
+.tc-emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    max-width: 280px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+.tc-emoji-picker button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.tc-emoji-picker button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================
+   MENTIONS
+========================================== */
+.tc-mention {
+    color: var(--gold);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tc-mention:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================
+   CONVERSATION OPTIONS MENU
+========================================== */
+.tc-conv-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    min-width: 220px;
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 162, 39, 0.12);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    display: none;
+}
+
+.tc-conv-menu.show {
+    display: block;
+    animation: tcMenuIn 0.15s ease-out;
+}
+
+@keyframes tcMenuIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tc-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.tc-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.tc-menu-item.tc-menu-danger {
+    color: var(--danger);
+}
+
+.tc-menu-item.tc-menu-danger:hover {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.tc-menu-sep {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 4px 8px;
+}
+
+/* ==========================================
+   PINNED MESSAGES BAR
+========================================== */
+.tc-pinned-bar {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.08);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tc-pinned-bar:hover {
+    background: rgba(201, 162, 39, 0.04);
+}
+
+.tc-pinned-bar-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.tc-pinned-bar-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tc-pinned-bar-count {
+    font-size: 10px;
+    color: var(--gold);
+    background: rgba(201, 162, 39, 0.1);
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Pinned messages expanded list */
+.tc-pinned-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid rgba(201, 162, 39, 0.08);
+    background: rgba(201, 162, 39, 0.02);
+    flex-shrink: 0;
+}
+
+.tc-pinned-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.15s;
+}
+
+.tc-pinned-item:last-child { border-bottom: none; }
+
+.tc-pinned-item:hover { background: rgba(255, 255, 255, 0.02); }
+
+.tc-pinned-item-pin { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+
+.tc-pinned-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.tc-pinned-item-sender {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+}
+
+.tc-pinned-item-text {
+    color: var(--text-secondary);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+.tc-pinned-item-unpin {
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+}
+
+.tc-pinned-item:hover .tc-pinned-item-unpin { opacity: 1; }
+.tc-pinned-item-unpin:hover { color: var(--danger); }
+
+/* ==========================================
+   READ-ONLY NOTICE (Announcements)
+========================================== */
+.tc-readonly-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(201, 162, 39, 0.1);
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   INCOMING CALL POPUP
+========================================== */
+.tc-call-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    animation: tcCallIn 0.4s ease-out;
+}
+
+@keyframes tcCallIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tcCallOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.tc-call-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 50px;
+    background: rgba(22, 22, 30, 0.95);
+    border: 1px solid rgba(201, 162, 39, 0.15);
+    border-radius: 24px;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(201, 162, 39, 0.06);
+    position: relative;
+}
+
+.tc-call-pulse-ring {
+    position: absolute;
+    top: 30px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 2px solid rgba(201, 162, 39, 0.3);
+    animation: tcCallRing 1.5s ease-out infinite;
+}
+
+@keyframes tcCallRing {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+.tc-call-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #000;
+    z-index: 1;
+}
+
+.tc-call-info {
+    text-align: center;
+}
+
+.tc-call-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.tc-call-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.tc-call-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.tc-call-actions {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.tc-call-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 28px;
+    border-radius: 16px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tc-call-btn span {
+    font-size: 24px;
+}
+
+.tc-call-decline {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.tc-call-decline:hover {
+    background: rgba(239, 68, 68, 0.25);
+    transform: scale(1.05);
+}
+
+.tc-call-accept {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    animation: tcCallPulseBtn 1.5s ease-in-out infinite;
+}
+
+.tc-call-accept:hover {
+    background: rgba(34, 197, 94, 0.25);
+    transform: scale(1.05);
+}
+
+@keyframes tcCallPulseBtn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2); }
+    50% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+@media (max-width: 480px) {
+    .tc-panel {
+        width: 100%;
+        right: -100%;
+    }
+
+    .tc-bubble {
+        bottom: 80px;
+        right: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+/* ==========================================
+   SCROLLBAR for chat
+========================================== */
+.tc-messages::-webkit-scrollbar { width: 4px; }
+.tc-messages::-webkit-scrollbar-track { background: transparent; }
+.tc-messages::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.15); border-radius: 4px; }
+.tc-messages::-webkit-scrollbar-thumb:hover { background: rgba(201, 162, 39, 0.3); }
+
+.tc-channels::-webkit-scrollbar { width: 4px; }
+.tc-channels::-webkit-scrollbar-track { background: transparent; }
+.tc-channels::-webkit-scrollbar-thumb { background: rgba(201, 162, 39, 0.15); border-radius: 4px; }

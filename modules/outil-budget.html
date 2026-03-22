@@ -1,0 +1,650 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: BUDGET PERSONNEL v3.0 - ONE-PAGER ACCORDÉONS
+     Table SQL: abf_budget
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* LAYOUT ONE-PAGER */
+.budget-page{display:grid;grid-template-columns:1fr 320px;gap:20px;min-height:calc(100vh - 100px)}
+.budget-main{display:flex;flex-direction:column;gap:16px;overflow-y:auto;max-height:calc(100vh - 100px);padding-right:8px}
+.budget-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:0;max-height:calc(100vh - 100px)}
+.budget-main::-webkit-scrollbar{width:6px}
+.budget-main::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+
+/* HEADER */
+.budget-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--border-color);margin-bottom:8px}
+.budget-header-left{display:flex;align-items:center;gap:12px}
+.budget-header-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.budget-header-text h1{font-size:24px;font-weight:700;margin:0}
+.budget-header-text p{font-size:13px;color:var(--text-muted);margin:0}
+.budget-save-btn{display:flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:10px;color:#000;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s}
+.budget-save-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,162,39,.35)}
+
+/* DASHBOARD */
+.budget-dashboard{display:grid;grid-template-columns:180px 1fr 220px;gap:20px;padding:20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px}
+.budget-donut-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.budget-donut{position:relative;width:160px;height:160px}
+.budget-donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.budget-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.budget-donut-value{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700}
+.budget-donut-label{font-size:11px;color:var(--text-muted);text-transform:uppercase}
+
+/* CARDS */
+.budget-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:center}
+.budget-card{padding:16px;background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:12px;transition:all .2s}
+.budget-card.positive{border-color:rgba(16,185,129,.3);background:linear-gradient(135deg,rgba(16,185,129,.08),transparent)}
+.budget-card.gold{border-color:rgba(232,180,77,.4);background:linear-gradient(135deg,rgba(232,180,77,.08),transparent)}
+.budget-card.negative{border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,rgba(239,68,68,.08),transparent)}
+.budget-card-icon{font-size:20px;margin-bottom:6px}
+.budget-card-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.budget-card-value{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700}
+.budget-card-value.green{color:#10b981}
+.budget-card-value.gold{color:var(--gold)}
+.budget-card-value.red{color:#ef4444}
+
+/* RATIOS */
+.budget-ratios{display:flex;flex-direction:column;justify-content:center;gap:16px}
+.budget-ratio{display:flex;flex-direction:column;gap:6px}
+.budget-ratio-header{display:flex;justify-content:space-between;align-items:center}
+.budget-ratio-label{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+.budget-ratio-value{font-size:14px;font-weight:700;color:#10b981}
+.budget-ratio-value.warning{color:#f59e0b}
+.budget-ratio-value.danger{color:#ef4444}
+.budget-ratio-bar{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.budget-ratio-fill{height:100%;background:linear-gradient(90deg,var(--gold),#d4a84b);border-radius:4px;transition:width .4s}
+.budget-ratio-fill.green{background:linear-gradient(90deg,#10b981,#34d399)}
+.budget-ratio-fill.warning{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.budget-ratio-fill.danger{background:linear-gradient(90deg,#ef4444,#f87171)}
+.budget-ratio-hint{font-size:10px;color:var(--text-muted);margin-top:2px}
+
+/* ACCORDÉONS */
+.budget-accordion{display:flex;flex-direction:column;gap:8px}
+.budget-accordion-item{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;transition:all .2s}
+.budget-accordion-item:hover{border-color:rgba(232,180,77,.3)}
+.budget-accordion-item.active{border-color:var(--gold);box-shadow:0 4px 20px rgba(232,180,77,.1)}
+.budget-accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;transition:background .2s}
+.budget-accordion-header:hover{background:rgba(232,180,77,.05)}
+.budget-accordion-item.active .budget-accordion-header{background:rgba(232,180,77,.08)}
+.budget-accordion-left{display:flex;align-items:center;gap:12px}
+.budget-accordion-icon{width:36px;height:36px;background:linear-gradient(135deg,rgba(232,180,77,.2),rgba(232,180,77,.05));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.budget-accordion-title{font-size:14px;font-weight:600}
+.budget-accordion-count{font-size:11px;color:var(--text-muted);background:rgba(0,0,0,.3);padding:3px 10px;border-radius:12px;margin-left:8px}
+.budget-sync-btn{background:rgba(232,180,77,.15);border:1px solid rgba(232,180,77,.3);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;margin-left:8px;transition:all .2s}
+.budget-sync-btn:hover{background:rgba(232,180,77,.3);transform:scale(1.1)}
+.budget-accordion-right{display:flex;align-items:center;gap:14px}
+.budget-accordion-total{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700}
+.budget-accordion-total.green{color:#10b981}
+.budget-accordion-chevron{width:20px;height:20px;color:var(--text-muted);transition:transform .3s}
+.budget-accordion-item.active .budget-accordion-chevron{transform:rotate(180deg);color:var(--gold)}
+.budget-accordion-body{max-height:0;overflow:hidden;transition:max-height .3s,padding .3s}
+.budget-accordion-item.active .budget-accordion-body{max-height:600px;padding:0 18px 18px}
+
+/* GRILLE CHAMPS - CSS Grid fixe */
+.budget-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.budget-field{display:flex;flex-direction:column;background:rgba(0,0,0,.25);border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;transition:all .2s}
+.budget-field:focus-within{border-color:var(--gold);background:rgba(232,180,77,.03)}
+.budget-field-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;min-height:18px}
+.budget-field-icon{font-size:13px;flex-shrink:0}
+.budget-field-label{font-size:10px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.budget-field-badge{font-size:7px;padding:1px 4px;background:rgba(232,180,77,.25);color:var(--gold);border-radius:3px;font-weight:600;flex-shrink:0}
+.budget-field-row{display:flex;gap:4px}
+.budget-field-input{flex:1;min-width:0;padding:8px 8px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:13px;font-weight:600;text-align:right;transition:all .2s}
+.budget-field-input:focus{outline:none;border-color:var(--gold)}
+.budget-field-input::placeholder{color:var(--text-muted);font-weight:400}
+.budget-field-input.revenu:not(:placeholder-shown){color:#10b981}
+.budget-field-input.mapped{background:rgba(232,180,77,.08);border-color:rgba(232,180,77,.3)}
+.budget-field-freq{width:38px;flex-shrink:0;padding:8px 2px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;color:var(--text-muted);font-size:9px;text-align:center;cursor:pointer}
+.budget-field-freq:focus{outline:none;border-color:var(--gold)}
+
+/* RECOMMANDATIONS */
+.budget-reco{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;display:flex;flex-direction:column;flex:1;overflow:hidden}
+.budget-reco-header{display:flex;align-items:center;gap:12px;padding:18px 20px;background:linear-gradient(135deg,rgba(232,180,77,.08),transparent);border-bottom:1px solid var(--border-color)}
+.budget-reco-header-icon{font-size:24px}
+.budget-reco-header-title{font-size:16px;font-weight:600;color:var(--gold)}
+.budget-reco-header-sub{font-size:11px;color:var(--text-muted)}
+.budget-reco-content{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.budget-reco-item{display:flex;gap:12px;padding:14px 16px;background:rgba(255,255,255,.02);border-radius:12px;border-left:4px solid var(--border-color);transition:all .2s}
+.budget-reco-item:hover{background:rgba(255,255,255,.04)}
+.budget-reco-item.success{border-left-color:#10b981;background:rgba(16,185,129,.06)}
+.budget-reco-item.warning{border-left-color:#f59e0b;background:rgba(245,158,11,.06)}
+.budget-reco-item.danger{border-left-color:#ef4444;background:rgba(239,68,68,.06)}
+.budget-reco-item.info{border-left-color:#3b82f6;background:rgba(59,130,246,.06)}
+.budget-reco-icon{font-size:22px;flex-shrink:0}
+.budget-reco-text{flex:1;min-width:0}
+.budget-reco-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.budget-reco-desc{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.budget-reco-value{font-weight:700;color:var(--gold)}
+.budget-reco-value.green{color:#10b981}
+.budget-reco-value.red{color:#ef4444}
+.budget-reco-value.orange{color:#f59e0b}
+.budget-reco-empty{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.budget-reco-empty-icon{font-size:48px;opacity:.4;margin-bottom:12px}
+
+/* LÉGENDE */
+.budget-legend{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:18px}
+.budget-legend-title{font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.budget-legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.budget-legend-item{display:flex;align-items:center;gap:8px}
+.budget-legend-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.budget-legend-label{font-size:11px;color:var(--text-secondary);flex:1}
+.budget-legend-value{font-size:11px;font-weight:600}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.budget-page{grid-template-columns:1fr}.budget-side{flex-direction:row;position:static;max-height:none}.budget-reco{flex:2;max-height:400px}.budget-legend{flex:1}.budget-main{max-height:none;overflow:visible}}
+@media(max-width:900px){.budget-dashboard{grid-template-columns:1fr;justify-items:center}.budget-cards{width:100%;max-width:400px}.budget-ratios{width:100%;max-width:350px}.budget-side{flex-direction:column}}
+@media(max-width:600px){.budget-fields{grid-template-columns:repeat(2,1fr)}.budget-header{flex-direction:column;gap:16px;text-align:center}}
+</style>
+
+<!-- HEADER -->
+<div class="budget-header">
+    <div class="budget-header-left">
+        <div class="budget-header-icon">💰</div>
+        <div class="budget-header-text">
+            <h1>Budget Personnel</h1>
+            <p>Analyse complète des revenus et dépenses mensuelles</p>
+        </div>
+    </div>
+    <button class="budget-save-btn" onclick="saveBudget()"><span>💾</span> Sauvegarder</button>
+</div>
+
+<!-- LAYOUT -->
+<div class="budget-page">
+    <div class="budget-main">
+        <!-- Dashboard -->
+        <div class="budget-dashboard">
+            <div class="budget-donut-wrap">
+                <div class="budget-donut">
+                    <svg viewBox="0 0 160 160">
+                        <circle cx="80" cy="80" r="60" fill="none" stroke="#2a2a2a" stroke-width="18"/>
+                        <circle id="chartHabitation" cx="80" cy="80" r="60" fill="none" stroke="#E8B44D" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartTransport" cx="80" cy="80" r="60" fill="none" stroke="#10b981" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartAlimentation" cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartAssurances" cx="80" cy="80" r="60" fill="none" stroke="#8b5cf6" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartLoisirs" cx="80" cy="80" r="60" fill="none" stroke="#ec4899" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartDettes" cx="80" cy="80" r="60" fill="none" stroke="#ef4444" stroke-width="18" stroke-dasharray="0 377"/>
+                        <circle id="chartEpargne" cx="80" cy="80" r="60" fill="none" stroke="#06b6d4" stroke-width="18" stroke-dasharray="0 377"/>
+                    </svg>
+                    <div class="budget-donut-center">
+                        <div class="budget-donut-value" id="donutTotal">0 $</div>
+                        <div class="budget-donut-label">Dépenses</div>
+                    </div>
+                </div>
+            </div>
+            <div class="budget-cards">
+                <div class="budget-card positive"><div class="budget-card-icon">💰</div><div class="budget-card-label">Revenus</div><div class="budget-card-value green" id="totalRevenus">0 $</div></div>
+                <div class="budget-card"><div class="budget-card-icon">💳</div><div class="budget-card-label">Dépenses</div><div class="budget-card-value" id="totalDepenses">0 $</div></div>
+                <div class="budget-card gold" id="surplusCard"><div class="budget-card-icon">📈</div><div class="budget-card-label">Surplus</div><div class="budget-card-value gold" id="surplus">0 $</div></div>
+                <div class="budget-card"><div class="budget-card-icon">🎯</div><div class="budget-card-label">Capacité épargne</div><div class="budget-card-value gold" id="tauxEpargne" title="Épargne budgétée + surplus disponible">0 %</div></div>
+            </div>
+            <div class="budget-ratios">
+                <div class="budget-ratio"><div class="budget-ratio-header"><span class="budget-ratio-label">🏠 Ratio logement</span><span class="budget-ratio-value" id="ratioLogement">0%</span></div><div class="budget-ratio-bar"><div class="budget-ratio-fill" id="ratioLogementBar"></div></div><div class="budget-ratio-hint">Cible: max 35%</div></div>
+                <div class="budget-ratio"><div class="budget-ratio-header"><span class="budget-ratio-label">💳 Ratio endettement</span><span class="budget-ratio-value" id="ratioEndettement">0%</span></div><div class="budget-ratio-bar"><div class="budget-ratio-fill" id="ratioEndettementBar"></div></div><div class="budget-ratio-hint">Cible: max 40%</div></div>
+                <div class="budget-ratio"><div class="budget-ratio-header"><span class="budget-ratio-label">🐷 Épargne budgétée</span><span class="budget-ratio-value" id="ratioEpargne">0%</span></div><div class="budget-ratio-bar"><div class="budget-ratio-fill green" id="ratioEpargneBar"></div></div><div class="budget-ratio-hint">Cible: min 10-15% (hors surplus)</div></div>
+            </div>
+        </div>
+        
+        <!-- Accordéons -->
+        <div class="budget-accordion">
+            <!-- REVENUS -->
+            <div class="budget-accordion-item active" data-category="revenus">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">💵</div><span class="budget-accordion-title">Revenus</span><span class="budget-accordion-count">6 entrées</span><button class="budget-sync-btn" onclick="event.stopPropagation(); syncRevenus();" title="Synchroniser avec module Emploi">🔄</button></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total green" id="sectionRevenus">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">👔</span><span class="budget-field-label" id="labelClient">Salaire client</span><span class="budget-field-badge" id="badgeClient" style="display:none">ABF</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetSalaireClient" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field" id="fieldConjoint" style="display:none"><div class="budget-field-header"><span class="budget-field-icon">👗</span><span class="budget-field-label" id="labelConjoint">Salaire conjoint</span><span class="budget-field-badge" id="badgeConjoint" style="display:none">ABF</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetSalaireConjoint" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">👶</span><span class="budget-field-label">Allocations familiales</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetAllocations" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏠</span><span class="budget-field-label">Revenus de location</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetRevenusLocation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">📊</span><span class="budget-field-label">Revenus de placements</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetRevenusPlacements" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqRevenusPlacements" onchange="calculateBudget()"><option value="1">M</option><option value="0.25">T</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💼</span><span class="budget-field-label">Autres revenus</span></div><div class="budget-field-row"><input type="text" class="budget-field-input revenu money-input" id="budgetAutresRevenus" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- HABITATION -->
+            <div class="budget-accordion-item" data-category="habitation">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🏠</div><span class="budget-accordion-title">Habitation</span><span class="budget-accordion-count">7 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionHabitation">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏡</span><span class="budget-field-label">Hypothèque / Loyer</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetHypotheque" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqHypotheque" onchange="calculateBudget()"><option value="1">M</option><option value="2">2S</option><option value="52">H</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏛️</span><span class="budget-field-label">Taxes municipales</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetTaxes" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqTaxes" onchange="calculateBudget()"><option value="1">M</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💡</span><span class="budget-field-label">Électricité</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetElectricite" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🔥</span><span class="budget-field-label">Chauffage / Gaz</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetChauffage" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🌐</span><span class="budget-field-label">Internet / Téléphone</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetInternet" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🛡️</span><span class="budget-field-label">Assurance habitation</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceHab" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqAssuranceHab" onchange="calculateBudget()"><option value="1">M</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🔧</span><span class="budget-field-label">Entretien maison</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetEntretien" data-cat="habitation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- TRANSPORT -->
+            <div class="budget-accordion-item" data-category="transport">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🚗</div><span class="budget-accordion-title">Transport</span><span class="budget-accordion-count">7 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionTransport">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🚙</span><span class="budget-field-label">Paiement auto #1</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetPaiementAuto1" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqPaiementAuto1" onchange="calculateBudget()"><option value="1">M</option><option value="2">2S</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🚗</span><span class="budget-field-label">Paiement auto #2</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetPaiementAuto2" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqPaiementAuto2" onchange="calculateBudget()"><option value="1">M</option><option value="2">2S</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">⛽</span><span class="budget-field-label">Essence</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetEssence" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqEssence" onchange="calculateBudget()"><option value="1">M</option><option value="52">H</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🛡️</span><span class="budget-field-label">Assurance auto</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceAuto" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqAssuranceAuto" onchange="calculateBudget()"><option value="1">M</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">📋</span><span class="budget-field-label">Immatriculation</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetImmatriculation" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqImmatriculation" onchange="calculateBudget()"><option value="0.0833">A</option><option value="1">M</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🔧</span><span class="budget-field-label">Entretien auto</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetEntretienAuto" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🚌</span><span class="budget-field-label">Transport en commun</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetTransportCommun" data-cat="transport" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- ALIMENTATION -->
+            <div class="budget-accordion-item" data-category="alimentation">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🍽️</div><span class="budget-accordion-title">Alimentation</span><span class="budget-accordion-count">4 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionAlimentation">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🛒</span><span class="budget-field-label">Épicerie</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetEpicerie" data-cat="alimentation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqEpicerie" onchange="calculateBudget()"><option value="1">M</option><option value="52">H</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🍕</span><span class="budget-field-label">Restaurants</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetRestaurants" data-cat="alimentation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqRestaurants" onchange="calculateBudget()"><option value="1">M</option><option value="52">H</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">☕</span><span class="budget-field-label">Cafés / Sorties</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCafes" data-cat="alimentation" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqCafes" onchange="calculateBudget()"><option value="1">M</option><option value="52">H</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🍺</span><span class="budget-field-label">Alcool / Sorties</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAlcool" data-cat="alimentation" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- ASSURANCES -->
+            <div class="budget-accordion-item" data-category="assurances">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🛡️</div><span class="budget-accordion-title">Assurances personnelles</span><span class="budget-accordion-count">4 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionAssurances">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">❤️</span><span class="budget-field-label">Assurance vie</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceVie" data-cat="assurances" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqAssuranceVie" onchange="calculateBudget()"><option value="1">M</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏥</span><span class="budget-field-label">Assurance invalidité</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceInv" data-cat="assurances" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🩺</span><span class="budget-field-label">Assurance maladie grave</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceMG" data-cat="assurances" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💊</span><span class="budget-field-label">Collective / RAMQ</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetAssuranceColl" data-cat="assurances" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- LOISIRS -->
+            <div class="budget-accordion-item" data-category="loisirs">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🎯</div><span class="budget-accordion-title">Loisirs & Personnel</span><span class="budget-accordion-count">6 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionLoisirs">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🎬</span><span class="budget-field-label">Streaming / Divertissement</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetDivertissement" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏋️</span><span class="budget-field-label">Gym / Sport</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetGym" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">✈️</span><span class="budget-field-label">Voyages / Vacances</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetVoyages" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"><select class="budget-field-freq" id="freqVoyages" onchange="calculateBudget()"><option value="1">M</option><option value="0.0833">A</option></select></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">👕</span><span class="budget-field-label">Vêtements</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetVetements" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💇</span><span class="budget-field-label">Soins personnels</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetSoins" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🎁</span><span class="budget-field-label">Cadeaux / Dons</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCadeaux" data-cat="loisirs" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- DETTES -->
+            <div class="budget-accordion-item" data-category="dettes">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">💳</div><span class="budget-accordion-title">Remboursement de dettes</span><span class="budget-accordion-count">5 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionDettes">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💳</span><span class="budget-field-label">Carte de crédit #1</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCarteCredit1" data-cat="dettes" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💳</span><span class="budget-field-label">Carte de crédit #2</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCarteCredit2" data-cat="dettes" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏦</span><span class="budget-field-label">Marge de crédit</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetMargeCredit" data-cat="dettes" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🎓</span><span class="budget-field-label">Prêt étudiant</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetPretEtudiant" data-cat="dettes" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">📝</span><span class="budget-field-label">Autre prêt personnel</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetPretPersonnel" data-cat="dettes" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+            
+            <!-- ÉPARGNE -->
+            <div class="budget-accordion-item" data-category="epargne">
+                <div class="budget-accordion-header" onclick="toggleAccordion(this)">
+                    <div class="budget-accordion-left"><div class="budget-accordion-icon">🏦</div><span class="budget-accordion-title">Épargne & Investissements</span><span class="budget-accordion-count">6 entrées</span></div>
+                    <div class="budget-accordion-right"><span class="budget-accordion-total" id="sectionEpargne">0 $</span><svg class="budget-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                </div>
+                <div class="budget-accordion-body"><div class="budget-fields">
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">📈</span><span class="budget-field-label">REER</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetREER" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">💰</span><span class="budget-field-label">CELI</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCELI" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🏠</span><span class="budget-field-label">CELIAPP</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCELIAPP" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">👶</span><span class="budget-field-label">REEE</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetREEE" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🎯</span><span class="budget-field-label">Compte épargne</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetCompteEpargne" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                    <div class="budget-field"><div class="budget-field-header"><span class="budget-field-icon">🚨</span><span class="budget-field-label">Fonds d'urgence</span></div><div class="budget-field-row"><input type="text" class="budget-field-input depense money-input" id="budgetFondsUrgence" data-cat="epargne" placeholder="0 $" oninput="calculateBudget()"></div></div>
+                </div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SIDEBAR -->
+    <div class="budget-side">
+        <div class="budget-reco">
+            <div class="budget-reco-header"><span class="budget-reco-header-icon">💡</span><div><div class="budget-reco-header-title">Recommandations Personnalisées</div><div class="budget-reco-header-sub">Basées sur votre profil financier</div></div></div>
+            <div class="budget-reco-content" id="recoContent"><div class="budget-reco-empty"><div class="budget-reco-empty-icon">📊</div><div>Entrez vos données pour recevoir des conseils personnalisés</div></div></div>
+        </div>
+        <div class="budget-legend">
+            <div class="budget-legend-title">📊 Répartition des dépenses</div>
+            <div class="budget-legend-grid">
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#E8B44D"></div><span class="budget-legend-label">Habitation</span><span class="budget-legend-value" id="legendHabitation">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#10b981"></div><span class="budget-legend-label">Transport</span><span class="budget-legend-value" id="legendTransport">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#f59e0b"></div><span class="budget-legend-label">Alimentation</span><span class="budget-legend-value" id="legendAlimentation">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#8b5cf6"></div><span class="budget-legend-label">Assurances</span><span class="budget-legend-value" id="legendAssurances">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#ec4899"></div><span class="budget-legend-label">Loisirs</span><span class="budget-legend-value" id="legendLoisirs">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#ef4444"></div><span class="budget-legend-label">Dettes</span><span class="budget-legend-value" id="legendDettes">0 $</span></div>
+                <div class="budget-legend-item"><div class="budget-legend-dot" style="background:#06b6d4"></div><span class="budget-legend-label">Épargne</span><span class="budget-legend-value" id="legendEpargne">0 $</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle accordéon - GLOBAL
+window.toggleAccordion = function(header) {
+    const item = header.closest('.budget-accordion-item');
+    document.querySelectorAll('.budget-accordion-item').forEach(o => { if (o !== item) o.classList.remove('active'); });
+    item.classList.toggle('active');
+};
+
+(async function() {
+    console.log('💰 Budget Personnel v3.0 - Init');
+    let client = null;
+    
+    const FIELDS = ['budgetSalaireClient','budgetSalaireConjoint','budgetAllocations','budgetRevenusLocation','budgetRevenusPlacements','budgetAutresRevenus','budgetHypotheque','budgetTaxes','budgetElectricite','budgetChauffage','budgetInternet','budgetAssuranceHab','budgetEntretien','budgetPaiementAuto1','budgetPaiementAuto2','budgetEssence','budgetAssuranceAuto','budgetImmatriculation','budgetEntretienAuto','budgetTransportCommun','budgetEpicerie','budgetRestaurants','budgetCafes','budgetAlcool','budgetAssuranceVie','budgetAssuranceInv','budgetAssuranceMG','budgetAssuranceColl','budgetDivertissement','budgetGym','budgetVoyages','budgetVetements','budgetSoins','budgetCadeaux','budgetCarteCredit1','budgetCarteCredit2','budgetMargeCredit','budgetPretEtudiant','budgetPretPersonnel','budgetREER','budgetCELI','budgetCELIAPP','budgetREEE','budgetCompteEpargne','budgetFondsUrgence'];
+    
+    // Utilitaires
+    const fmt = v => new Intl.NumberFormat('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0)+' $';
+    const parse = v => FINOX.parseNumber(v);
+    const toM = (a,f) => { f=parseFloat(f); if(f===52)return a*52/12; if(f===2)return a*26/12; if(f===0.0833)return a/12; if(f===0.25)return a/4; return a; };
+    const getF = id => { const e=document.getElementById('freq'+id.replace('budget','')); return e?e.value:'1'; };
+    
+    // Chargement DB
+    async function loadDB() {
+        try {
+            const {data,error} = await FINOX.supabase.from('abf_budget').select('*').eq('client_id',FINOX.CLIENT_ID).order('ordre');
+            if(error) throw error;
+            (data||[]).forEach(item => {
+                if(item.field_id) {
+                    const inp = document.getElementById(item.field_id);
+                    if(inp) { inp.value = fmt(item.amount); const fEl=document.getElementById('freq'+item.field_id.replace('budget','')); if(fEl&&item.frequency)fEl.value=item.frequency; }
+                }
+            });
+        } catch(e) { console.error('Erreur chargement:',e); }
+    }
+    
+    // Mapper revenus NETS du module Emploi (abf_data.emploi_client / emploi_conjoint)
+    function mapRevenus(force = false) {
+        const abfData = client.abf_data || {};
+        
+        // Revenus NET MENSUELS du module emploi (déjà calculés et divisés par 12)
+        // Le module Emploi sauvegarde: revenu_net (annuel) ET revenu_mensuel_net (mensuel)
+        const revMensuelClient = parseFloat(abfData.emploi_client?.revenu_mensuel_net) || 0;
+        const revMensuelConjoint = parseFloat(abfData.emploi_conjoint?.revenu_mensuel_net) || 0;
+        
+        // Fallback: estimation 70% du brut mensuel si pas de données emploi NET
+        let revC = revMensuelClient;
+        let revCo = revMensuelConjoint;
+        if(revC === 0 && client.revenu_emploi) {
+            revC = Math.round((parseFloat(client.revenu_emploi) + (parseFloat(client.revenu_autre)||0)) * 0.7 / 12);
+        }
+        if(revCo === 0 && client.revenu_emploi_conjoint) {
+            revCo = Math.round((parseFloat(client.revenu_emploi_conjoint) + (parseFloat(client.revenu_autre_conjoint)||0)) * 0.7 / 12);
+        }
+        
+        // force=true: écraser même si valeur existante
+        if(revC > 0) {
+            const inp = document.getElementById('budgetSalaireClient');
+            if(inp && (force || parse(inp.value) === 0)) { 
+                inp.value = fmt(revC); 
+                inp.classList.add('mapped'); 
+                const badge = document.getElementById('badgeClient');
+                if(badge) {
+                    badge.style.display = 'inline';
+                    badge.textContent = revMensuelClient > 0 ? 'NET' : 'EST';
+                    badge.title = revMensuelClient > 0 ? 'Revenu NET mensuel du module Emploi' : 'Estimation 70% du brut';
+                }
+            }
+        }
+        if(revCo > 0) {
+            const inp = document.getElementById('budgetSalaireConjoint');
+            if(inp && (force || parse(inp.value) === 0)) { 
+                inp.value = fmt(revCo); 
+                inp.classList.add('mapped'); 
+                const badge = document.getElementById('badgeConjoint');
+                if(badge) {
+                    badge.style.display = 'inline';
+                    badge.textContent = revMensuelConjoint > 0 ? 'NET' : 'EST';
+                    badge.title = revMensuelConjoint > 0 ? 'Revenu NET mensuel du module Emploi' : 'Estimation 70% du brut';
+                }
+            }
+        }
+        
+        // Noms
+        const nomClient = client.first_name || 'Client';
+        const nomConjoint = abfData.emploi_conjoint?.prenom || client.conjoint_first_name || 'Conjoint';
+        
+        const labelC = document.getElementById('labelClient');
+        const labelCo = document.getElementById('labelConjoint');
+        if(labelC) labelC.textContent = `Salaire net ${nomClient}`;
+        if(labelCo) labelCo.textContent = `Salaire net ${nomConjoint}`;
+        
+        const fieldCo = document.getElementById('fieldConjoint');
+        if(fieldCo) fieldCo.style.display = (client.has_conjoint || revCo > 0) ? 'flex' : 'none';
+        
+        console.log('📊 Budget - Revenus mappés:', { 
+            client: { mensuelNet: revMensuelClient, affiche: revC },
+            conjoint: { mensuelNet: revMensuelConjoint, affiche: revCo },
+            source: revMensuelClient > 0 ? 'emploi_client.revenu_mensuel_net' : 'fallback 70%'
+        });
+    }
+    
+    // Synchroniser revenus depuis module Emploi (bouton 🔄)
+    window.syncRevenus = function() {
+        mapRevenus(true); // force=true
+        calculateBudget();
+        
+        // Animation feedback
+        const btn = document.querySelector('.budget-sync-btn');
+        if(btn) {
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = '🔄', 1500);
+        }
+        console.log('🔄 Budget - Revenus synchronisés depuis module Emploi');
+    }
+    
+    // Calcul principal
+    window.calculateBudget = function() {
+        let totalRev = 0;
+        let cats = {habitation:0, transport:0, alimentation:0, assurances:0, loisirs:0, dettes:0, epargne:0};
+        
+        // Revenus
+        document.querySelectorAll('.budget-field-input.revenu').forEach(inp => {
+            const field = inp.closest('.budget-field');
+            if(field && field.style.display === 'none') return;
+            totalRev += toM(parse(inp.value), getF(inp.id));
+        });
+        
+        // Dépenses
+        document.querySelectorAll('.budget-field-input.depense').forEach(inp => {
+            const cat = inp.dataset.cat;
+            if(cats.hasOwnProperty(cat)) cats[cat] += toM(parse(inp.value), getF(inp.id));
+        });
+        
+        const totalDep = Object.values(cats).reduce((a,b)=>a+b,0);
+        const surplus = totalRev - totalDep;
+        const tauxEp = totalRev > 0 ? ((cats.epargne + Math.max(0,surplus)) / totalRev * 100) : 0;
+        const ratioLog = totalRev > 0 ? (cats.habitation / totalRev * 100) : 0;
+        const ratioEnd = totalRev > 0 ? ((cats.habitation + cats.dettes) / totalRev * 100) : 0;
+        const ratioEp = totalRev > 0 ? (cats.epargne / totalRev * 100) : 0;
+        
+        // Update UI
+        document.getElementById('totalRevenus').textContent = fmt(totalRev);
+        document.getElementById('totalDepenses').textContent = fmt(totalDep);
+        document.getElementById('donutTotal').textContent = fmt(totalDep);
+        
+        const sEl = document.getElementById('surplus');
+        const sC = document.getElementById('surplusCard');
+        sEl.textContent = fmt(surplus);
+        sEl.className = 'budget-card-value ' + (surplus >= 0 ? 'gold' : 'red');
+        sC.className = 'budget-card ' + (surplus >= 0 ? 'gold' : 'negative');
+        
+        document.getElementById('tauxEpargne').textContent = tauxEp.toFixed(1) + ' %';
+        
+        // Ratios
+        updateRatio('Logement', ratioLog, 35);
+        updateRatio('Endettement', ratioEnd, 40);
+        document.getElementById('ratioEpargne').textContent = ratioEp.toFixed(0) + '%';
+        document.getElementById('ratioEpargneBar').style.width = Math.min(ratioEp * 2, 100) + '%';
+        
+        // Sections
+        document.getElementById('sectionRevenus').textContent = fmt(totalRev);
+        document.getElementById('sectionHabitation').textContent = fmt(cats.habitation);
+        document.getElementById('sectionTransport').textContent = fmt(cats.transport);
+        document.getElementById('sectionAlimentation').textContent = fmt(cats.alimentation);
+        document.getElementById('sectionAssurances').textContent = fmt(cats.assurances);
+        document.getElementById('sectionLoisirs').textContent = fmt(cats.loisirs);
+        document.getElementById('sectionDettes').textContent = fmt(cats.dettes);
+        document.getElementById('sectionEpargne').textContent = fmt(cats.epargne);
+        
+        // Légende
+        document.getElementById('legendHabitation').textContent = fmt(cats.habitation);
+        document.getElementById('legendTransport').textContent = fmt(cats.transport);
+        document.getElementById('legendAlimentation').textContent = fmt(cats.alimentation);
+        document.getElementById('legendAssurances').textContent = fmt(cats.assurances);
+        document.getElementById('legendLoisirs').textContent = fmt(cats.loisirs);
+        document.getElementById('legendDettes').textContent = fmt(cats.dettes);
+        document.getElementById('legendEpargne').textContent = fmt(cats.epargne);
+        
+        // Donut
+        updateDonut(cats, totalDep);
+        
+        // Recommandations
+        generateReco(totalRev, totalDep, surplus, cats, ratioLog, ratioEnd, ratioEp);
+    };
+    
+    function updateRatio(name, value, threshold) {
+        const vEl = document.getElementById('ratio' + name);
+        const bEl = document.getElementById('ratio' + name + 'Bar');
+        vEl.textContent = value.toFixed(0) + '%';
+        vEl.className = 'budget-ratio-value ' + (value > threshold ? 'danger' : value > threshold * 0.85 ? 'warning' : '');
+        bEl.style.width = Math.min(value * 2, 100) + '%';
+        bEl.className = 'budget-ratio-fill ' + (value > threshold ? 'danger' : value > threshold * 0.85 ? 'warning' : '');
+    }
+    
+    function updateDonut(cats, total) {
+        if(total <= 0) return;
+        const circ = 2 * Math.PI * 60;
+        let off = 0;
+        ['habitation','transport','alimentation','assurances','loisirs','dettes','epargne'].forEach(c => {
+            const el = document.getElementById('chart' + c.charAt(0).toUpperCase() + c.slice(1));
+            if(!el) return;
+            const len = (cats[c] / total) * circ;
+            el.setAttribute('stroke-dasharray', len + ' ' + circ);
+            el.setAttribute('stroke-dashoffset', -off);
+            off += len;
+        });
+    }
+    
+    // Recommandations personnalisées
+    function generateReco(rev, dep, surp, cats, rLog, rEnd, rEp) {
+        const c = document.getElementById('recoContent');
+        if(rev <= 0) { c.innerHTML = '<div class="budget-reco-empty"><div class="budget-reco-empty-icon">📊</div><div>Entrez vos données pour recevoir des conseils personnalisés</div></div>'; return; }
+        
+        const r = [];
+        
+        // Budget déficitaire
+        if(surp < 0) {
+            r.push({t:'danger', i:'🚨', n:'Budget déficitaire', d:`Vous dépensez <span class="budget-reco-value red">${fmt(Math.abs(surp))}</span> de plus que vos revenus chaque mois. Il est urgent de réduire vos dépenses.`});
+        } else if(surp < rev * 0.05) {
+            r.push({t:'warning', i:'⚠️', n:'Marge très limitée', d:`Votre surplus de <span class="budget-reco-value orange">${fmt(surp)}</span> laisse peu de place aux imprévus.`});
+        } else if(surp >= rev * 0.15) {
+            r.push({t:'success', i:'🎉', n:'Excellente gestion!', d:`Félicitations! Surplus de <span class="budget-reco-value green">${fmt(surp)}</span> soit ${(surp/rev*100).toFixed(0)}% de vos revenus.`});
+        }
+        
+        // Endettement
+        if(rEnd > 40) {
+            r.push({t:'danger', i:'💳', n:'Niveau d\'endettement critique', d:`Ratio de <span class="budget-reco-value red">${rEnd.toFixed(0)}%</span>. Au-delà de 40%, le risque est élevé. Priorisez le remboursement.`});
+        }
+        
+        // Épargne - tenir compte de la capacité totale (budgété + surplus)
+        const capaciteEp = rev > 0 ? ((cats.epargne + Math.max(0,surp)) / rev * 100) : 0;
+        if(rEp < 5 && capaciteEp < 10 && rev > 0) {
+            r.push({t:'danger', i:'🐷', n:'Épargne insuffisante', d:`Seulement <span class="budget-reco-value red">${rEp.toFixed(0)}%</span> budgété à l'épargne. Capacité totale: ${capaciteEp.toFixed(0)}%. Cible: 10-15% minimum.`});
+        } else if(rEp < 5 && capaciteEp >= 10 && rev > 0) {
+            r.push({t:'info', i:'🐷', n:'Allouez votre surplus', d:`Seulement <span class="budget-reco-value orange">${rEp.toFixed(0)}%</span> budgété, mais capacité de <span class="budget-reco-value green">${capaciteEp.toFixed(0)}%</span>. Allouez votre surplus à l'épargne!`});
+        } else if(rEp >= 15) {
+            r.push({t:'success', i:'🐷', n:'Super épargnant!', d:`<span class="budget-reco-value green">${rEp.toFixed(0)}%</span> d'épargne budgétée - vous êtes sur la bonne voie!`});
+        }
+        
+        // Assurances manquantes
+        if(cats.assurances === 0 && rev > 3000) {
+            r.push({t:'info', i:'🛡️', n:'Protection à considérer', d:'Aucune assurance personnelle budgétée. Considérez une assurance vie ou invalidité.'});
+        }
+        
+        // Fonds d'urgence
+        const fu = parse(document.getElementById('budgetFondsUrgence')?.value || 0);
+        if(fu === 0 && rev > 0) {
+            r.push({t:'info', i:'🚨', n:'Fonds d\'urgence', d:`Aucune contribution. Cible: 3-6 mois de dépenses. Commencez par <span class="budget-reco-value">${fmt(dep * 0.05)}</span>/mois.`});
+        }
+        
+        // REER
+        const reer = parse(document.getElementById('budgetREER')?.value || 0);
+        if(reer === 0 && rev > 4000) {
+            r.push({t:'info', i:'📈', n:'Planification retraite', d:`Aucune cotisation REER. Même <span class="budget-reco-value">${fmt(rev * 0.1)}</span>/mois ferait une grande différence!`});
+        }
+        
+        // Alimentation élevée
+        const ratioAlim = rev > 0 ? (cats.alimentation / rev * 100) : 0;
+        if(ratioAlim > 20) {
+            r.push({t:'warning', i:'🍽️', n:'Alimentation élevée', d:`<span class="budget-reco-value orange">${ratioAlim.toFixed(0)}%</span> du revenu en alimentation (norme: 10-15%).`});
+        }
+        
+        // Restos/Cafés
+        const restos = toM(parse(document.getElementById('budgetRestaurants')?.value||0), getF('budgetRestaurants'));
+        const cafes = toM(parse(document.getElementById('budgetCafes')?.value||0), getF('budgetCafes'));
+        if((restos + cafes) > rev * 0.05 && rev > 0) {
+            const eco = (restos + cafes) * 0.5;
+            r.push({t:'warning', i:'☕', n:'Restos & Cafés', d:`<span class="budget-reco-value orange">${fmt(restos+cafes)}</span>/mois. Réduire de moitié = <span class="budget-reco-value green">${fmt(eco)}</span> économisés!`});
+        }
+        
+        // Logement trop cher
+        if(rLog > 35) {
+            r.push({t:'danger', i:'🏠', n:'Logement trop cher', d:`<span class="budget-reco-value red">${rLog.toFixed(0)}%</span> de vos revenus. La règle du 35% max est dépassée.`});
+        }
+        
+        // Tout va bien
+        if(r.length === 0) {
+            r.push({t:'success', i:'✨', n:'Tout semble en ordre!', d:'Votre budget est équilibré. Continuez à surveiller vos finances.'});
+        }
+        
+        c.innerHTML = r.slice(0, 8).map(x => `<div class="budget-reco-item ${x.t}"><span class="budget-reco-icon">${x.i}</span><div class="budget-reco-text"><div class="budget-reco-title">${x.n}</div><div class="budget-reco-desc">${x.d}</div></div></div>`).join('');
+    }
+    
+    // Sauvegarde
+    window.saveBudget = async function() {
+        try {
+            await FINOX.supabase.from('abf_budget').delete().eq('client_id', FINOX.CLIENT_ID);
+            const items = [];
+            FIELDS.forEach((f, i) => {
+                const inp = document.getElementById(f);
+                if(!inp) return;
+                const v = parse(inp.value);
+                if(v === 0) return;
+                const fEl = document.getElementById('freq' + f.replace('budget',''));
+                items.push({ client_id: FINOX.CLIENT_ID, field_id: f, category: inp.dataset.cat || 'revenus', label: f, amount: v, frequency: fEl?.value || '1', ordre: i });
+            });
+            if(items.length > 0) await FINOX.supabase.from('abf_budget').insert(items);
+            FINOX.showNotification('💰 Budget sauvegardé!', 'success');
+        } catch(e) {
+            console.error('Erreur:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    };
+    
+    // Init
+    try {
+        client = await FINOX.loadClientData(true);
+        if(!client) { console.error('❌ Aucun client'); return; }
+        await loadDB();
+        mapRevenus();
+        FINOX.setupAllMoneyInputs();
+        setTimeout(calculateBudget, 100);
+        console.log('✅ Budget v3.0 chargé');
+    } catch(e) { console.error('❌ Erreur:', e); }
+})();
+</script>

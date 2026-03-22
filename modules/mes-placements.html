@@ -1,0 +1,990 @@
+<!-- MODULE: MES PLACEMENTS v2.0 - Édition directe + Onglets (Modifier/Timeline/Documents) -->
+<style>
+.plc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.plc-header-left{display:flex;align-items:center;gap:16px}
+.plc-header-icon{width:56px;height:56px;background:linear-gradient(135deg,#10b981,#059669);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.plc-header h1{font-size:28px;font-weight:700}
+.plc-header p{color:var(--text-muted);font-size:14px;margin-top:4px}
+.plc-btn{padding:12px 20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s}
+.plc-btn:hover{border-color:var(--gold);color:var(--gold)}
+.plc-btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;color:#000}
+.plc-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--gold-glow);color:#000}
+.plc-btn-sm{padding:8px 14px;font-size:12px}
+.plc-btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3)}
+.plc-btn-danger:hover{background:rgba(239,68,68,.25)}
+
+.plc-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.plc-dashboard-card{padding:20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;text-align:center}
+.plc-dashboard-card:last-child{background:linear-gradient(135deg,rgba(16,185,129,.1),transparent);border-color:rgba(16,185,129,.3)}
+.plc-dashboard-label{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+.plc-dashboard-value{font-size:24px;font-weight:700}
+.plc-dashboard-value.green{color:#10b981}
+.plc-dashboard-value.blue{color:#3b82f6}
+.plc-dashboard-value.gold{color:var(--gold)}
+
+.plc-section{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px;margin-bottom:20px}
+.plc-section-title{font-size:16px;font-weight:600;color:#10b981;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+.plc-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.plc-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;transition:all .2s;cursor:pointer}
+.plc-card:hover{border-color:rgba(16,185,129,.3);transform:translateY(-2px)}
+.plc-card.actif{border-left:4px solid #10b981}
+.plc-card.ferme{border-left:4px solid #ef4444}
+.plc-card.transfert_en_cours{border-left:4px solid #f59e0b}
+
+.plc-card-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border-color);background:rgba(255,255,255,.02)}
+.plc-card-header-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.plc-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(16,185,129,.15);flex-shrink:0}
+.plc-card-title-wrap{min-width:0;flex:1}
+.plc-card-title{font-size:15px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc-card-subtitle{font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+.plc-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
+.plc-badge.institution{background:rgba(59,130,246,.15);color:#60a5fa}
+.plc-badge.actif{background:rgba(16,185,129,.2);color:#10b981}
+.plc-badge.ferme{background:rgba(239,68,68,.2);color:#ef4444}
+.plc-badge.transfert_en_cours{background:rgba(245,158,11,.2);color:#f59e0b}
+
+.plc-card-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plc-value-box{background:rgba(0,0,0,.25);border-radius:10px;padding:12px}
+.plc-value-box.gold{border:1px solid rgba(201,162,39,.3)}
+.plc-value-box.green{border:1px solid rgba(16,185,129,.3)}
+.plc-value-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.plc-value-label.gold{color:var(--gold)}
+.plc-value-label.green{color:#10b981}
+.plc-value{font-size:18px;font-weight:700}
+.plc-value.gold{color:var(--gold)}
+.plc-value.green{color:#10b981}
+
+.plc-card-footer{padding:12px 16px;background:rgba(0,0,0,.15);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted)}
+.plc-card-footer-item{display:flex;align-items:center;gap:4px}
+
+.plc-empty-msg{color:var(--text-muted);text-align:center;padding:40px 20px;font-size:14px;grid-column:1/-1}
+.plc-loading{text-align:center;padding:40px;color:var(--text-muted)}
+
+.plc-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.plc-modal-overlay.show{display:flex}
+.plc-modal{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;width:100%;max-width:750px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+.plc-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(16,185,129,.1),transparent)}
+.plc-modal-title{font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px}
+.plc-modal-close{width:36px;height:36px;border-radius:8px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.plc-modal-close:hover{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444}
+
+.plc-modal-tabs{display:flex;border-bottom:1px solid var(--border-color);background:rgba(0,0,0,.2)}
+.plc-modal-tab{padding:12px 16px;background:none;border:none;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.plc-modal-tab:hover{color:var(--text-primary);background:var(--bg-hover)}
+.plc-modal-tab.active{color:#10b981;border-bottom-color:#10b981}
+
+.plc-modal-body{padding:20px;overflow-y:auto;flex:1}
+.plc-tab-content{display:none}
+.plc-tab-content.active{display:block}
+
+.plc-modal-footer{padding:16px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;gap:12px;background:rgba(0,0,0,.2)}
+.plc-modal-footer-left{display:flex;gap:12px}
+.plc-modal-footer-right{display:flex;gap:12px}
+
+.plc-form-section{margin-bottom:20px}
+.plc-form-section:last-child{margin-bottom:0}
+.plc-form-section-title{font-size:12px;font-weight:600;color:#10b981;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.plc-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plc-form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.plc-form-group{display:flex;flex-direction:column;gap:4px}
+.plc-form-group.full{grid-column:span 2}
+.plc-form-label{font-size:11px;color:var(--text-muted)}
+.plc-form-input,.plc-form-select{padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:13px}
+.plc-form-input:focus,.plc-form-select:focus{outline:none;border-color:var(--gold, #C9A227)}
+.plc-form-textarea{padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:13px;min-height:60px;resize:vertical;font-family:inherit}
+
+.plc-person-chips{display:flex;flex-wrap:wrap;gap:8px}
+.plc-person-chip{display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s}
+.plc-person-chip:hover{border-color:rgba(16,185,129,.3)}
+.plc-person-chip.checked{background:rgba(16,185,129,.15);border-color:#10b981}
+.plc-person-chip input{display:none}
+
+.plc-timeline{position:relative;padding-left:24px}
+.plc-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border-color)}
+.plc-timeline-item{position:relative;padding-bottom:16px}
+.plc-timeline-item:last-child{padding-bottom:0}
+.plc-timeline-item::before{content:'';position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:#10b981;border:2px solid var(--bg-card)}
+.plc-timeline-item.note::before{background:var(--gold)}
+.plc-timeline-item.document_ajoute::before{background:#3b82f6}
+.plc-timeline-item.depot::before{background:#22c55e}
+.plc-timeline-item.retrait::before{background:#ef4444}
+.plc-timeline-date{font-size:10px;color:var(--text-muted);margin-bottom:2px}
+.plc-timeline-title{font-weight:600;font-size:12px;margin-bottom:2px}
+.plc-timeline-desc{font-size:11px;color:var(--text-secondary)}
+.plc-timeline-empty{text-align:center;padding:30px;color:var(--text-muted)}
+
+.plc-note-form{display:flex;flex-direction:column;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)}
+.plc-note-form textarea{min-height:80px}
+
+.plc-docs-upload{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;padding:16px;background:rgba(59,130,246,.05);border:1px dashed rgba(59,130,246,.3);border-radius:12px;flex-wrap:wrap}
+.plc-docs-upload input[type="file"]{display:none}
+.plc-docs-upload-btn{padding:10px 16px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#60a5fa;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.plc-docs-upload-btn:hover{background:rgba(59,130,246,.25)}
+.plc-file-preview{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:12px;color:#93c5fd;max-width:300px;animation:plcFileIn .25s ease}
+.plc-file-preview .plc-fp-icon{font-size:18px;flex-shrink:0}
+.plc-file-preview .plc-fp-info{flex:1;min-width:0;overflow:hidden}
+.plc-file-preview .plc-fp-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc-file-preview .plc-fp-size{color:var(--text-muted);font-size:11px}
+.plc-file-preview .plc-fp-remove{background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:background .2s}
+.plc-file-preview .plc-fp-remove:hover{background:rgba(248,113,113,.15)}
+@keyframes plcFileIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+.plc-docs-list{display:flex;flex-direction:column;gap:8px}
+.plc-doc-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:8px}
+.plc-doc-item:hover{border-color:rgba(59,130,246,.3)}
+.plc-doc-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.plc-doc-icon{font-size:24px}
+.plc-doc-details{min-width:0}
+.plc-doc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc-doc-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+.plc-doc-actions{display:flex;gap:6px}
+.plc-doc-action{width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:rgba(255,255,255,.05)}
+.plc-doc-action:hover{background:rgba(255,255,255,.1)}
+.plc-doc-action.delete:hover{background:rgba(239,68,68,.2);color:#ef4444}
+.plc-docs-empty{text-align:center;padding:30px;color:var(--text-muted)}
+
+@media(max-width:768px){
+.plc-cards-grid{grid-template-columns:1fr}
+.plc-form-grid,.plc-form-grid.cols-3{grid-template-columns:1fr}
+.plc-form-group.full{grid-column:span 1}
+}
+</style>
+
+<div class="plc-header">
+<div class="plc-header-left"><div class="plc-header-icon">📈</div><div><h1>Mes Placements</h1><p>Épargnes et placements du client</p></div></div>
+<div class="plc-header-actions"><button class="plc-btn plc-btn-primary" onclick="PLC.openAddModal()">➕ Nouveau Placement</button></div>
+</div>
+
+<div class="plc-dashboard">
+<div class="plc-dashboard-card"><div class="plc-dashboard-label">Total Comptes</div><div class="plc-dashboard-value green" id="statTotal">0</div></div>
+<div class="plc-dashboard-card"><div class="plc-dashboard-label">Actifs</div><div class="plc-dashboard-value blue" id="statActifs">0</div></div>
+<div class="plc-dashboard-card"><div class="plc-dashboard-label">Valeur Totale</div><div class="plc-dashboard-value gold" id="statValeur">0 $</div></div>
+<div class="plc-dashboard-card"><div class="plc-dashboard-label">PAC Mensuel</div><div class="plc-dashboard-value green" id="statPAC">0 $</div></div>
+</div>
+
+<div class="plc-section">
+<h3 class="plc-section-title">📊 Placements</h3>
+<div class="plc-cards-grid" id="plcList"><div class="plc-loading">⏳ Chargement...</div></div>
+</div>
+
+<!-- Modal Unifiée avec Onglets -->
+<div class="plc-modal-overlay" id="plcModal" onclick="if(event.target===this)PLC.closeModal()">
+<div class="plc-modal">
+<div class="plc-modal-header">
+<div class="plc-modal-title"><span id="modalIcon">📈</span><span id="modalTitle">Placement</span></div>
+<button class="plc-modal-close" onclick="PLC.closeModal()">✕</button>
+</div>
+<div class="plc-modal-tabs" id="modalTabs">
+<button class="plc-modal-tab active" data-tab="edit">✏️ Modifier</button>
+<button class="plc-modal-tab" data-tab="documents">📎 Documents</button>
+<button class="plc-modal-tab" data-tab="timeline">📅 Timeline</button>
+</div>
+<div class="plc-modal-body">
+<!-- Onglet Modifier (Formulaire) -->
+<div class="plc-tab-content active" id="tabEdit">
+<input type="hidden" id="plcId">
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">🏦 Institution & Compte</div>
+<div class="plc-form-grid">
+<div class="plc-form-group"><label class="plc-form-label">Institution</label>
+<select class="plc-form-select" id="plcInstitution">
+<option value="">Choisir...</option>
+<option>Beneva</option>
+<option>Canada Vie</option>
+<option>Desjardins</option>
+<option>Empire Vie</option>
+<option>Équitable</option>
+<option>Foresters</option>
+<option>iA Groupe financier</option>
+<option>ivari</option>
+<option>Manuvie</option>
+<option>RBC Assurances</option>
+<option>SSQ</option>
+<option>Sun Life</option>
+<option>UV Assurance</option>
+<option>BMO</option>
+<option>Banque Nationale</option>
+<option>TD</option>
+<option>CIBC</option>
+<option>Scotiabank</option>
+<option>Fidelity</option>
+<option>CI</option>
+<option>AGF</option>
+<option>Franklin Templeton</option>
+<option>Autre</option>
+</select>
+</div>
+<div class="plc-form-group"><label class="plc-form-label">Statut</label>
+<select class="plc-form-select" id="plcStatut">
+<option value="actif">✅ Actif</option>
+<option value="transfert_en_cours">🔄 Transfert en cours</option>
+<option value="ferme">❌ Fermé</option>
+</select>
+</div>
+<div class="plc-form-group"><label class="plc-form-label">Numéro de Compte</label><input type="text" class="plc-form-input" id="plcNumeroCompte" placeholder="Ex: 123-456-789"></div>
+<div class="plc-form-group"><label class="plc-form-label">Date d'ouverture</label><input type="date" class="plc-form-input" id="plcDateOuverture"></div>
+</div>
+</div>
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">📦 Type de placement</div>
+<div class="plc-form-grid">
+<div class="plc-form-group"><label class="plc-form-label">Type de compte</label>
+<select class="plc-form-select" id="plcTypePlacement">
+<option value="">Choisir...</option>
+<option value="CELI">CELI</option>
+<option value="CELI_APP">CELI APP</option>
+<option value="REER">REER</option>
+<option value="FEER">FEER</option>
+<option value="FRV">FRV</option>
+<option value="CRI">CRI</option>
+<option value="REEE">REEE</option>
+<option value="REEI">REEI</option>
+<option value="NON_ENREGISTRE">Non Enregistré</option>
+</select>
+</div>
+<div class="plc-form-group"><label class="plc-form-label">Type de produit</label>
+<select class="plc-form-select" id="plcTypeCompte">
+<option value="">Choisir...</option>
+<option value="fonds_mutuel">Fonds Mutuel</option>
+<option value="fonds_distinct">Fonds Distinct</option>
+<option value="cpg">CPG</option>
+<option value="marche_dispense">Marché Dispensé</option>
+</select>
+</div>
+<div class="plc-form-group full"><label class="plc-form-label">Choix de fonds (optionnel)</label><input type="text" class="plc-form-input" id="plcChoixFonds" placeholder="Ex: Fonds équilibré canadien"></div>
+</div>
+</div>
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">👤 Titulaire</div>
+<div class="plc-person-chips" id="plcProprietaireChips"></div>
+</div>
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">💰 Montants</div>
+<div class="plc-form-grid cols-3">
+<div class="plc-form-group"><label class="plc-form-label">Montant Initial ($)</label><input type="number" class="plc-form-input money-input" id="plcMontantInitial" step="0.01"></div>
+<div class="plc-form-group"><label class="plc-form-label">Valeur Actuelle ($)</label><input type="number" class="plc-form-input money-input" id="plcValeurActuelle" step="0.01"></div>
+<div class="plc-form-group"><label class="plc-form-label">Frais gestion (%)</label><input type="number" class="plc-form-input" id="plcFraisGestion" step="0.01"></div>
+</div>
+</div>
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">🔄 PAC (Prélèvement Automatique)</div>
+<div class="plc-form-grid">
+<div class="plc-form-group"><label class="plc-form-label">Montant du PAC ($)</label><input type="number" class="plc-form-input money-input" id="plcMontantPAC" step="0.01"></div>
+<div class="plc-form-group"><label class="plc-form-label">Fréquence du PAC</label>
+<select class="plc-form-select" id="plcFrequencePAC">
+<option value="">Aucun PAC</option>
+<option value="hebdomadaire">Hebdomadaire</option>
+<option value="bi_mensuel">Aux 2 semaines</option>
+<option value="mensuel">Mensuel</option>
+<option value="trimestriel">Trimestriel</option>
+<option value="annuel">Annuel</option>
+</select>
+</div>
+</div>
+</div>
+
+<div class="plc-form-section">
+<div class="plc-form-section-title">👥 Bénéficiaire</div>
+<div class="plc-form-grid">
+<div class="plc-form-group"><label class="plc-form-label">Nom du bénéficiaire</label><input type="text" class="plc-form-input" id="plcBeneficiaireNom"></div>
+<div class="plc-form-group"><label class="plc-form-label">Lien</label>
+<select class="plc-form-select" id="plcBeneficiaireLien">
+<option value="">Non spécifié</option>
+<option value="conjoint">Conjoint(e)</option>
+<option value="enfant">Enfant</option>
+<option value="succession">Succession</option>
+<option value="autre">Autre</option>
+</select>
+</div>
+</div>
+</div>
+
+</div>
+
+<!-- Onglet Timeline -->
+<div class="plc-tab-content" id="tabTimeline"></div>
+
+<!-- Onglet Documents -->
+<div class="plc-tab-content" id="tabDocuments"></div>
+</div>
+<div class="plc-modal-footer">
+<div class="plc-modal-footer-left">
+<button class="plc-btn plc-btn-danger" id="btnDelete" style="display:none" onclick="PLC.confirmDelete()">🗑️ Supprimer</button>
+</div>
+<div class="plc-modal-footer-right">
+<button class="plc-btn" onclick="PLC.closeModal()">Annuler</button>
+<button class="plc-btn plc-btn-primary" onclick="PLC.save()">💾 Enregistrer</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// Nettoyer l'instance précédente si elle existe
+if (window.PLC) { delete window.PLC; }
+
+window.PLC = {
+placements: [],
+currentPlacement: null,
+timeline: [],
+documents: [],
+family: { client: null, conjoint: null },
+
+TYPES_PLACEMENT: {
+    'CELI': {l: 'CELI', i: '💰'},
+    'CELI_APP': {l: 'CELI APP', i: '🏠'},
+    'REER': {l: 'REER', i: '🏦'},
+    'FEER': {l: 'FEER', i: '📊'},
+    'FRV': {l: 'FRV', i: '🔒'},
+    'CRI': {l: 'CRI', i: '🔐'},
+    'REEE': {l: 'REEE', i: '🎓'},
+    'REEI': {l: 'REEI', i: '♿'},
+    'NON_ENREGISTRE': {l: 'Non Enregistré', i: '📋'}
+},
+
+TYPES_COMPTE: {
+    'fonds_mutuel': 'Fonds Mutuel',
+    'fonds_distinct': 'Fonds Distinct',
+    'cpg': 'CPG',
+    'marche_dispense': 'Marché Dispensé'
+},
+
+STATUTS: {
+    'actif': 'Actif',
+    'ferme': 'Fermé',
+    'transfert_en_cours': 'Transfert en cours'
+},
+
+FREQUENCES: {
+    'hebdomadaire': 'Hebdomadaire',
+    'bi_mensuel': 'Aux 2 semaines',
+    'mensuel': 'Mensuel',
+    'trimestriel': 'Trimestriel',
+    'annuel': 'Annuel'
+},
+FREQ_SHORT: {
+    'hebdomadaire': 'Sem',
+    'bi_mensuel': '2 sem',
+    'mensuel': 'Mois',
+    'trimestriel': 'Trim',
+    'annuel': 'An'
+},
+
+DOC_TYPES: [
+    {v:'releve', l:'Relevé de compte'},
+    {v:'contrat', l:'Contrat / Convention'},
+    {v:'formulaire', l:'Formulaire signé'},
+    {v:'correspondance', l:'Correspondance'},
+    {v:'autre', l:'Autre'}
+],
+
+fmt: v => {
+    try { return typeof FINOX !== 'undefined' && FINOX.formatMoney ? FINOX.formatMoney(v) : new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(v||0); }
+    catch(e) { return new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD',maximumFractionDigits:0}).format(v||0); }
+},
+fmtDate: d => d ? new Date(d).toLocaleDateString('fr-CA',{year:'numeric',month:'short',day:'numeric'}) : '--',
+fmtDateTime: d => d ? new Date(d).toLocaleDateString('fr-CA',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '--',
+getTypePlacement(v) { return this.TYPES_PLACEMENT[v] || {i:'📈', l:v||'Placement'} },
+getDocTypeLabel(v) { return this.DOC_TYPES.find(t=>t.v===v)?.l || v },
+
+async init() {
+    let retries = 0;
+    while ((!window.FINOX || !FINOX.CLIENT_ID || !FINOX.supabase) && retries < 20) {
+        await new Promise(r => setTimeout(r, 200));
+        retries++;
+    }
+    if (!window.FINOX || !FINOX.CLIENT_ID) {
+        document.getElementById('plcList').innerHTML = '<p class="plc-empty-msg">❌ Erreur: Module non initialisé</p>';
+        return;
+    }
+    
+    try {
+        const c = await FINOX.loadClientData(true);
+        if (c) {
+            this.family.client = { type:'client', prenom:c.first_name, nom:c.last_name, full:(c.first_name||'')+' '+(c.last_name||'') };
+            if (c.has_conjoint && c.conjoint_first_name) {
+                this.family.conjoint = { type:'conjoint', prenom:c.conjoint_first_name, nom:c.conjoint_last_name||'', full:(c.conjoint_first_name||'')+' '+(c.conjoint_last_name||'') };
+            }
+        }
+    } catch(e) { console.error('Erreur chargement famille:', e); }
+
+    this.setupTabs();
+    await this.load();
+    // Limiter les champs date à 4 chiffres pour l'année
+    FINOX.setupAllDateInputs();
+},
+
+setupTabs() {
+    document.querySelectorAll('.plc-modal-tab').forEach(tab => {
+        tab.onclick = () => this.switchTab(tab.dataset.tab);
+    });
+},
+
+async switchTab(tabName) {
+    // Auto-save quand on quitte l'onglet edit (pour que le renommage de documents soit persisté)
+    const currentTab = document.querySelector('.plc-modal-tab.active');
+    if (currentTab && currentTab.dataset.tab === 'edit') {
+        try {
+            await this.save(true); // silent save
+        } catch(e) {
+            console.warn('[Placement] Auto-save error:', e.message);
+        }
+    }
+
+    // Si le placement n'est pas encore créé → auto-save d'abord
+    if ((tabName === 'timeline' || tabName === 'documents') && !document.getElementById('plcId').value) {
+        const typePlacement = document.getElementById('plcTypePlacement').value;
+        if (!typePlacement) { FINOX.showNotification('⚠️ Choisir un type de compte avant de continuer', 'error'); return; }
+        await this.autoSaveNew();
+        if (!document.getElementById('plcId').value) return; // save failed
+    }
+
+    document.querySelectorAll('.plc-modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.plc-tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.plc-modal-tab[data-tab="${tabName}"]`)?.classList.add('active');
+    const tabId = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+    document.getElementById('tab' + tabId)?.classList.add('active');
+
+    // Charger timeline/documents après auto-save
+    const plcId = document.getElementById('plcId').value;
+    if (plcId && tabName === 'timeline') this.loadTimeline(plcId);
+    if (plcId && tabName === 'documents') this.loadDocuments(plcId);
+},
+
+async load() {
+    try {
+        document.getElementById('plcList').innerHTML = '<div class="plc-loading">⏳ Chargement...</div>';
+        const {data, error} = await FINOX.supabase.from('placements').select('*').eq('client_id', FINOX.CLIENT_ID).order('created_at',{ascending:false});
+        if (error) throw error;
+        this.placements = data || [];
+        this.render();
+        this.stats();
+        if (typeof FINOX_NAV?.updatePlacementsBadge === 'function') {
+            FINOX_NAV.updatePlacementsBadge();
+        }
+    } catch(e) {
+        console.error('Erreur chargement:', e);
+        document.getElementById('plcList').innerHTML = '<p class="plc-empty-msg">❌ Erreur de chargement</p>';
+    }
+},
+
+stats() {
+    const t = this.placements.length;
+    const a = this.placements.filter(p => p.statut === 'actif').length;
+    const v = this.placements.reduce((s, p) => s + (FINOX.parseNumber(p.valeur_actuelle) || FINOX.parseNumber(p.montant_initial) || 0), 0);
+    const pac = this.placements.filter(p => p.statut === 'actif' && p.frequence_pac === 'mensuel')
+        .reduce((s, p) => s + (FINOX.parseNumber(p.montant_pac) || 0), 0);
+    
+    document.getElementById('statTotal').textContent = t;
+    document.getElementById('statActifs').textContent = a;
+    document.getElementById('statValeur').textContent = this.fmt(v);
+    document.getElementById('statPAC').textContent = this.fmt(pac);
+},
+
+render() {
+    if (this.placements.length === 0) {
+        document.getElementById('plcList').innerHTML = '<p class="plc-empty-msg">📊 Aucun placement enregistré. Cliquez sur "Nouveau Placement" pour commencer.</p>';
+        return;
+    }
+    
+    let html = '';
+    this.placements.forEach(p => {
+        const ti = this.getTypePlacement(p.type_placement);
+        const sc = p.statut || 'actif';
+        const sl = this.STATUTS[sc] || sc;
+        const tc = this.TYPES_COMPTE[p.type_compte] || p.type_compte || '';
+        const valeur = p.valeur_actuelle || p.montant_initial || 0;
+        
+        html += `<div class="plc-card ${sc}" onclick="PLC.openModal('${p.id}')">
+            <div class="plc-card-header">
+                <div class="plc-card-header-left">
+                    <div class="plc-card-icon">${ti.i}</div>
+                    <div class="plc-card-title-wrap">
+                        <div class="plc-card-title">${ti.l}${p.institution ? ' - ' + p.institution : ''}</div>
+                        <div class="plc-card-subtitle">
+                            ${tc ? '<span class="plc-badge institution">' + tc + '</span>' : ''}
+                            <span class="plc-badge ${sc}">${sl}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="plc-card-body">
+                <div class="plc-value-box gold">
+                    <div class="plc-value-label gold">💰 Valeur</div>
+                    <div class="plc-value gold">${this.fmt(valeur)}</div>
+                </div>
+                <div class="plc-value-box green">
+                    <div class="plc-value-label green">🔄 PAC</div>
+                    <div class="plc-value green">${p.montant_pac ? this.fmt(p.montant_pac) + (p.frequence_pac ? ' $/' + (this.FREQ_SHORT[p.frequence_pac] || p.frequence_pac) : ' $') : '--'}</div>
+                </div>
+            </div>
+            <div class="plc-card-footer">
+                <div class="plc-card-footer-item">📅 ${this.fmtDate(p.date_ouverture)}</div>
+                <div class="plc-card-footer-item">${p.numero_compte ? '🔢 ' + p.numero_compte : ''}</div>
+            </div>
+        </div>`;
+    });
+    document.getElementById('plcList').innerHTML = html;
+},
+
+// OUVRE DIRECTEMENT EN MODE ÉDITION
+async openModal(id) {
+    const p = this.placements.find(x => x.id === id);
+    if (!p) return;
+    this.currentPlacement = p;
+    
+    const ti = this.getTypePlacement(p.type_placement);
+    document.getElementById('modalIcon').textContent = ti.i;
+    document.getElementById('modalTitle').textContent = ti.l + (p.institution ? ' - ' + p.institution : '');
+    document.getElementById('btnDelete').style.display = 'block';
+    
+    // Remplir le formulaire d'édition
+    this.fillEditForm(p);
+    
+    // Charger timeline et documents
+    await this.loadTimeline(p.id);
+    this.renderTimelineTab();
+    await this.loadDocuments(p.id);
+    this.renderDocumentsTab();
+    
+    // Afficher l'onglet Modifier par défaut
+    this.switchTab('edit');
+    
+    document.getElementById('plcModal').classList.add('show');
+},
+
+// Remplir le formulaire avec les données existantes
+fillEditForm(p) {
+    this.resetForm();
+    
+    document.getElementById('plcId').value = p.id;
+    document.getElementById('plcInstitution').value = p.institution || '';
+    document.getElementById('plcStatut').value = p.statut || 'actif';
+    document.getElementById('plcNumeroCompte').value = p.numero_compte || '';
+    document.getElementById('plcDateOuverture').value = p.date_ouverture || '';
+    document.getElementById('plcTypePlacement').value = p.type_placement || '';
+    document.getElementById('plcTypeCompte').value = p.type_compte || '';
+    document.getElementById('plcChoixFonds').value = p.choix_fonds || '';
+    document.getElementById('plcMontantInitial').value = p.montant_initial || '';
+    document.getElementById('plcValeurActuelle').value = p.valeur_actuelle || '';
+    document.getElementById('plcFraisGestion').value = p.frais_gestion || '';
+    document.getElementById('plcMontantPAC').value = p.montant_pac || '';
+    document.getElementById('plcFrequencePAC').value = p.frequence_pac || '';
+    document.getElementById('plcBeneficiaireNom').value = p.beneficiaire_nom || '';
+    document.getElementById('plcBeneficiaireLien').value = p.beneficiaire_lien || '';
+    this.renderProprietaireChips(p.proprietaire || 'client');
+},
+
+openAddModal() {
+    this.currentPlacement = null;
+    this.resetForm();
+    document.getElementById('modalIcon').textContent = '📈';
+    document.getElementById('modalTitle').textContent = 'Nouveau Placement';
+    document.getElementById('btnDelete').style.display = 'none';
+    this.renderProprietaireChips('client');
+    
+    // Vider timeline et documents pour nouveau placement
+    document.getElementById('tabTimeline').innerHTML = '<div class="plc-timeline-empty">📅 La timeline sera disponible après création</div>';
+    document.getElementById('tabDocuments').innerHTML = '<div class="plc-docs-empty">📎 Les documents seront disponibles après création</div>';
+    
+    this.switchTab('edit');
+    document.getElementById('plcModal').classList.add('show');
+},
+
+closeModal() {
+    document.getElementById('plcModal').classList.remove('show');
+    this.currentPlacement = null;
+},
+
+async loadTimeline(id) {
+    try {
+        const {data} = await FINOX.supabase.from('placement_timeline').select('*').eq('placement_id', id).order('created_at',{ascending:false});
+        this.timeline = data || [];
+    } catch(e) { this.timeline = []; }
+},
+
+async loadDocuments(id) {
+    try {
+        const {data} = await FINOX.supabase.from('placement_documents').select('*').eq('placement_id', id).order('created_at',{ascending:false});
+        this.documents = data || [];
+    } catch(e) { this.documents = []; }
+},
+
+renderTimelineTab() {
+    let html = '';
+    if (this.timeline.length === 0) {
+        html = '<div class="plc-timeline-empty">📅 Aucun événement</div>';
+    } else {
+        html = '<div class="plc-timeline">';
+        this.timeline.forEach(e => {
+            html += `<div class="plc-timeline-item ${e.type_event}">
+                <div class="plc-timeline-date">${this.fmtDateTime(e.created_at)}</div>
+                <div class="plc-timeline-title">${e.titre}</div>
+                <div class="plc-timeline-desc">${e.description || ''}</div>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    
+    html += `<div class="plc-note-form">
+        <label class="plc-form-label">Ajouter une note</label>
+        <textarea class="plc-form-textarea" id="plcNewNote" placeholder="Écrire une note..."></textarea>
+        <button class="plc-btn plc-btn-sm plc-btn-primary" onclick="PLC.addNote()">➕ Ajouter</button>
+    </div>`;
+    
+    document.getElementById('tabTimeline').innerHTML = html;
+},
+
+async addNote() {
+    if (!this.currentPlacement) return;
+    const note = document.getElementById('plcNewNote').value.trim();
+    if (!note) return;
+    
+    try {
+        await FINOX.supabase.from('placement_timeline').insert({
+            placement_id: this.currentPlacement.id,
+            type_event: 'note',
+            titre: 'Note ajoutée',
+            description: note,
+            source: 'manuel'
+        });
+        document.getElementById('plcNewNote').value = '';
+        await this.loadTimeline(this.currentPlacement.id);
+        this.renderTimelineTab();
+        FINOX.showNotification('📝 Note ajoutée', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur', 'error');
+    }
+},
+
+renderDocumentsTab() {
+    let html = `<div class="plc-docs-upload">
+        <input type="file" id="plcDocFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="PLC.onFileSelected(this)">
+        <select class="plc-form-select" id="plcDocType" style="width:150px">
+            ${this.DOC_TYPES.map(t => `<option value="${t.v}">${t.l}</option>`).join('')}
+        </select>
+        <label for="plcDocFile" class="plc-docs-upload-btn">📎 Choisir fichier</label>
+        <span id="plcFilePreview"></span>
+        <button class="plc-btn plc-btn-sm plc-btn-primary" onclick="PLC.uploadDocument()">⬆️ Uploader</button>
+    </div>`;
+    
+    if (this.documents.length === 0) {
+        html += '<div class="plc-docs-empty">📎 Aucun document</div>';
+    } else {
+        html += '<div class="plc-docs-list">';
+        this.documents.forEach(d => {
+            const icon = d.mime_type?.includes('pdf') ? '📄' : d.mime_type?.includes('image') ? '🖼️' : '📎';
+            const size = d.taille_fichier ? (d.taille_fichier / 1024).toFixed(1) + ' KB' : '';
+            html += `<div class="plc-doc-item">
+                <div class="plc-doc-info">
+                    <div class="plc-doc-icon">${icon}</div>
+                    <div class="plc-doc-details">
+                        <div class="plc-doc-name">${d.nom_fichier}</div>
+                        <div class="plc-doc-meta">${this.getDocTypeLabel(d.type_document)} • ${size} • ${this.fmtDate(d.created_at)}</div>
+                    </div>
+                </div>
+                <div class="plc-doc-actions">
+                    <button class="plc-doc-action" onclick="PLC.downloadDocument('${d.id}')" title="Télécharger">⬇️</button>
+                    <button class="plc-doc-action delete" onclick="PLC.deleteDocument('${d.id}')" title="Supprimer">🗑️</button>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    document.getElementById('tabDocuments').innerHTML = html;
+},
+
+onFileSelected(input) {
+    const preview = document.getElementById('plcFilePreview');
+    if (!preview) return;
+    if (!input.files || !input.files[0]) { preview.innerHTML = ''; return; }
+    const f = input.files[0];
+    const icon = f.type.includes('pdf') ? '📄' : f.type.includes('image') ? '🖼️' : '📎';
+    const size = f.size < 1024 ? f.size + ' o' : f.size < 1048576 ? (f.size/1024).toFixed(1) + ' Ko' : (f.size/1048576).toFixed(1) + ' Mo';
+    preview.innerHTML = '<div class="plc-file-preview"><span class="plc-fp-icon">' + icon + '</span><div class="plc-fp-info"><div class="plc-fp-name">' + FINOX.escapeHtml(f.name) + '</div><div class="plc-fp-size">' + size + '</div></div><button class="plc-fp-remove" onclick="PLC.clearFileInput()" title="Retirer">✕</button></div>';
+},
+
+clearFileInput() {
+    const fi = document.getElementById('plcDocFile');
+    if (fi) fi.value = '';
+    const p = document.getElementById('plcFilePreview');
+    if (p) p.innerHTML = '';
+},
+
+async uploadDocument() {
+    if (!this.currentPlacement) return;
+    const fileInput = document.getElementById('plcDocFile');
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    const typeDoc = document.getElementById('plcDocType').value;
+    
+    try {
+        FINOX.showNotification('⏳ Upload en cours...', 'info');
+        
+        const fileExt = file.name.split('.').pop();
+        const fileName = this.currentPlacement.id + '/' + Date.now() + '.' + fileExt;
+        
+        const {data: uploadData, error: uploadError} = await FINOX.supabase.storage
+            .from('placement-documents')
+            .upload(fileName, file);
+        
+        if (uploadError) throw uploadError;
+        
+        const {data: plcDoc, error} = await FINOX.supabase.from('placement_documents').insert({
+            placement_id: this.currentPlacement.id,
+            type_document: typeDoc,
+            nom_fichier: file.name,
+            storage_path: 'placement-documents/' + fileName,
+            taille_fichier: file.size,
+            mime_type: file.type
+        }).select('id').single();
+
+        if (error) throw error;
+
+        // Double-écriture: aussi dans client_documents pour vue 360°
+        const placementLabel = (this.currentPlacement.institution || '') + (this.currentPlacement.numero_compte ? ' #' + this.currentPlacement.numero_compte : '');
+        await FINOX.supabase.from('client_documents').insert({
+            client_id: FINOX.CLIENT_ID,
+            organization_id: this.currentPlacement.organization_id || (await FINOX.loadClientData()).organization_id,
+            nom_fichier: file.name,
+            storage_path: 'placement-documents/' + fileName,
+            taille_fichier: file.size,
+            mime_type: file.type,
+            folder: 'placements',
+            description: this.getDocTypeLabel(typeDoc) + (placementLabel ? ' — ' + placementLabel : ''),
+            source: 'placement',
+            source_id: plcDoc?.id || null
+        }).then(() => {}).catch(e => console.warn('Sync client_documents:', e.message));
+
+        await FINOX.supabase.from('placement_timeline').insert({
+            placement_id: this.currentPlacement.id,
+            type_event: 'document_ajoute',
+            titre: 'Document ajouté',
+            description: file.name + ' (' + this.getDocTypeLabel(typeDoc) + ')',
+            source: 'manuel'
+        });
+        
+        fileInput.value = '';
+        await this.loadDocuments(this.currentPlacement.id);
+        await this.loadTimeline(this.currentPlacement.id);
+        this.renderDocumentsTab();
+        this.renderTimelineTab();
+        FINOX.showNotification('✅ Document uploadé', 'success');
+        
+    } catch(e) {
+        console.error('Erreur upload:', e);
+        FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+    }
+},
+
+async downloadDocument(docId) {
+    const doc = this.documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    try {
+        const storageName = doc.storage_path.replace('placement-documents/', '');
+        const downloadName = doc.nom_fichier || storageName.split('/').pop();
+        const {data} = await FINOX.supabase.storage.from('placement-documents').createSignedUrl(storageName, 3600, { download: downloadName });
+        if (data && data.signedUrl) window.open(data.signedUrl, '_blank');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur téléchargement', 'error');
+    }
+},
+
+async deleteDocument(docId) {
+    if (!(await FINOX.confirm('Supprimer ce document?'))) return;
+
+    const doc = this.documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    try {
+        const fileName = doc.storage_path.replace('placement-documents/', '');
+        await FINOX.supabase.storage.from('placement-documents').remove([fileName]);
+        
+        const {error} = await FINOX.supabase.from('placement_documents').delete().eq('id', docId);
+        if (error) throw error;
+
+        // Sync: supprimer aussi le miroir dans client_documents
+        await FINOX.supabase.from('client_documents')
+            .delete()
+            .eq('source', 'placement')
+            .eq('source_id', docId)
+            .then(() => {}).catch(e => console.warn('Sync delete client_documents:', e.message));
+        await FINOX.supabase.from('client_documents')
+            .delete()
+            .eq('storage_path', doc.storage_path)
+            .eq('source', 'placement')
+            .then(() => {}).catch(() => {});
+
+        await this.loadDocuments(this.currentPlacement.id);
+        this.renderDocumentsTab();
+        FINOX.showNotification('🗑️ Document supprimé', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+    }
+},
+
+resetForm() {
+    ['plcId','plcNumeroCompte','plcDateOuverture','plcChoixFonds','plcMontantInitial','plcValeurActuelle','plcFraisGestion','plcMontantPAC','plcBeneficiaireNom'].forEach(x => document.getElementById(x).value = '');
+    document.getElementById('plcInstitution').value = '';
+    document.getElementById('plcStatut').value = 'actif';
+    document.getElementById('plcTypePlacement').value = '';
+    document.getElementById('plcTypeCompte').value = '';
+    document.getElementById('plcFrequencePAC').value = '';
+    document.getElementById('plcBeneficiaireLien').value = '';
+},
+
+renderProprietaireChips(sel) {
+    sel = sel || 'client';
+    let h = '<label class="plc-person-chip'+(sel==='client'?' checked':'')+'"><input type="radio" name="proprietaire" value="client"'+(sel==='client'?' checked':'')+'><span>👤</span>'+(this.family.client ? this.family.client.prenom : 'Client')+'</label>';
+    if (this.family.conjoint) {
+        h += '<label class="plc-person-chip'+(sel==='conjoint'?' checked':'')+'"><input type="radio" name="proprietaire" value="conjoint"'+(sel==='conjoint'?' checked':'')+'><span>💑</span>'+this.family.conjoint.prenom+'</label>';
+        h += '<label class="plc-person-chip'+(sel==='commun'?' checked':'')+'"><input type="radio" name="proprietaire" value="commun"'+(sel==='commun'?' checked':'')+'><span>👫</span>Commun</label>';
+    }
+    document.getElementById('plcProprietaireChips').innerHTML = h;
+    document.querySelectorAll('#plcProprietaireChips .plc-person-chip').forEach(c => {
+        c.onclick = function() {
+            document.querySelectorAll('#plcProprietaireChips .plc-person-chip').forEach(x => x.classList.remove('checked'));
+            this.classList.add('checked');
+            this.querySelector('input').checked = true;
+        };
+    });
+},
+
+_buildSaveData() {
+    const typePlacement = document.getElementById('plcTypePlacement').value;
+    if (!typePlacement) return null;
+
+    let proprietaire = 'client', titulaireNom = this.family.client ? this.family.client.full : '';
+    const pc = document.querySelector('#plcProprietaireChips input:checked');
+    if (pc) {
+        proprietaire = pc.value;
+        if (proprietaire === 'client') titulaireNom = this.family.client ? this.family.client.full : '';
+        else if (proprietaire === 'conjoint') titulaireNom = this.family.conjoint ? this.family.conjoint.full : '';
+        else titulaireNom = (this.family.client ? this.family.client.full : '') + ' et ' + (this.family.conjoint ? this.family.conjoint.full : '');
+    }
+
+    return {
+        client_id: FINOX.CLIENT_ID,
+        institution: document.getElementById('plcInstitution').value || null,
+        statut: document.getElementById('plcStatut').value,
+        numero_compte: document.getElementById('plcNumeroCompte').value || null,
+        date_ouverture: document.getElementById('plcDateOuverture').value || null,
+        type_placement: typePlacement,
+        type_compte: document.getElementById('plcTypeCompte').value || null,
+        choix_fonds: document.getElementById('plcChoixFonds').value || null,
+        proprietaire: proprietaire,
+        titulaire_nom: titulaireNom,
+        montant_initial: FINOX.parseNumber(document.getElementById('plcMontantInitial').value) || null,
+        valeur_actuelle: FINOX.parseNumber(document.getElementById('plcValeurActuelle').value) || null,
+        frais_gestion: parseFloat(document.getElementById('plcFraisGestion').value) || null,
+        montant_pac: FINOX.parseNumber(document.getElementById('plcMontantPAC').value) || null,
+        frequence_pac: document.getElementById('plcFrequencePAC').value || null,
+        beneficiaire_nom: document.getElementById('plcBeneficiaireNom').value || null,
+        beneficiaire_lien: document.getElementById('plcBeneficiaireLien').value || null,
+        notes: null
+    };
+},
+
+// Auto-save silencieux pour nouveau placement (reste dans le modal)
+async autoSaveNew() {
+    const d = this._buildSaveData();
+    if (!d) { FINOX.showNotification('⚠️ Choisir un type de compte', 'error'); return; }
+    try {
+        const {data} = await FINOX.supabase.from('placements').insert(d).select().single();
+        if (data) {
+            document.getElementById('plcId').value = data.id;
+            this.currentPlacement = data;
+            document.getElementById('modalTitle').textContent = 'Modifier Placement';
+            document.getElementById('btnDelete').style.display = '';
+            await FINOX.supabase.from('placement_timeline').insert({
+                placement_id: data.id,
+                type_event: 'note',
+                titre: 'Compte créé',
+                description: 'Nouveau placement ajouté',
+                source: 'manuel'
+            });
+            FINOX.showNotification('✅ Placement créé', 'success');
+        }
+    } catch(e) {
+        FINOX.showNotification('❌ ' + e.message, 'error');
+    }
+},
+
+async save(silent) {
+    const id = document.getElementById('plcId').value;
+    const d = this._buildSaveData();
+    if (!d) { if (!silent) FINOX.showNotification('⚠️ Choisir un type de compte', 'error'); return; }
+
+    try {
+        if (id) {
+            await FINOX.supabase.from('placements').update(d).eq('id', id);
+        } else {
+            const {data} = await FINOX.supabase.from('placements').insert(d).select().single();
+            if (data) {
+                document.getElementById('plcId').value = data.id;
+                this.currentPlacement = { ...d, id: data.id };
+                await FINOX.supabase.from('placement_timeline').insert({
+                    placement_id: data.id,
+                    type_event: 'note',
+                    titre: 'Compte créé',
+                    description: 'Nouveau placement ajouté',
+                    source: 'manuel'
+                });
+            }
+        }
+        // Invalidate pulse cache on placement change
+        const pcid = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (pcid) { FINOX.invalidateCache('pulse_' + pcid); FINOX.invalidateCache('pulse_all'); }
+        if (!silent) {
+            this.closeModal();
+            await this.load();
+            FINOX.showNotification(id ? '✅ Modifié' : '✅ Ajouté', 'success');
+        }
+    } catch(e) {
+        if (!silent) FINOX.showNotification('❌ ' + e.message, 'error');
+        else throw e;
+    }
+},
+
+async confirmDelete() {
+    if (!this.currentPlacement) return;
+    if (await FINOX.confirm('Supprimer ce placement et tous ses documents?')) {
+        this.deletePlacement(this.currentPlacement.id);
+    }
+},
+
+async deletePlacement(id) {
+    try {
+        for (const doc of this.documents) {
+            const fileName = doc.storage_path.replace('placement-documents/', '');
+            await FINOX.supabase.storage.from('placement-documents').remove([fileName]);
+        }
+        await FINOX.supabase.from('placements').delete().eq('id', id);
+        // Invalidate pulse cache on placement deletion
+        const dcid = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (dcid) { FINOX.invalidateCache('pulse_' + dcid); FINOX.invalidateCache('pulse_all'); }
+        this.closeModal();
+        await this.load();
+        FINOX.showNotification('🗑️ Supprimé', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ ' + e.message, 'error');
+    }
+}
+};
+
+PLC.init();
+FINOX.setupAllMoneyInputs();
+
+window.saveModuleData = async function() {
+    return { success: true };
+};
+</script>

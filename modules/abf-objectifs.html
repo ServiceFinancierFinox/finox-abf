@@ -1,0 +1,1586 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF — OPPORTUNITÉS & RÉFÉRENCES
+     Gestion des opportunités + références client
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ─── FULL WIDTH LAYOUT ─── */
+.bpa-two-col { display: block; margin-bottom: 28px; }
+
+/* ─── SECTION HEADERS ─── */
+.bpa-section { margin-bottom: 0; }
+.bpa-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+}
+.bpa-section-title {
+    font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px;
+    color: var(--text-primary);
+}
+.bpa-section-title .bpa-icon { font-size: 20px; }
+.bpa-section-count {
+    font-size: 12px; font-weight: 600; padding: 2px 10px;
+    border-radius: 12px; background: rgba(232,180,77,0.15); color: var(--gold);
+}
+
+/* ─── OPPORTUNITY CARDS ─── */
+.bpa-opp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 900px) { .bpa-opp-grid { grid-template-columns: 1fr; } }
+
+.bpa-opp-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 10px; padding: 10px 14px; cursor: pointer;
+    transition: all 0.2s ease; position: relative;
+    display: flex; flex-direction: column; gap: 0;
+}
+.bpa-opp-card:hover { border-color: var(--gold); box-shadow: 0 4px 16px rgba(232,180,77,0.15); transform: translateY(-2px); }
+.bpa-opp-card.urgency-overdue { border-left: 3px solid #ef4444; }
+.bpa-opp-card.urgency-overdue:hover { box-shadow: 0 4px 16px rgba(239,68,68,0.18); }
+.bpa-opp-card.urgency-this-week { border-left: 3px solid #f97316; }
+.bpa-opp-card.urgency-this-month { border-left: 3px solid #eab308; }
+.bpa-opp-card.urgency-later { border-left: 3px solid #22c55e; }
+.bpa-opp-card.urgency-closed { border-left: 3px solid #6b7280; opacity: 0.65; }
+
+.bpa-opp-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
+.bpa-opp-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--gold), #D4A03D);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0; position: relative;
+}
+.bpa-opp-info { flex: 1; min-width: 0; }
+.bpa-opp-title { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bpa-opp-stage {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 5px; margin-top: 2px;
+}
+.bpa-opp-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px dashed var(--border-color); font-size: 11px; margin-top: 6px; }
+.bpa-opp-date { color: var(--text-muted); }
+.bpa-opp-date.overdue { color: #ef4444; font-weight: 600; }
+.bpa-fu-badge { position: absolute; top: -4px; right: -4px; background: #f97316; color: #fff; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 7px; line-height: 1.3; }
+
+.bpa-opp-complete-btn {
+    position: absolute; top: 6px; right: 6px; background: transparent; border: none;
+    font-size: 14px; cursor: pointer; opacity: 0.4; transition: all 0.15s; padding: 2px 4px;
+    border-radius: 4px; line-height: 1; z-index: 2;
+}
+.bpa-opp-complete-btn:hover { opacity: 1; background: rgba(16,185,129,0.15); transform: scale(1.15); }
+
+.bpa-add-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; background: var(--gold); color: #000;
+    border: none; border-radius: 10px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.bpa-add-btn:hover { background: #d4a82a; transform: translateY(-1px); }
+
+/* ─── EMPTY STATE ─── */
+.bpa-empty { text-align: center; padding: 30px 20px; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 14px; }
+.bpa-empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ─── REFERENCES PREMIUM SECTION ─── */
+.bpa-ref-section {
+    background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02));
+    border: 1.5px solid rgba(34,197,94,0.3);
+    border-radius: 16px; padding: 24px; margin-bottom: 18px;
+}
+.bpa-ref-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
+}
+.bpa-ref-title {
+    font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; color: #22c55e;
+}
+.bpa-ref-count {
+    font-size: 12px; font-weight: 600; padding: 2px 10px;
+    border-radius: 12px; background: rgba(34,197,94,0.15); color: #22c55e;
+}
+.bpa-ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.bpa-ref-card {
+    background: var(--bg-card); border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e;
+    transition: all 0.2s;
+}
+.bpa-ref-card:hover { border-color: rgba(34,197,94,0.5); box-shadow: 0 4px 16px rgba(34,197,94,0.15); transform: translateY(-2px); }
+.bpa-ref-card-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.bpa-ref-card-meta { font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.bpa-ref-card-actions { display: flex; gap: 8px; }
+.bpa-ref-btn {
+    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.2s;
+}
+.bpa-ref-btn-convert { background: #22c55e; color: #fff; }
+.bpa-ref-btn-convert:hover { background: #16a34a; }
+.bpa-ref-btn-convert:disabled { opacity: 0.5; cursor: default; }
+.bpa-ref-btn-complete { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+.bpa-ref-btn-complete:hover { background: rgba(34,197,94,0.2); }
+.bpa-ref-btn-delete { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+.bpa-ref-btn-delete:hover { background: rgba(239,68,68,0.2); }
+
+/* Quick-add reference form */
+.bpa-ref-add {
+    display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+    padding: 16px; background: rgba(34,197,94,0.05); border: 1px dashed rgba(34,197,94,0.3);
+    border-radius: 12px;
+}
+.bpa-ref-add-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+.bpa-ref-add-field label { font-size: 10px; font-weight: 700; color: #22c55e; text-transform: uppercase; letter-spacing: 0.5px; }
+.bpa-ref-add-field input {
+    padding: 8px 12px; border-radius: 8px; background: var(--bg-card);
+    border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px;
+}
+.bpa-ref-add-field input:focus { border-color: #22c55e; outline: none; }
+.bpa-ref-add-submit {
+    padding: 8px 18px; background: #22c55e; color: #fff; border: none;
+    border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+}
+.bpa-ref-add-submit:hover { background: #16a34a; }
+
+/* ─── OBJECTIFS PILLS ─── */
+.bpa-goals-section { margin-bottom: 0; }
+
+/* Person Tabs */
+.bpa-person-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.bpa-person-tab {
+    padding: 10px 18px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color); border-radius: 10px;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    font-size: 14px; color: var(--text-muted); transition: all 0.2s;
+}
+.bpa-person-tab:hover { border-color: var(--gold); }
+.bpa-person-tab.active {
+    background: rgba(232,180,77,0.1); border-color: rgba(232,180,77,0.5); color: var(--gold);
+}
+.bpa-conjoint-tab { display: none; }
+.bpa-conjoint-tab.visible { display: flex; }
+.bpa-tab-content { display: none; }
+.bpa-tab-content.active { display: block; }
+
+/* Category */
+.bpa-goal-categories { display: flex; flex-direction: column; gap: 16px; }
+.bpa-goal-category {
+    background: var(--bg-primary, #121212); border: 1px solid var(--border-color);
+    border-radius: 14px; overflow: hidden;
+}
+.bpa-goal-cat-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(232,180,77,0.12), rgba(232,180,77,0.04));
+    border-bottom: 1px solid var(--border-color);
+}
+.bpa-goal-cat-icon { font-size: 18px; }
+.bpa-goal-cat-title { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; }
+.bpa-goal-cat-count { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+.bpa-goal-pills {
+    padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+
+.bpa-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    cursor: pointer; transition: all 0.25s ease;
+    font-size: 12px; color: var(--text-secondary);
+    user-select: none;
+}
+.bpa-pill:hover { border-color: rgba(232,180,77,0.4); background: rgba(232,180,77,0.05); transform: translateY(-1px); }
+.bpa-pill.selected {
+    background: rgba(232,180,77,0.15);
+    border-color: rgba(232,180,77,0.5);
+    color: var(--gold); font-weight: 600;
+    box-shadow: 0 0 12px rgba(232,180,77,0.15);
+}
+.bpa-pill .pill-check { font-size: 10px; opacity: 0; transition: opacity 0.2s; }
+.bpa-pill.selected .pill-check { opacity: 1; }
+
+/* Recommandations */
+.bpa-reco {
+    background: linear-gradient(135deg, rgba(232,180,77,0.1), rgba(232,180,77,0.03));
+    border: 1px solid rgba(232,180,77,0.3); border-radius: 14px;
+    padding: 16px; margin-top: 20px;
+}
+.bpa-reco label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 600; color: var(--gold); margin-bottom: 10px;
+}
+.bpa-reco textarea {
+    width: 100%; background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 12px; color: var(--text-primary); font-size: 13px;
+    resize: none; height: 80px; box-sizing: border-box;
+}
+.bpa-reco textarea:focus { border-color: var(--gold); outline: none; }
+
+/* ─── TYPE PICKER MODAL ─── */
+.bpa-tp-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1001; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.bpa-tp-overlay.show { display:flex; }
+.bpa-tp-modal { background:var(--bg-card,#1e1e1e); border:1px solid var(--border-color); border-radius:16px; width:95%; max-width:480px; max-height:85vh; overflow-y:auto; animation:bpa-in 0.2s ease; }
+@keyframes bpa-in { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.bpa-tp-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-color); }
+.bpa-tp-header h3 { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.bpa-tp-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; }
+.bpa-tp-close:hover { background:rgba(255,255,255,0.1); }
+.bpa-tp-body { padding:16px 20px 20px; }
+.bpa-tp-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; margin:14px 0 8px; }
+.bpa-tp-label:first-child { margin-top:0; }
+.bpa-tp-label.gold { color:var(--gold); }
+.bpa-tp-label.blue { color:#3b82f6; }
+.bpa-tp-label.green { color:#22c55e; }
+.bpa-tp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; margin-bottom:6px; }
+.bpa-tp-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 6px; background:rgba(255,255,255,0.03); border:1.5px solid var(--border-color); border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.bpa-tp-btn:hover { border-color:var(--gold); background:rgba(232,180,77,0.1); transform:translateY(-2px); }
+.bpa-tp-btn .bpa-tp-icon { font-size:24px; line-height:1; }
+.bpa-tp-btn .bpa-tp-name { font-size:10px; color:var(--text-secondary); font-weight:500; line-height:1.2; }
+
+/* ─── CREATE/DETAIL MODALS ─── */
+.bpa-modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
+.bpa-modal-overlay.active { display:flex; }
+.bpa-modal { background:var(--bg-primary); border:1px solid var(--border-color); border-radius:16px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto; padding:24px; }
+.bpa-modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.bpa-modal-header h3 { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.bpa-modal-close { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-muted); }
+.bpa-modal-close:hover { color:#ef4444; border-color:#ef4444; }
+
+/* Form */
+.bpa-form-group { margin-bottom:16px; }
+.bpa-form-label { font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; display:block; }
+.bpa-form-input, .bpa-form-select, .bpa-form-textarea { width:100%; padding:10px 12px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); font-size:13px; font-family:inherit; box-sizing:border-box; }
+.bpa-form-textarea { resize:vertical; min-height:60px; }
+.bpa-form-input:focus, .bpa-form-select:focus, .bpa-form-textarea:focus { border-color:var(--gold); outline:none; }
+.bpa-form-row { display:flex; gap:12px; }
+.bpa-form-row .bpa-form-group { flex:1; }
+.bpa-form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.bpa-btn { padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--border-color); transition:all 0.2s; }
+.bpa-btn-primary { background:var(--gold); color:#000; border-color:var(--gold); }
+.bpa-btn-primary:hover { filter:brightness(1.1); }
+.bpa-btn-secondary { background:var(--bg-secondary); color:var(--text-primary); }
+.bpa-btn-danger { background:rgba(239,68,68,0.1); color:#ef4444; border-color:rgba(239,68,68,0.3); }
+.bpa-auto-hint { display:none; font-size:12px; color:var(--gold); margin:-4px 0 12px; padding:8px 12px; background:rgba(201,162,39,0.08); border-radius:8px; }
+
+/* Detail modal extras */
+.bpa-detail-hero { display:flex; align-items:center; gap:16px; margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border-color); }
+.bpa-detail-hero-icon { width:56px; height:56px; background:linear-gradient(135deg, var(--gold), #D4A03D); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
+.bpa-detail-hero-info { flex:1; min-width:0; }
+.bpa-detail-hero-title { font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+.bpa-detail-hero-cat { font-size:13px; color:var(--text-muted); }
+.bpa-detail-section { margin-bottom:24px; }
+.bpa-detail-section h4 { font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px; }
+.bpa-detail-dates { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+.bpa-detail-date-field { padding:12px 14px; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color); }
+.bpa-detail-date-field label { font-size:11px; color:var(--text-muted); display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+.bpa-detail-date-field input[type="date"] { width:100%; padding:6px 0; background:transparent; border:none; color:var(--text-primary); font-size:14px; font-weight:500; cursor:pointer; }
+.bpa-detail-date-field input[type="date"]:focus { outline:none; }
+.bpa-detail-note-input { display:flex; gap:8px; }
+.bpa-detail-note-input input { flex:1; padding:10px 14px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-primary); font-size:13px; }
+.bpa-detail-actions { display:flex; gap:8px; margin-top:24px; padding-top:20px; border-top:1px solid var(--border-color); }
+
+/* Timeline */
+.bpa-tl-list { max-height:250px; overflow-y:auto; padding-right:4px; }
+.bpa-tl-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:12px; }
+.bpa-tl-item:last-child { border-bottom:none; }
+.bpa-tl-icon { font-size:14px; margin-top:1px; flex-shrink:0; }
+.bpa-tl-content { flex:1; }
+.bpa-tl-desc { color:var(--text-primary); }
+.bpa-tl-time { color:var(--text-muted); font-size:11px; margin-top:2px; }
+.bpa-tl-list::-webkit-scrollbar { width:4px; }
+.bpa-tl-list::-webkit-scrollbar-track { background:transparent; }
+.bpa-tl-list::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:2px; }
+
+/* Follow-up dropdown */
+.bpa-followup-dropdown { position:absolute; top:100%; right:0; background:var(--bg-primary); border:1px solid var(--border-color); border-radius:12px; padding:8px; z-index:100; min-width:220px; box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.bpa-fu-title { font-size:11px; font-weight:700; color:var(--text-muted); padding:4px 8px; text-transform:uppercase; letter-spacing:0.5px; }
+.bpa-fu-option { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:12px; transition:background 0.15s; }
+.bpa-fu-option:hover { background:var(--bg-secondary); }
+.bpa-fu-sep { height:1px; background:var(--border-color); margin:4px 0; }
+
+/* Nav buttons */
+.nav-btn { padding:12px 24px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+.nav-btn-prev { background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-muted); }
+.nav-btn-next { background:var(--gold); border:none; color:#000; }
+.nav-btn:hover { transform:translateY(-2px); }
+.nav-btn-save { background:transparent; border:1px solid var(--border-color); color:var(--text-secondary); }
+.nav-btn-save:hover { border-color:var(--gold); color:var(--gold); }
+.save-status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:#10b981; }
+.save-status-dot.unsaved { background:#f59e0b; animation:pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .bpa-ref-add { flex-direction: column; }
+    .bpa-ref-add-field { min-width: 100%; }
+    .bpa-detail-dates { grid-template-columns: 1fr; }
+}
+</style>
+
+<!-- ═══════ TWO-COLUMN: RÉFÉRENCES+OPPORTUNITÉS (gauche) + OBJECTIFS (droite) ═══════ -->
+<div class="bpa-two-col">
+
+    <!-- COLONNE GAUCHE: RÉFÉRENCES + OPPORTUNITÉS -->
+    <div>
+
+    <!-- Références -->
+    <div class="bpa-ref-section" id="bpaRefSection">
+        <div class="bpa-ref-header">
+            <div class="bpa-ref-title">
+                <span>🤝</span> Demande de Références
+                <span class="bpa-ref-count" id="bpaRefCount">0</span>
+            </div>
+        </div>
+        <div id="bpaRefList" class="bpa-ref-grid"></div>
+        <!-- Quick add reference -->
+        <div class="bpa-ref-add">
+            <div class="bpa-ref-add-field">
+                <label>Prénom *</label>
+                <input type="text" id="bpaRefFirstName" placeholder="Jean">
+            </div>
+            <div class="bpa-ref-add-field">
+                <label>Nom *</label>
+                <input type="text" id="bpaRefLastName" placeholder="Tremblay">
+            </div>
+            <div class="bpa-ref-add-field">
+                <label>Téléphone</label>
+                <input type="tel" id="bpaRefPhone" placeholder="(514) 555-1234" oninput="this.value=BPA.formatPhone(this.value)">
+            </div>
+            <div class="bpa-ref-add-field">
+                <label>Email</label>
+                <input type="email" id="bpaRefEmail" placeholder="jean@example.com">
+            </div>
+            <button class="bpa-ref-add-submit" onclick="BPA.addQuickReference()">🤝 Ajouter</button>
+        </div>
+    </div>
+
+    <!-- Opportunités -->
+    <div class="bpa-section" id="bpaOppSection">
+        <div class="bpa-section-header">
+            <div class="bpa-section-title">
+                <span class="bpa-icon">🎯</span> Opportunités
+                <span class="bpa-section-count" id="bpaOppCount">0</span>
+            </div>
+            <button class="bpa-add-btn" onclick="BPA.openTypePicker()">➕ Nouvelle</button>
+        </div>
+        <div id="bpaOppList"></div>
+    </div>
+
+    </div>
+
+    <!-- Notes hidden (kept for backward compat) -->
+    <textarea id="bpaRecoText" style="display:none;"></textarea>
+
+</div>
+
+
+<!-- ═══════ TYPE PICKER MODAL ═══════ -->
+<div class="bpa-tp-overlay" id="bpaTpOverlay" onclick="if(event.target===this)BPA.closeTypePicker()">
+    <div class="bpa-tp-modal" onclick="event.stopPropagation()">
+        <div class="bpa-tp-header">
+            <h3>🎯 Nouvelle Opportunité</h3>
+            <button class="bpa-tp-close" onclick="BPA.closeTypePicker()">✕</button>
+        </div>
+        <div class="bpa-tp-body">
+            <p class="bpa-tp-label gold">💰 Ventes & Revenus</p>
+            <div class="bpa-tp-grid">
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('renouv_auto')"><span class="bpa-tp-icon">🚗</span><span class="bpa-tp-name">Renouv. Auto</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('renouv_habitation')"><span class="bpa-tp-icon">🏠</span><span class="bpa-tp-name">Renouv. Habitation</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('renouv_hypothecaire')"><span class="bpa-tp-icon">🏦</span><span class="bpa-tp-name">Renouv. Hypothèque</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('cross_sell')"><span class="bpa-tp-icon">🔄</span><span class="bpa-tp-name">Cross-sell</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('upsell')"><span class="bpa-tp-icon">⬆️</span><span class="bpa-tp-name">Upsell</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('decalee_mev')"><span class="bpa-tp-icon">📅</span><span class="bpa-tp-name">Décalée — MEV</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('renewal_review')"><span class="bpa-tp-icon">📋</span><span class="bpa-tp-name">Révision</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('placement')"><span class="bpa-tp-icon">📈</span><span class="bpa-tp-name">Placement</span></div>
+            </div>
+            <p class="bpa-tp-label" style="color:#a78bfa;">🛡️ Assurance & Protection</p>
+            <div class="bpa-tp-grid">
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('assurance_vie')"><span class="bpa-tp-icon">❤️</span><span class="bpa-tp-name">Assurance Vie</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('maladie_grave')"><span class="bpa-tp-icon">🏥</span><span class="bpa-tp-name">Maladie Grave</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('invalidite')"><span class="bpa-tp-icon">🦽</span><span class="bpa-tp-name">Invalidité</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('assurance_pret')"><span class="bpa-tp-icon">🏦</span><span class="bpa-tp-name">Ass. Prêt</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('transfert_compte')"><span class="bpa-tp-icon">🔄</span><span class="bpa-tp-name">Transfert Compte</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('epargne')"><span class="bpa-tp-icon">💰</span><span class="bpa-tp-name">Épargne</span></div>
+            </div>
+            <p class="bpa-tp-label blue">📅 Événements & Suivi</p>
+            <div class="bpa-tp-grid">
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('life_event')"><span class="bpa-tp-icon">👶</span><span class="bpa-tp-name">Événement de vie</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('decalee_medical')"><span class="bpa-tp-icon">💊</span><span class="bpa-tp-name">Décalée — Médical</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('follow_up')"><span class="bpa-tp-icon">📞</span><span class="bpa-tp-name">Relance</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('testament')"><span class="bpa-tp-icon">📜</span><span class="bpa-tp-name">Testament</span></div>
+                <div class="bpa-tp-btn" onclick="BPA.closeTypePicker();BPA.openCreateModal('other')"><span class="bpa-tp-icon">📌</span><span class="bpa-tp-name">Autre</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ CREATE MODAL ═══════ -->
+<div class="bpa-modal-overlay" id="bpaCreateModal">
+    <div class="bpa-modal">
+        <div class="bpa-modal-header">
+            <h3 id="bpaCreateTitle">🎯 Nouvelle opportunité</h3>
+            <div class="bpa-modal-close" onclick="BPA.closeCreateModal()">✕</div>
+        </div>
+        <input type="hidden" id="bpaFormCategory" value="">
+        <div class="bpa-form-group">
+            <label class="bpa-form-label">Titre *</label>
+            <input type="text" class="bpa-form-input" id="bpaFormTitle" placeholder="Ex: Renouvellement auto — Desjardins">
+        </div>
+        <div class="bpa-form-row">
+            <div class="bpa-form-group">
+                <label class="bpa-form-label">Date cible</label>
+                <input type="date" class="bpa-form-input" id="bpaFormTargetDate" max="2099-12-31">
+            </div>
+            <div class="bpa-form-group" id="bpaNextActionGroup">
+                <label class="bpa-form-label">Prochaine action</label>
+                <input type="date" class="bpa-form-input" id="bpaFormNextAction" max="2099-12-31">
+            </div>
+            <div class="bpa-form-group" id="bpaReminderGroup" style="display:none;">
+                <label class="bpa-form-label">Rappel avant date cible</label>
+                <select class="bpa-form-select" id="bpaFormReminder">
+                    <option value="90" selected>90 jours avant</option>
+                    <option value="30">30 jours avant</option>
+                    <option value="60">60 jours avant</option>
+                    <option value="120">120 jours avant</option>
+                    <option value="180">180 jours avant</option>
+                </select>
+            </div>
+        </div>
+        <div class="bpa-auto-hint" id="bpaAutoDateHint"></div>
+        <div class="bpa-form-group">
+            <label class="bpa-form-label">Description / Notes</label>
+            <textarea class="bpa-form-textarea" id="bpaFormDesc" placeholder="Détails de l'opportunité..." rows="3"></textarea>
+        </div>
+        <div class="bpa-form-actions">
+            <button class="bpa-btn bpa-btn-secondary" onclick="BPA.closeCreateModal()">Annuler</button>
+            <button class="bpa-btn bpa-btn-primary" onclick="BPA.createOpportunity()">Créer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ DETAIL MODAL ═══════ -->
+<div class="bpa-modal-overlay" id="bpaDetailModal">
+    <div class="bpa-modal" style="max-width:650px;">
+        <div class="bpa-modal-header">
+            <h3 id="bpaDetailTitle">🎯 Détail</h3>
+            <div class="bpa-modal-close" onclick="BPA.closeDetailModal()">✕</div>
+        </div>
+        <div id="bpaDetailContent"></div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// MODULE ABF — BILAN & PLAN D'ACTION (BPA)
+// Fusion Objectifs + Opportunités + Références
+// ═══════════════════════════════════════════════════════════════
+window.BPA = (function() {
+    'use strict';
+
+    // ── STATE ──
+    let opportunities = [];
+    let references = [];
+    let userProfile = null;
+    let clientData = null;
+    let isSaving = false;
+    let autoSaveTimer = null;
+
+    // ── CONSTANTES ──
+    const CATEGORIES = {
+        renouv_auto:         { icon: '🚗', label: 'Renouv. Auto', hasReminder: true },
+        renouv_habitation:   { icon: '🏠', label: 'Renouv. Habitation', hasReminder: true },
+        renouv_hypothecaire: { icon: '🏦', label: 'Renouv. Hypothèque', hasReminder: true },
+        cross_sell:      { icon: '🔄', label: 'Cross-sell' },
+        upsell:          { icon: '⬆️', label: 'Upsell' },
+        life_event:      { icon: '👶', label: 'Événement de vie' },
+        decalee_medical: { icon: '💊', label: 'Décalée — Médical' },
+        decalee_mev:     { icon: '📅', label: 'Décalée — MEV' },
+        follow_up:       { icon: '📞', label: 'Relance' },
+        referral:        { icon: '🤝', label: 'Référence', isReferral: true },
+        renewal_review:  { icon: '📋', label: 'Révision' },
+        placement:       { icon: '📈', label: 'Placement' },
+        assurance_vie:   { icon: '❤️', label: 'Assurance Vie' },
+        maladie_grave:   { icon: '🏥', label: 'Maladie Grave' },
+        invalidite:      { icon: '🦽', label: 'Invalidité' },
+        assurance_pret:  { icon: '🏦', label: 'Ass. Prêt' },
+        transfert_compte:{ icon: '🔄', label: 'Transfert Compte' },
+        epargne:         { icon: '💰', label: 'Épargne' },
+        testament:       { icon: '📜', label: 'Testament' },
+        other:           { icon: '📌', label: 'Autre' }
+    };
+
+    const STAGES = {
+        active:         { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        won:            { icon: '🎉', label: 'Complétée', color: '#10b981' },
+        lost:           { icon: '❌', label: 'Perdue', color: '#ef4444' },
+        identified:     { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        qualified:      { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        action_planned: { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        in_progress:    { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        proposal_sent:  { icon: '🔵', label: 'Active', color: '#3b82f6' },
+        deferred:       { icon: '⏸️', label: 'Reportée', color: '#6b7280' }
+    };
+
+    const ACTIVE_STAGES = ['active', 'identified', 'qualified', 'action_planned', 'in_progress', 'proposal_sent'];
+    const CLOSED_STAGES = ['won', 'lost', 'deferred'];
+
+    const FOLLOW_UP_RESULTS = [
+        { key: 'no_answer',      icon: '📵', label: 'Pas de réponse',        autoBackoff: true },
+        { key: 'voicemail',      icon: '📱', label: 'Boîte vocale laissée',  autoBackoff: true },
+        { key: 'call_back',      icon: '🕐', label: 'Rappeler plus tard',    autoBackoff: false },
+        { key: 'interested',     icon: '✅', label: 'Intéressé → planifier', autoBackoff: false },
+        { key: 'not_interested', icon: '❌', label: 'Pas intéressé',         autoBackoff: false },
+        { key: 'bad_timing',     icon: '😐', label: 'Mauvais moment',        autoBackoff: true }
+    ];
+
+    const BACKOFF_DAYS = [1, 3, 7, 14, 30];
+    const NEXT_DATE_OPTIONS = [
+        { label: 'Demain', days: 1 }, { label: 'Dans 3 jours', days: 3 },
+        { label: 'Dans 1 semaine', days: 7 }, { label: 'Dans 2 semaines', days: 14 }
+    ];
+
+    // Objectifs list (same keys as before for compat)
+    const OBJECTIFS_LIST = [
+        'dettes_deces', 'frais_funeraires', 'enfants_maladie', 'enrichir_patrimoine',
+        'revenu_maladie', 'niveau_vie', 'impots_deces', 'frais_bancaires', 'budget',
+        'gerer_dettes', 'epargne_mensuelle', 'payer_moins_impot', 'testament',
+        'pre_arrangements', 'epargne_retraite', 'etudes_enfants', 'assurances_complementaires',
+        'assurance_collective', 'point_assurances', 'protections_prets', 'regime_epargne_travail'
+    ];
+
+    const GOAL_CATEGORIES = [
+        { key: 'protection', icon: '🛡️', title: 'Protection', items: [
+            { key: 'dettes_deces', label: 'Couvrir dettes au décès' },
+            { key: 'frais_funeraires', label: 'Frais funéraires' },
+            { key: 'enfants_maladie', label: 'Protection enfants' },
+            { key: 'enrichir_patrimoine', label: 'Enrichir patrimoine' },
+            { key: 'revenu_maladie', label: 'Revenu si maladie' },
+            { key: 'niveau_vie', label: 'Niveau de vie famille' },
+            { key: 'impots_deces', label: 'Impôts au décès' }
+        ]},
+        { key: 'optimisation', icon: '💰', title: 'Optimisation', items: [
+            { key: 'frais_bancaires', label: 'Diminuer frais bancaires' },
+            { key: 'budget', label: 'Faire un budget' },
+            { key: 'gerer_dettes', label: 'Gérer mes dettes' },
+            { key: 'epargne_mensuelle', label: 'Épargne mensuelle' },
+            { key: 'payer_moins_impot', label: 'Payer moins d\'impôt' }
+        ]},
+        { key: 'planification', icon: '📅', title: 'Planification', items: [
+            { key: 'testament', label: 'Testament' },
+            { key: 'pre_arrangements', label: 'Pré-arrangements' },
+            { key: 'epargne_retraite', label: 'Épargne retraite' },
+            { key: 'etudes_enfants', label: 'Études des enfants' }
+        ]},
+        { key: 'revision', icon: '🔍', title: 'Révision', items: [
+            { key: 'assurances_complementaires', label: 'Assurances complémentaires' },
+            { key: 'assurance_collective', label: 'Assurance collective' },
+            { key: 'point_assurances', label: 'Point assurances' },
+            { key: 'protections_prets', label: 'Protections prêts' },
+            { key: 'regime_epargne_travail', label: 'Régime épargne travail' }
+        ]}
+    ];
+
+    // ── HELPERS ──
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    function formatPhone(v) {
+        const digits = v.replace(/\D/g, '').slice(0, 10);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+        return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+
+    function fmtDate(d) {
+        if (!d) return '—';
+        const date = FINOX.parseLocalDate ? FINOX.parseLocalDate(d) : new Date(d + (d.includes('T') ? '' : 'T00:00:00'));
+        return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function fmtRelative(d) {
+        if (!d) return '';
+        const now = new Date(); now.setHours(0,0,0,0);
+        const date = FINOX.parseLocalDate ? FINOX.parseLocalDate(d) : new Date(d + (d.includes('T') ? '' : 'T00:00:00'));
+        const diffDays = Math.round((date - now) / 86400000);
+        if (diffDays === 0) return "aujourd'hui";
+        if (diffDays === 1) return 'demain';
+        if (diffDays === -1) return 'hier';
+        if (diffDays > 1 && diffDays <= 7) return `dans ${diffDays}j`;
+        if (diffDays > 7 && diffDays <= 30) return `dans ${Math.ceil(diffDays/7)} sem.`;
+        if (diffDays < -1 && diffDays >= -30) return `retard ${Math.abs(diffDays)}j`;
+        if (diffDays < -30) return `retard ${Math.abs(Math.round(diffDays/30))} mois`;
+        return fmtDate(d);
+    }
+
+    function fmtTimeAgo(d) {
+        if (!d) return '';
+        const diffMs = Date.now() - new Date(d).getTime();
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 1) return "à l'instant";
+        if (mins < 60) return `il y a ${mins}min`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `il y a ${hrs}h`;
+        const days = Math.floor(hrs / 24);
+        if (days < 7) return `il y a ${days}j`;
+        return fmtDate(d);
+    }
+
+    function getUrgency(opp) {
+        if (CLOSED_STAGES.includes(opp.stage)) return 'closed';
+        const now = new Date(); now.setHours(0,0,0,0);
+        const checkDate = opp.next_action_date || opp.target_date;
+        if (!checkDate) return 'later';
+        const d = new Date(checkDate + 'T00:00:00');
+        const diffDays = Math.round((d - now) / 86400000);
+        if (diffDays < 0) return 'overdue';
+        if (diffDays <= 7) return 'this_week';
+        if (diffDays <= 30) return 'this_month';
+        return 'later';
+    }
+
+    function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; }
+
+    function computeAutoActionDate(targetDateStr, autoActionDays) {
+        if (!targetDateStr || !autoActionDays) return null;
+        const target = new Date(targetDateStr + 'T00:00:00');
+        const action = new Date(target); action.setDate(action.getDate() - autoActionDays);
+        const today = new Date(); today.setHours(0,0,0,0);
+        return (action < today ? today : action).toISOString().split('T')[0];
+    }
+
+    function getBackoffDays(count) { return BACKOFF_DAYS[Math.min(count, BACKOFF_DAYS.length - 1)]; }
+
+    // ── INIT ──
+    async function init() {
+        console.log('🎯 Module Bilan & Plan d\'Action — Init');
+
+        const client = await FINOX.loadClientData(true);
+        if (!client) { console.error('❌ Aucun client'); return; }
+        clientData = client;
+
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+
+        // Setup names (kept for reference lookup)
+        const _clientName = client.first_name || 'Client';
+        const _conjointName = client.conjoint_first_name || 'Conjoint';
+
+        // Load user profile
+        try {
+            const { data: profile } = await FINOX.supabase
+                .from('profiles')
+                .select('organization_id, role, first_name, last_name')
+                .eq('id', user.id)
+                .single();
+            if (!profile) return;
+            userProfile = { ...profile, id: user.id };
+        } catch (e) {
+            console.error('Erreur profil:', e);
+            return;
+        }
+
+        // Load opportunities
+        await loadOpportunities();
+
+        // Restore notes
+        const abfData = client.abf_data || {};
+        const recoTextarea = document.getElementById('bpaRecoText');
+        if (recoTextarea) {
+            // Try new key first, fallback to old
+            recoTextarea.value = abfData.opportunites_notes || abfData.objectifs?.recommandations || '';
+            recoTextarea.addEventListener('input', () => {
+                markUnsaved();
+                debouncedAutoSave();
+            });
+        }
+
+        console.log('✅ Module Opportunités chargé');
+    }
+
+    // ══════════════════════════════════════
+    // SECTION 1: OPPORTUNITÉS
+    // ══════════════════════════════════════
+    async function loadOpportunities() {
+        const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (!clientId || !userProfile) {
+            document.getElementById('bpaOppList').innerHTML = '<div class="bpa-empty"><div class="bpa-empty-icon">🎯</div><div>Aucun client sélectionné</div></div>';
+            return;
+        }
+
+        try {
+            const { data, error } = await FINOX.supabase
+                .from('client_opportunities')
+                .select('*')
+                .eq('client_id', clientId)
+                .eq('organization_id', userProfile.organization_id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const allOpps = data || [];
+
+            // Split: referrals vs others (only active)
+            opportunities = allOpps.filter(o => ACTIVE_STAGES.includes(o.stage) && o.category !== 'referral');
+            // Références: montrer les actives ET les won non-converties (pour permettre la conversion)
+            references = allOpps.filter(o => o.category === 'referral' && (
+                ACTIVE_STAGES.includes(o.stage) ||
+                (o.stage === 'won' && !o.metadata?.converted)
+            ));
+
+            renderOpportunities();
+            renderReferences();
+        } catch (e) {
+            console.error('❌ Erreur chargement opportunités:', e);
+            document.getElementById('bpaOppList').innerHTML = '<div class="bpa-empty"><div class="bpa-empty-icon">⚠️</div><div>Erreur de chargement</div></div>';
+        }
+    }
+
+    function renderOpportunities() {
+        const container = document.getElementById('bpaOppList');
+        document.getElementById('bpaOppCount').textContent = opportunities.length;
+
+        if (opportunities.length === 0) {
+            container.innerHTML = '<div class="bpa-empty"><div class="bpa-empty-icon">✅</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">Aucune opportunité active</div><div style="font-size:12px;">Les opportunités détectées pendant l\'ABF apparaîtront ici</div></div>';
+            return;
+        }
+
+        // Sort by urgency
+        const sorted = [...opportunities].sort((a, b) => {
+            const uo = { overdue: 0, this_week: 1, this_month: 2, later: 3, closed: 4 };
+            const ua = uo[getUrgency(a)] ?? 3;
+            const ub = uo[getUrgency(b)] ?? 3;
+            if (ua !== ub) return ua - ub;
+            const da = a.next_action_date || a.target_date || '9999-12-31';
+            const db = b.next_action_date || b.target_date || '9999-12-31';
+            return da.localeCompare(db);
+        });
+
+        container.innerHTML = '<div class="bpa-opp-grid">' + sorted.map(o => renderOppCard(o)).join('') + '</div>';
+    }
+
+    function renderOppCard(opp) {
+        const cat = CATEGORIES[opp.category] || CATEGORIES.other;
+        const stage = STAGES[opp.stage] || STAGES.active;
+        const urgency = getUrgency(opp);
+        const displayDate = opp.next_action_date || opp.target_date;
+        const isOverdue = urgency === 'overdue';
+        const stageColor = stage.color || 'var(--gold)';
+        const fuCount = opp.follow_up_count || 0;
+        const fuBadge = fuCount > 0 ? `<span class="bpa-fu-badge" title="${fuCount} relance(s)">x${fuCount}</span>` : '';
+
+        let bottomHtml = '';
+        if (displayDate) {
+            bottomHtml = `<div class="bpa-opp-bottom"><span class="bpa-opp-date ${isOverdue ? 'overdue' : ''}">${isOverdue ? '⚠️' : '📅'} ${fmtRelative(displayDate)}</span></div>`;
+        }
+
+        const isClosed = CLOSED_STAGES.includes(opp.stage);
+        return `<div class="bpa-opp-card urgency-${urgency}" onclick="BPA.openDetailModal('${opp.id}')" style="position:relative;">
+            ${!isClosed ? `<button class="bpa-opp-complete-btn" onclick="event.stopPropagation();BPA.completeOpp('${opp.id}')" title="Compléter">✅</button>` : ''}
+            <div class="bpa-opp-header">
+                <div class="bpa-opp-icon">${cat.icon}${fuBadge}</div>
+                <div class="bpa-opp-info">
+                    <div class="bpa-opp-title">${esc(opp.title)}</div>
+                    <span class="bpa-opp-stage" style="background:${stageColor}15;color:${stageColor};">${stage.icon} ${stage.label}</span>
+                </div>
+            </div>
+            ${bottomHtml}
+        </div>`;
+    }
+
+    // ══════════════════════════════════════
+    // SECTION 2: RÉFÉRENCES
+    // ══════════════════════════════════════
+    function renderReferences() {
+        const container = document.getElementById('bpaRefList');
+        document.getElementById('bpaRefCount').textContent = references.length;
+
+        if (references.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">Aucune référence — ajoutez-en ci-dessous!</div>';
+            return;
+        }
+
+        container.innerHTML = references.map(ref => {
+            const meta = ref.metadata || {};
+            const name = meta.ref_name || ref.title || '—';
+            const isConverted = meta.converted === true;
+
+            return `<div class="bpa-ref-card">
+                <div class="bpa-ref-card-name">🤝 ${esc(name)} ${isConverted ? '<span style="font-size:11px;color:#22c55e;">✅ Converti</span>' : ''}</div>
+                <div class="bpa-ref-card-meta">
+                    ${meta.ref_phone ? `<span>📞 ${esc(meta.ref_phone)}</span>` : ''}
+                    ${meta.ref_email ? `<span>✉️ ${esc(meta.ref_email)}</span>` : ''}
+                    ${!meta.ref_phone && !meta.ref_email ? '<span style="color:var(--text-muted);">Aucune info de contact</span>' : ''}
+                </div>
+                <div class="bpa-ref-card-actions">
+                    ${!isConverted ? `<button class="bpa-ref-btn bpa-ref-btn-convert" onclick="BPA.convertReferral('${ref.id}')">🤝 Créer le contact</button>` : '<button class="bpa-ref-btn bpa-ref-btn-convert" disabled>✅ Contact créé</button>'}
+                    <button class="bpa-ref-btn bpa-ref-btn-complete" onclick="BPA.closeOpp('${ref.id}','won')">✅</button>
+                    <button class="bpa-ref-btn bpa-ref-btn-delete" onclick="BPA.deleteOpp('${ref.id}')">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function addQuickReference() {
+        const firstName = document.getElementById('bpaRefFirstName').value.trim();
+        const lastName = document.getElementById('bpaRefLastName').value.trim();
+        const phone = document.getElementById('bpaRefPhone').value.trim();
+        const email = document.getElementById('bpaRefEmail').value.trim();
+
+        if (!firstName || !lastName) {
+            FINOX.showNotification('Prénom et nom requis', 'error');
+            return;
+        }
+
+        const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (!clientId || !userProfile) return;
+
+        try {
+            const { data, error } = await FINOX.supabase
+                .from('client_opportunities')
+                .insert({
+                    organization_id: userProfile.organization_id,
+                    client_id: clientId,
+                    conseiller_id: userProfile.id,
+                    category: 'referral',
+                    title: `Référence — ${firstName} ${lastName}`,
+                    stage: 'active',
+                    priority: 'normal',
+                    source: 'manual',
+                    metadata: {
+                        ref_first_name: firstName,
+                        ref_last_name: lastName,
+                        ref_name: `${firstName} ${lastName}`,
+                        ref_phone: phone || null,
+                        ref_email: email || null,
+                        converted: false
+                    }
+                })
+                .select('*')
+                .single();
+
+            if (error) throw error;
+
+            await addTimelineEntry(data.id, 'created', `Référence créée: ${firstName} ${lastName}`);
+            FINOX.addTimelineEntry('opportunity', `🤝 Nouvelle référence: ${firstName} ${lastName}`, phone || email || '');
+
+            // Clear form
+            document.getElementById('bpaRefFirstName').value = '';
+            document.getElementById('bpaRefLastName').value = '';
+            document.getElementById('bpaRefPhone').value = '';
+            document.getElementById('bpaRefEmail').value = '';
+
+            FINOX.showNotification(`🤝 Référence « ${firstName} ${lastName} » ajoutée!`, 'success');
+            await loadOpportunities();
+
+            // Invalidate pulse
+            const cid = FINOX.CLIENT_ID || FINOX.getClientId();
+            if (cid) { FINOX.invalidateCache('pulse_' + cid); FINOX.invalidateCache('pulse_all'); }
+
+        } catch (e) {
+            console.error('Erreur ajout référence:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    }
+
+    async function convertReferral(oppId) {
+        const ref = [...references, ...opportunities].find(o => o.id === oppId);
+        if (!ref || !ref.metadata?.ref_name) return;
+
+        const meta = ref.metadata;
+        if (meta.converted) {
+            FINOX.showNotification('Ce référé est déjà converti', 'warning');
+            return;
+        }
+
+        if (!(await FINOX.confirm(`Créer un nouveau contact CRM pour « ${meta.ref_name} » ?`))) return;
+
+        try {
+            const { data: newClient, error: clientError } = await FINOX.supabase
+                .from('clients')
+                .insert({
+                    organization_id: userProfile.organization_id,
+                    conseiller_id: userProfile.id,
+                    first_name: meta.ref_first_name || meta.ref_name.split(' ')[0] || '',
+                    last_name: meta.ref_last_name || meta.ref_name.split(' ').slice(1).join(' ') || '',
+                    phone: meta.ref_phone || null,
+                    email: meta.ref_email || null,
+                    type_contact: 'prospect',
+                    source: 'referral',
+                    statut_lead: 'Nouveau Lead'
+                })
+                .select()
+                .single();
+
+            if (clientError) throw clientError;
+
+            const updatedMeta = { ...meta, converted: true, converted_client_id: newClient.id, converted_at: new Date().toISOString() };
+            await updateOpp(oppId, { metadata: updatedMeta, stage: 'won' });
+            await addTimelineEntry(oppId, 'note', `🤝 Référé converti en contact CRM : ${meta.ref_name}`);
+
+            FINOX.showNotification(`✅ Contact « ${meta.ref_name} » créé!`, 'success');
+            await loadOpportunities();
+        } catch (e) {
+            console.error('Erreur conversion:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    }
+
+    // ══════════════════════════════════════
+    // SECTION 3: OBJECTIFS PILLS
+    // ══════════════════════════════════════
+    function renderGoals() {
+        renderGoalsForPerson('client', 'bpaClientGoals');
+        renderGoalsForPerson('conjoint', 'bpaConjointGoals');
+    }
+
+    function renderGoalsForPerson(person, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = GOAL_CATEGORIES.map(cat => {
+            const pills = cat.items.map(item => {
+                return `<div class="bpa-pill" data-key="${item.key}" data-person="${person}" onclick="BPA.toggleObjectif(this)">
+                    <span class="pill-check">✓</span> ${esc(item.label)}
+                </div>`;
+            }).join('');
+
+            return `<div class="bpa-goal-category">
+                <div class="bpa-goal-cat-header">
+                    <span class="bpa-goal-cat-icon">${cat.icon}</span>
+                    <span class="bpa-goal-cat-title">${cat.title}</span>
+                    <span class="bpa-goal-cat-count" id="bpaCatCount_${cat.key}_${person}">0 / ${cat.items.length}</span>
+                </div>
+                <div class="bpa-goal-pills">${pills}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function debouncedAutoSave() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(async () => {
+            if (typeof window.saveModuleData === 'function') {
+                console.log('💾 Auto-save objectifs (debounced)');
+                const result = await window.saveModuleData();
+                if (result.success) FINOX_NAV.markAsSaved();
+            }
+        }, 2000);
+        if (FINOX.registerTimeout) FINOX.registerTimeout(autoSaveTimer);
+    }
+
+    function toggleObjectif(el) {
+        el.classList.toggle('selected');
+        markUnsaved();
+        updateCategoryCounts();
+        debouncedAutoSave();
+    }
+
+    function updateCategoryCounts() {
+        ['client', 'conjoint'].forEach(person => {
+            GOAL_CATEGORIES.forEach(cat => {
+                const pills = document.querySelectorAll(`.bpa-pill[data-person="${person}"]`);
+                let count = 0;
+                pills.forEach(p => {
+                    if (cat.items.some(i => i.key === p.dataset.key) && p.classList.contains('selected')) count++;
+                });
+                const el = document.getElementById(`bpaCatCount_${cat.key}_${person}`);
+                if (el) el.textContent = `${count} / ${cat.items.length}`;
+            });
+        });
+    }
+
+    function collectObjectifsData() {
+        const data = { client: {}, conjoint: {}, recommandations: '' };
+        OBJECTIFS_LIST.forEach(key => {
+            const clientPill = document.querySelector(`.bpa-pill[data-key="${key}"][data-person="client"]`);
+            if (clientPill) data.client[key] = clientPill.classList.contains('selected');
+
+            const conjointPill = document.querySelector(`.bpa-pill[data-key="${key}"][data-person="conjoint"]`);
+            if (conjointPill) data.conjoint[key] = conjointPill.classList.contains('selected');
+        });
+        data.recommandations = document.getElementById('bpaRecoText')?.value || '';
+        return data;
+    }
+
+    function restoreObjectifsData(data) {
+        if (!data) return;
+        if (data.client) {
+            OBJECTIFS_LIST.forEach(key => {
+                if (data.client[key]) {
+                    const pill = document.querySelector(`.bpa-pill[data-key="${key}"][data-person="client"]`);
+                    if (pill) pill.classList.add('selected');
+                }
+            });
+        }
+        if (data.conjoint) {
+            OBJECTIFS_LIST.forEach(key => {
+                if (data.conjoint[key]) {
+                    const pill = document.querySelector(`.bpa-pill[data-key="${key}"][data-person="conjoint"]`);
+                    if (pill) pill.classList.add('selected');
+                }
+            });
+        }
+        if (data.recommandations) {
+            const reco = document.getElementById('bpaRecoText');
+            if (reco) reco.value = data.recommandations;
+        }
+        updateCategoryCounts();
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('#bpaTabs .bpa-person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#bpaTabs .bpa-person-tab[data-tab="${tab}"]`)?.classList.add('active');
+        document.getElementById('bpaClientContent').classList.toggle('active', tab === 'client');
+        document.getElementById('bpaConjointContent').classList.toggle('active', tab === 'conjoint');
+    }
+
+    // ══════════════════════════════════════
+    // OPPORTUNITY CRUD
+    // ══════════════════════════════════════
+    function openTypePicker() { document.getElementById('bpaTpOverlay').classList.add('show'); }
+    function closeTypePicker() { document.getElementById('bpaTpOverlay').classList.remove('show'); }
+
+    function openCreateModal(category) {
+        if (!category) return;
+        const cat = CATEGORIES[category];
+        if (!cat) return;
+
+        document.getElementById('bpaFormCategory').value = category;
+        document.getElementById('bpaCreateTitle').innerHTML = `${cat.icon} Nouvelle: ${cat.label}`;
+
+        // Reset
+        document.getElementById('bpaFormTitle').value = '';
+        document.getElementById('bpaFormTargetDate').value = '';
+        document.getElementById('bpaFormNextAction').value = '';
+        document.getElementById('bpaFormDesc').value = '';
+
+        // Auto-suggest title
+        const suggestions = {
+            renouv_auto: 'Renouvellement auto — ', renouv_habitation: 'Renouvellement habitation — ',
+            renouv_hypothecaire: 'Renouvellement hypothécaire — ', cross_sell: 'Opportunité ',
+            upsell: 'Augmentation couverture ', life_event: '', decalee_medical: 'Vente décalée (médical) — ',
+            decalee_mev: 'Vente décalée (MEV) — ', follow_up: 'Relance — ',
+            renewal_review: 'Révision ', placement: 'Placement — ', testament: 'Testament — ', other: ''
+        };
+        document.getElementById('bpaFormTitle').value = suggestions[category] || '';
+
+        // Reminder / next_action logic
+        const nextActionGroup = document.getElementById('bpaNextActionGroup');
+        const reminderGroup = document.getElementById('bpaReminderGroup');
+        const autoHint = document.getElementById('bpaAutoDateHint');
+        const targetInput = document.getElementById('bpaFormTargetDate');
+        const reminderSelect = document.getElementById('bpaFormReminder');
+
+        function updateReminderHint() {
+            const days = parseInt(reminderSelect.value);
+            if (!targetInput.value) { autoHint.style.display = 'none'; return; }
+            const autoDate = computeAutoActionDate(targetInput.value, days);
+            autoHint.textContent = `📅 Action à poser : ${fmtDate(autoDate)} (${days} jours avant)`;
+            autoHint.style.display = 'block';
+        }
+
+        if (cat.hasReminder) {
+            nextActionGroup.style.display = 'none';
+            reminderGroup.style.display = '';
+            reminderSelect.value = '90';
+            autoHint.style.display = 'none';
+            targetInput.onchange = updateReminderHint;
+            reminderSelect.onchange = updateReminderHint;
+        } else {
+            nextActionGroup.style.display = '';
+            reminderGroup.style.display = 'none';
+            autoHint.style.display = 'none';
+            targetInput.onchange = null;
+        }
+
+        document.getElementById('bpaCreateModal').classList.add('active');
+        setTimeout(() => document.getElementById('bpaFormTitle').focus(), 100);
+    }
+
+    function closeCreateModal() { document.getElementById('bpaCreateModal').classList.remove('active'); }
+
+    async function createOpportunity() {
+        const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+        const category = document.getElementById('bpaFormCategory').value;
+        const title = document.getElementById('bpaFormTitle').value.trim();
+        if (!category || !title) { FINOX.showNotification('Catégorie et titre requis', 'error'); return; }
+
+        try {
+            const targetDate = document.getElementById('bpaFormTargetDate').value || null;
+            let nextActionDate = document.getElementById('bpaFormNextAction').value || null;
+            const catData = CATEGORIES[category];
+
+            if (catData?.hasReminder && targetDate && !nextActionDate) {
+                const reminderDays = parseInt(document.getElementById('bpaFormReminder').value) || 90;
+                nextActionDate = computeAutoActionDate(targetDate, reminderDays);
+            }
+
+            const payload = {
+                organization_id: userProfile.organization_id,
+                client_id: clientId,
+                conseiller_id: userProfile.id,
+                category, title,
+                target_date: targetDate,
+                next_action_date: nextActionDate,
+                description: document.getElementById('bpaFormDesc').value.trim() || null,
+                stage: 'active', priority: 'normal', source: 'manual'
+            };
+
+            const { data, error } = await FINOX.supabase
+                .from('client_opportunities').insert(payload).select('*').single();
+            if (error) throw error;
+
+            await addTimelineEntry(data.id, 'created', `Opportunité créée: ${title}`);
+            FINOX.addTimelineEntry('opportunity', `🎯 Nouvelle opportunité: ${title}`, `${CATEGORIES[category]?.label || category}${payload.target_date ? ' — Cible: ' + fmtDate(payload.target_date) : ''}`);
+
+            closeCreateModal();
+            FINOX.showNotification('🎯 Opportunité créée!', 'success');
+            await loadOpportunities();
+
+            const cid = FINOX.CLIENT_ID || FINOX.getClientId();
+            if (cid) { FINOX.invalidateCache('pulse_' + cid); FINOX.invalidateCache('pulse_all'); }
+        } catch (e) {
+            console.error('❌ Erreur création:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    }
+
+    async function updateOpp(id, updates) {
+        try {
+            updates.updated_at = new Date().toISOString();
+            const { error } = await FINOX.supabase.from('client_opportunities').update(updates).eq('id', id);
+            if (error) throw error;
+            return true;
+        } catch (e) {
+            console.error('❌ Erreur update:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+            return false;
+        }
+    }
+
+    async function addTimelineEntry(oppId, type, description, oldVal, newVal) {
+        try {
+            await FINOX.supabase.from('opportunity_timeline').insert({
+                opportunity_id: oppId, type, description,
+                old_value: oldVal || null, new_value: newVal || null,
+                created_by: userProfile?.id
+            });
+        } catch (e) { console.warn('Timeline entry error:', e); }
+    }
+
+    function completeOpp(id) {
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+
+        const content = `<div class="bpa-detail-section">
+            <h4>Fermer l'opportunité</h4>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Comment se termine « ${esc(opp.title)} » ?</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="bpa-btn bpa-btn-primary" onclick="BPA.closeOpp('${id}','won')" style="background:#10b981;border-color:#10b981;">🎉 Complétée</button>
+                <button class="bpa-btn bpa-btn-danger" onclick="BPA.closeOpp('${id}','lost')">❌ Perdue</button>
+                <button class="bpa-btn bpa-btn-secondary" onclick="BPA.closeDetailModal()">Annuler</button>
+            </div>
+        </div>`;
+        document.getElementById('bpaDetailTitle').innerHTML = '📋 Fermer l\'opportunité';
+        document.getElementById('bpaDetailContent').innerHTML = content;
+        document.getElementById('bpaDetailModal').classList.add('active');
+    }
+
+    async function closeOpp(id, result) {
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+        if (await updateOpp(id, { stage: result, closed_at: new Date().toISOString() })) {
+            const label = STAGES[result]?.label || result;
+            await addTimelineEntry(id, 'stage_change', `Opportunité ${label}: ${opp.title}`, opp.stage, result);
+            FINOX.addTimelineEntry('opportunity', `🎯 Opportunité ${label}`, opp.title);
+            FINOX.showNotification(`${STAGES[result]?.icon} Opportunité ${label}`, 'success');
+            closeDetailModal();
+            await loadOpportunities();
+            const cid = FINOX.CLIENT_ID || FINOX.getClientId();
+            if (cid) { FINOX.invalidateCache('pulse_' + cid); FINOX.invalidateCache('pulse_all'); }
+        }
+    }
+
+    async function deleteOpp(id) {
+        if (!(await FINOX.confirm('Supprimer cette opportunité?'))) return;
+        try {
+            const { error } = await FINOX.supabase.from('client_opportunities').delete().eq('id', id);
+            if (error) throw error;
+            const cid = FINOX.CLIENT_ID || FINOX.getClientId();
+            if (cid) { FINOX.invalidateCache('pulse_' + cid); FINOX.invalidateCache('pulse_all'); }
+            FINOX.showNotification('🗑️ Supprimée', 'success');
+            closeDetailModal();
+            await loadOpportunities();
+        } catch (e) {
+            console.error('Erreur suppression:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    }
+
+    async function reopenOpp(id) {
+        if (await updateOpp(id, { stage: 'active', closed_at: null })) {
+            await addTimelineEntry(id, 'stage_change', 'Opportunité réouverte', null, 'active');
+            FINOX.showNotification('🔄 Réouverte', 'success');
+            closeDetailModal();
+            await loadOpportunities();
+        }
+    }
+
+    // ── FOLLOW-UP ──
+    let activeFollowUpId = null;
+
+    function startFollowUp(id, event) {
+        event.stopPropagation();
+        activeFollowUpId = id;
+        showFollowUpStep1(event.currentTarget);
+    }
+
+    function showFollowUpStep1(anchor) {
+        document.querySelectorAll('.bpa-followup-dropdown').forEach(el => el.remove());
+        const opp = [...opportunities, ...references].find(o => o.id === activeFollowUpId);
+        const nextBackoff = getBackoffDays(opp?.follow_up_count || 0);
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'bpa-followup-dropdown';
+        dropdown.innerHTML = `<div class="bpa-fu-title">Résultat de la relance</div>
+            ${FOLLOW_UP_RESULTS.map(r => {
+                const hint = r.autoBackoff ? `<span style="color:var(--text-muted);font-size:10px;margin-left:auto;">+${nextBackoff}j</span>` : '';
+                return `<div class="bpa-fu-option" onclick="BPA.selectFollowUpResult('${r.key}')">${r.icon} ${r.label}${hint}</div>`;
+            }).join('')}`;
+
+        const card = anchor.closest('.bpa-opp-card') || anchor.closest('.bpa-detail-section') || anchor.parentElement;
+        if (card) { card.style.position = 'relative'; card.appendChild(dropdown); }
+
+        setTimeout(() => document.addEventListener('click', closeFollowUpDropdown, { once: true }), 10);
+    }
+
+    function closeFollowUpDropdown() { document.querySelectorAll('.bpa-followup-dropdown').forEach(el => el.remove()); }
+
+    async function selectFollowUpResult(resultKey) {
+        closeFollowUpDropdown();
+        const result = FOLLOW_UP_RESULTS.find(r => r.key === resultKey);
+        if (!result) return;
+        const opp = [...opportunities, ...references].find(o => o.id === activeFollowUpId);
+        if (!opp) return;
+
+        if (resultKey === 'interested') {
+            if (await updateOpp(opp.id, { follow_up_count: (opp.follow_up_count || 0) + 1, last_follow_up_at: new Date().toISOString() })) {
+                await addTimelineEntry(opp.id, 'follow_up_attempt', `${result.icon} ${result.label}`, null, 'interested');
+                FINOX.showNotification('✅ Client intéressé!', 'success');
+                await loadOpportunities();
+            }
+            return;
+        }
+        if (resultKey === 'not_interested') {
+            await addTimelineEntry(opp.id, 'follow_up_attempt', `${result.icon} ${result.label}`, null, 'not_interested');
+            await updateOpp(opp.id, { follow_up_count: (opp.follow_up_count || 0) + 1, last_follow_up_at: new Date().toISOString() });
+            completeOpp(opp.id);
+            await loadOpportunities();
+            return;
+        }
+        if (result.autoBackoff) {
+            await confirmFollowUp(opp.id, resultKey, getBackoffDays(opp.follow_up_count || 0));
+            return;
+        }
+        showFollowUpStep2(opp, result);
+    }
+
+    function showFollowUpStep2(opp, result) {
+        document.querySelectorAll('.bpa-followup-dropdown').forEach(el => el.remove());
+        const card = document.querySelector(`.bpa-opp-card[onclick*="${opp.id}"]`);
+        if (!card) return;
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'bpa-followup-dropdown';
+        dropdown.innerHTML = `<div class="bpa-fu-title">Prochaine relance</div>
+            ${NEXT_DATE_OPTIONS.map(opt => `<div class="bpa-fu-option" onclick="BPA.confirmFollowUp('${opp.id}','${result.key}',${opt.days})">${opt.label}</div>`).join('')}
+            <div class="bpa-fu-sep"></div>
+            <div class="bpa-fu-option">📅 <input type="date" max="2099-12-31" style="background:transparent;border:none;color:var(--text-primary);font-size:12px;cursor:pointer;" onchange="BPA.confirmFollowUp('${opp.id}','${result.key}',0,this.value)"></div>`;
+
+        card.style.position = 'relative';
+        card.appendChild(dropdown);
+        setTimeout(() => document.addEventListener('click', closeFollowUpDropdown, { once: true }), 10);
+    }
+
+    async function confirmFollowUp(id, resultKey, days, customDate) {
+        closeFollowUpDropdown();
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+        const result = FOLLOW_UP_RESULTS.find(r => r.key === resultKey);
+        const nextDate = customDate || addDays(days);
+
+        const updates = {
+            follow_up_count: (opp.follow_up_count || 0) + 1,
+            last_follow_up_at: new Date().toISOString(),
+            next_action_date: nextDate
+        };
+
+        if (await updateOpp(id, updates)) {
+            await addTimelineEntry(id, 'follow_up_attempt', `${result?.icon || '📞'} ${result?.label || resultKey} — Prochaine: ${fmtDate(nextDate)}`, null, resultKey);
+            const daysUntil = Math.round((new Date(nextDate + 'T00:00:00') - new Date()) / 86400000);
+            const delayText = daysUntil <= 0 ? "aujourd'hui" : daysUntil === 1 ? 'demain' : `dans ${daysUntil}j`;
+            FINOX.showNotification(`📞 Relance #${updates.follow_up_count} — Prochaine: ${delayText}`, 'success');
+            await loadOpportunities();
+        }
+    }
+
+    async function addQuickNote(id) {
+        const note = prompt('📝 Ajouter une note:');
+        if (!note?.trim()) return;
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+        const updatedNotes = opp.notes ? opp.notes + '\n---\n' + note.trim() : note.trim();
+        if (await updateOpp(id, { notes: updatedNotes })) {
+            await addTimelineEntry(id, 'note', note.trim());
+            FINOX.showNotification('📝 Note ajoutée', 'success');
+            await loadOpportunities();
+        }
+    }
+
+    // ── DETAIL MODAL ──
+    async function openDetailModal(id) {
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+        const cat = CATEGORIES[opp.category] || CATEGORIES.other;
+        const stage = STAGES[opp.stage] || STAGES.active;
+        const isClosed = CLOSED_STAGES.includes(opp.stage);
+        const stageColor = stage.color || 'var(--gold)';
+
+        document.getElementById('bpaDetailTitle').innerHTML = '';
+
+        // Referral section
+        const refMeta = opp.metadata;
+        const isRefWithData = opp.category === 'referral' && refMeta?.ref_name;
+        let referralSection = '';
+        if (isRefWithData) {
+            const isConverted = refMeta?.converted === true;
+            referralSection = `<div class="bpa-detail-section" style="border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:18px;background:rgba(34,197,94,0.05);">
+                <h4 style="color:#22c55e;">🤝 Personne référée</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Prénom</label><span style="font-size:14px;font-weight:500;">${esc(refMeta.ref_first_name || '—')}</span></div>
+                    <div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Nom</label><span style="font-size:14px;font-weight:500;">${esc(refMeta.ref_last_name || '—')}</span></div>
+                    <div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Téléphone</label><span style="font-size:14px;font-weight:500;">${refMeta.ref_phone ? esc(refMeta.ref_phone) : '—'}</span></div>
+                    <div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Email</label><span style="font-size:14px;font-weight:500;">${refMeta.ref_email ? esc(refMeta.ref_email) : '—'}</span></div>
+                </div>
+                <div style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+                    ${!isConverted ? `<button class="bpa-btn" style="background:#22c55e;border-color:#22c55e;color:#fff;" onclick="BPA.convertReferral('${opp.id}')">🤝 Créer le contact</button>` : '<button class="bpa-btn bpa-btn-secondary" disabled style="opacity:0.6;">✅ Contact créé</button>'}
+                    <span style="font-size:12px;color:var(--text-muted);">${isConverted ? '✅ Converti' : '⏳ En attente'}</span>
+                </div>
+            </div>`;
+        }
+
+        // Follow-up info
+        const fuCount = opp.follow_up_count || 0;
+        let relanceInfo = '';
+        if (fuCount > 0) {
+            relanceInfo = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:var(--bg-secondary);border-radius:10px;">
+                📞 <strong style="color:var(--text-primary);">${fuCount}</strong> relance${fuCount > 1 ? 's' : ''} / ${opp.max_follow_ups || 5}${opp.last_follow_up_at ? ` — Dernière : ${fmtTimeAgo(opp.last_follow_up_at)}` : ''}
+            </div>`;
+        }
+
+        const content = document.getElementById('bpaDetailContent');
+        content.innerHTML = `
+            <div class="bpa-detail-hero">
+                <div class="bpa-detail-hero-icon">${cat.icon}</div>
+                <div class="bpa-detail-hero-info">
+                    <div class="bpa-detail-hero-title">${esc(opp.title)}</div>
+                    <div class="bpa-detail-hero-cat">${cat.label}
+                        <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-left:8px;background:${stageColor}15;color:${stageColor};">${stage.icon} ${stage.label}</span>
+                    </div>
+                </div>
+            </div>
+            ${referralSection}
+            <div class="bpa-detail-dates">
+                <div class="bpa-detail-date-field">
+                    <label>📅 Date cible</label>
+                    <input type="date" id="bpaDetailTargetDate" value="${opp.target_date || ''}" max="2099-12-31">
+                </div>
+                <div class="bpa-detail-date-field">
+                    <label>⏰ Prochaine action</label>
+                    <input type="date" id="bpaDetailNextAction" value="${opp.next_action_date || ''}" max="2099-12-31">
+                </div>
+            </div>
+            ${opp.description ? `<div class="bpa-detail-section"><h4>Description</h4><textarea id="bpaDetailDesc" rows="2" style="width:100%;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:10px;color:var(--text-primary);font-size:13px;resize:vertical;font-family:'Inter',sans-serif;">${esc(opp.description)}</textarea></div>` : `<div class="bpa-detail-section"><h4>Description</h4><textarea id="bpaDetailDesc" rows="2" placeholder="Ajouter une description..." style="width:100%;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:10px;color:var(--text-primary);font-size:13px;resize:vertical;font-family:'Inter',sans-serif;"></textarea></div>`}
+            ${relanceInfo}
+            <div class="bpa-detail-section">
+                <h4>📝 Note rapide</h4>
+                <div class="bpa-detail-note-input">
+                    <input type="text" id="bpaDetailNoteInput" placeholder="Écrire une note..." onkeydown="if(event.key==='Enter') BPA.addDetailNote('${opp.id}')">
+                    <button class="bpa-btn bpa-btn-primary" style="padding:8px 16px;" onclick="BPA.addDetailNote('${opp.id}')">📝</button>
+                </div>
+            </div>
+            ${!isClosed ? `<div class="bpa-detail-section">
+                <h4>📞 Relance</h4>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span style="font-size:13px;color:var(--text-muted);">${fuCount} relance${fuCount > 1 ? 's' : ''} / ${opp.max_follow_ups || 5}${opp.last_follow_up_at ? ' — Dernière: ' + fmtTimeAgo(opp.last_follow_up_at) : ''}</span>
+                    <div style="flex:1;"></div>
+                    <button class="bpa-btn bpa-btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="BPA.startFollowUp('${opp.id}', event)">📞 Enregistrer une relance</button>
+                </div>
+            </div>` : ''}
+            <div class="bpa-detail-section">
+                <h4>Historique</h4>
+                <div class="bpa-tl-list" id="bpaDetailTimeline"><div style="color:var(--text-muted);font-size:12px;">Chargement...</div></div>
+            </div>
+            <div class="bpa-detail-actions">
+                ${!isClosed ? `
+                    <button class="bpa-btn bpa-btn-danger" onclick="BPA.deleteOpp('${opp.id}')" style="font-size:12px;">🗑️</button>
+                    <div style="flex:1;"></div>
+                    <button class="bpa-btn bpa-btn-primary" onclick="BPA.saveDetailChanges('${opp.id}')">💾 Sauvegarder</button>
+                    <button class="bpa-btn" style="background:#10b981;border-color:#10b981;color:#fff;" onclick="BPA.closeOpp('${opp.id}','won')">🎉 Complétée</button>
+                    <button class="bpa-btn bpa-btn-danger" onclick="BPA.closeOpp('${opp.id}','lost')">❌ Perdue</button>
+                ` : `
+                    <button class="bpa-btn bpa-btn-secondary" onclick="BPA.reopenOpp('${opp.id}')">🔄 Réouvrir</button>
+                    <div style="flex:1;"></div>
+                `}
+                <button class="bpa-btn bpa-btn-secondary" onclick="BPA.closeDetailModal()">Fermer</button>
+            </div>`;
+
+        document.getElementById('bpaDetailModal').classList.add('active');
+
+        // Load timeline async
+        try {
+            const { data: tl } = await FINOX.supabase
+                .from('opportunity_timeline').select('*')
+                .eq('opportunity_id', id)
+                .order('created_at', { ascending: false }).limit(50);
+
+            const TL_ICONS = { stage_change: '🔀', note: '📝', follow_up_attempt: '📞', created: '🎯', meeting_booked: '📅', value_change: '💰' };
+            const tlContainer = document.getElementById('bpaDetailTimeline');
+            if (!tl || tl.length === 0) {
+                tlContainer.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Aucun historique</div>';
+            } else {
+                tlContainer.innerHTML = tl.map(t => `<div class="bpa-tl-item">
+                    <div class="bpa-tl-icon">${TL_ICONS[t.type] || '📌'}</div>
+                    <div class="bpa-tl-content"><div class="bpa-tl-desc">${esc(t.description)}</div><div class="bpa-tl-time">${fmtTimeAgo(t.created_at)}</div></div>
+                </div>`).join('');
+            }
+        } catch (e) { console.warn('Timeline load error:', e); }
+    }
+
+    function closeDetailModal() { document.getElementById('bpaDetailModal').classList.remove('active'); }
+
+    async function updateDetailField(id, field, value) {
+        if (await updateOpp(id, { [field]: value || null })) {
+            FINOX.showNotification('✅ Sauvegardé', 'success');
+            await loadOpportunities();
+        }
+    }
+
+    async function saveDetailChanges(id) {
+        const updates = {};
+        const td = document.getElementById('bpaDetailTargetDate');
+        const na = document.getElementById('bpaDetailNextAction');
+        const desc = document.getElementById('bpaDetailDesc');
+        if (td) updates.target_date = td.value || null;
+        if (na) updates.next_action_date = na.value || null;
+        if (desc) updates.description = desc.value.trim() || null;
+        if (await updateOpp(id, updates)) {
+            FINOX.showNotification('💾 Opportunité sauvegardée', 'success');
+            await loadOpportunities();
+        }
+    }
+
+    async function addDetailNote(id) {
+        const input = document.getElementById('bpaDetailNoteInput');
+        const note = input?.value?.trim();
+        if (!note) return;
+        const opp = [...opportunities, ...references].find(o => o.id === id);
+        if (!opp) return;
+        const updatedNotes = opp.notes ? opp.notes + '\n---\n' + note : note;
+        if (await updateOpp(id, { notes: updatedNotes })) {
+            await addTimelineEntry(id, 'note', note);
+            FINOX.showNotification('📝 Note ajoutée', 'success');
+            input.value = '';
+            await loadOpportunities();
+            openDetailModal(id);
+        }
+    }
+
+    // ══════════════════════════════════════
+    // SAVE MODULE DATA
+    // ══════════════════════════════════════
+    function markUnsaved() { FINOX_NAV.markAsUnsaved(); }
+
+    window.saveModuleData = async function() {
+        console.log('💾 saveModuleData Objectifs appelé');
+        if (isSaving) {
+            console.log('⚠️ Sauvegarde objectifs déjà en cours, skip');
+            return { success: true };
+        }
+        isSaving = true;
+
+        try {
+            // Toujours lire le cache frais (pas la closure clientData figée au init)
+            const freshClient = FINOX.getClientData();
+            const currentAbfData = freshClient?.abf_data || clientData?.abf_data || {};
+            const recoText = document.getElementById('bpaRecoText')?.value || '';
+
+            const abfUpdate = { ...currentAbfData, opportunites_notes: recoText };
+
+            const { data, error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID)
+                .select('id');
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                throw new Error('Aucune ligne modifiée — permissions insuffisantes (RLS). Contactez un admin.');
+            }
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            // Mettre à jour aussi la closure locale
+            if (clientData) clientData.abf_data = abfUpdate;
+
+            console.log('✅ Objectifs sauvegardés avec succès');
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('❌ Erreur sauvegarde objectifs:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+
+    window.saveAndFinish = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Bilan sauvegardé — ABF terminé! 🎉', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-contact');
+        } else {
+            FINOX.showNotification('Erreur: ' + result.error, 'error');
+        }
+    };
+
+    // ── ESCAPE HANDLER ──
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeCreateModal();
+            closeDetailModal();
+            closeTypePicker();
+            closeFollowUpDropdown();
+        }
+    });
+
+    // Close modals on overlay click
+    document.getElementById('bpaCreateModal')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('bpa-modal-overlay')) closeCreateModal();
+    });
+    document.getElementById('bpaDetailModal')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('bpa-modal-overlay')) closeDetailModal();
+    });
+
+    // Auto-init
+    requestAnimationFrame(() => init());
+
+    // Public API
+    return {
+        openTypePicker, closeTypePicker,
+        openCreateModal, closeCreateModal,
+        createOpportunity,
+        openDetailModal, closeDetailModal,
+        completeOpp, closeOpp, deleteOpp, reopenOpp,
+        startFollowUp, selectFollowUpResult, confirmFollowUp,
+        addQuickNote, addQuickReference,
+        convertReferral,
+        updateDetailField, saveDetailChanges, addDetailNote,
+        markUnsaved, formatPhone
+    };
+})();
+</script>

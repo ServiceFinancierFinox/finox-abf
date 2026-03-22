@@ -1,0 +1,1695 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: CONFORMITE-RECOMMANDATIONS v4.0
+     Résumé des besoins et décisions client/conjoint/enfants
+     COMPLET: Tabs Assurance/Épargne, Objectifs par produit, Opportunités À faire
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Person Tabs */
+.person-tabs-container { margin-bottom: 20px; }
+.person-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.person-tab {
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+.person-tab:hover { border-color: var(--gold); }
+.person-tab.active {
+    background: rgba(232, 180, 77, 0.1);
+    border-color: rgba(232, 180, 77, 0.5);
+    color: var(--gold);
+}
+.tab-icon { font-size: 18px; }
+.conjoint-tab { display: none; }
+.conjoint-tab.visible { display: flex; }
+.enfant-tab { display: none; }
+.enfant-tab.visible { display: flex; }
+.person-tab.enfant-tab {
+    background: rgba(33, 150, 243, 0.08);
+    border-color: rgba(33, 150, 243, 0.2);
+}
+.person-tab.enfant-tab.active {
+    background: rgba(33, 150, 243, 0.15);
+    border-color: rgba(33, 150, 243, 0.5);
+    color: #64B5F6;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Conformité Layout 4 colonnes */
+.conformite-onepage { display: grid; gap: 16px; }
+
+.conformite-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+/* Layout 2 colonnes pour enfants (Vie + MG seulement) */
+.conformite-columns-enfant {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    max-width: 600px;
+}
+
+.conformite-column {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+}
+
+.conformite-column:hover { border-color: rgba(232, 180, 77, 0.3); }
+
+/* Header de colonne */
+.conformite-col-header {
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 14px 14px 0 0;
+    overflow: hidden;
+}
+
+.conformite-col-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.conformite-column.vie .conformite-col-header::before { background: linear-gradient(90deg, #4CAF50, #81C784); }
+.conformite-column.maladie .conformite-col-header::before { background: linear-gradient(90deg, #2196F3, #64B5F6); }
+.conformite-column.invalidite .conformite-col-header::before { background: linear-gradient(90deg, #FF9800, #FFB74D); }
+.conformite-column.pret .conformite-col-header::before { background: linear-gradient(90deg, #9C27B0, #BA68C8); }
+.conformite-column.epargne .conformite-col-header::before { background: linear-gradient(90deg, #00BCD4, #4DD0E1); }
+
+.conformite-col-icon { font-size: 28px; margin-bottom: 8px; }
+
+.conformite-col-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.conformite-col-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.conformite-column.vie .conformite-col-value { color: #4CAF50; }
+.conformite-column.maladie .conformite-col-value { color: #2196F3; }
+.conformite-column.invalidite .conformite-col-value { color: #FF9800; }
+.conformite-column.pret .conformite-col-value { color: #9C27B0; }
+.conformite-column.epargne .conformite-col-value { color: #00BCD4; }
+
+.conformite-col-subvalue {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.conformite-column.epargne .conformite-col-subvalue { color: rgba(0, 188, 212, 0.7); }
+
+/* Corps de colonne */
+.conformite-col-body {
+    padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.conformite-col-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.conformite-col-field label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.conformite-col-field select,
+.conformite-col-field input {
+    width: 100%;
+    padding: 10px;
+    font-size: 12px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.conformite-col-field select:focus,
+.conformite-col-field input:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.conformite-col-field.hidden { display: none; }
+
+/* Texte de conformité */
+.conformite-col-text {
+    background: rgba(232, 180, 77, 0.08);
+    border: 1px solid rgba(232, 180, 77, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: auto;
+}
+
+.conformite-col-text.hidden { display: none; }
+
+/* Statut visuel */
+.conformite-column.status-accepte {
+    border-color: rgba(76, 175, 80, 0.4);
+    background: linear-gradient(180deg, rgba(76, 175, 80, 0.05), var(--bg-card, #1e1e1e));
+}
+
+.conformite-column.status-refuse {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.05), var(--bg-card, #1e1e1e));
+}
+
+.conformite-column.status-afaire {
+    border-color: rgba(251, 191, 36, 0.4);
+    background: linear-gradient(180deg, rgba(251, 191, 36, 0.05), var(--bg-card, #1e1e1e));
+}
+
+
+
+/* Responsive */
+@media (max-width: 1200px) { .conformite-columns { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .conformite-columns { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) {
+    .conformite-columns { grid-template-columns: 1fr; }
+    .conformite-columns-enfant { grid-template-columns: 1fr; }
+}
+
+/* Main Category Tabs (Assurance vs Épargne) */
+.reco-main-tabs { display: flex; gap: 4px; margin-bottom: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; }
+.reco-main-tab {
+    flex: 1; padding: 14px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    text-align: center; cursor: pointer; transition: all 0.2s; border: none;
+    background: transparent; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.reco-main-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.reco-main-tab.active { background: rgba(232,180,77,0.15); color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.reco-main-tab .tab-badge { font-size: 11px; padding: 1px 8px; border-radius: 8px; background: rgba(255,255,255,0.1); }
+.reco-main-content { display: none; }
+.reco-main-content.active { display: block; }
+
+/* Épargne Placement Cards */
+.reco-epargne-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.reco-epargne-card {
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 14px; overflow: hidden; transition: all 0.2s;
+}
+.reco-epargne-card:hover { border-color: rgba(0,188,212,0.4); }
+.reco-epargne-card-header {
+    padding: 16px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(0,188,212,0.08), transparent);
+}
+.reco-epargne-card-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #00BCD4, #4DD0E1); }
+.reco-epargne-card-header { position: relative; }
+.reco-epargne-card-icon { font-size: 28px; }
+.reco-epargne-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.reco-epargne-card-owner { font-size: 11px; color: var(--text-muted); }
+.reco-epargne-card-contrib { font-size: 13px; color: #00BCD4; font-weight: 600; margin-left: auto; }
+.reco-epargne-card-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.reco-epargne-card-field { display: flex; flex-direction: column; gap: 4px; }
+.reco-epargne-card-field label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.reco-epargne-card-field select, .reco-epargne-card-field input { width: 100%; padding: 10px; font-size: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); box-sizing: border-box; }
+.reco-epargne-card-field select:focus, .reco-epargne-card-field input:focus { border-color: #00BCD4; outline: none; }
+.reco-epargne-source-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(245,158,11,0.1); color: #f59e0b; font-weight: 600; }
+
+/* Per-product Objectifs */
+.reco-objectifs-section {
+    margin-top: 8px; padding: 10px 12px;
+    background: rgba(232,180,77,0.05); border: 1px solid rgba(232,180,77,0.15);
+    border-radius: 8px;
+}
+.reco-objectifs-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: 600; color: var(--gold);
+}
+.reco-objectifs-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.reco-obj-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 14px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+    cursor: pointer; transition: all 0.2s; font-size: 11px; color: var(--text-secondary); user-select: none;
+}
+.reco-obj-pill:hover { border-color: rgba(232,180,77,0.4); }
+.reco-obj-pill.selected { background: rgba(232,180,77,0.15); border-color: rgba(232,180,77,0.5); color: var(--gold); font-weight: 600; }
+.reco-obj-pill .pill-chk { font-size: 9px; opacity: 0; transition: opacity 0.2s; }
+.reco-obj-pill.selected .pill-chk { opacity: 1; }
+.reco-obj-autre-input { display: none; margin-top: 6px; width: 100%; padding: 8px; font-size: 11px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); box-sizing: border-box; }
+.reco-obj-autre-input.show { display: block; }
+.reco-obj-autre-input:focus { border-color: var(--gold); outline: none; }
+
+/* Status colors for epargne cards */
+.reco-epargne-card.status-accepte { border-color: rgba(76, 175, 80, 0.4); background: linear-gradient(180deg, rgba(76, 175, 80, 0.03), var(--bg-card)); }
+.reco-epargne-card.status-refuse { border-color: rgba(239, 68, 68, 0.4); background: linear-gradient(180deg, rgba(239, 68, 68, 0.03), var(--bg-card)); }
+.reco-epargne-card.status-afaire { border-color: rgba(251, 191, 36, 0.4); background: linear-gradient(180deg, rgba(251, 191, 36, 0.03), var(--bg-card)); }
+
+/* À faire: date + create opportunity */
+.reco-afaire-opp { display: none; margin-top: 8px; padding: 10px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; }
+.reco-afaire-opp.show { display: block; }
+.reco-afaire-opp label { font-size: 10px; color: #f59e0b; font-weight: 600; display: block; margin-bottom: 6px; }
+.reco-afaire-opp-row { display: flex; flex-direction: column; gap: 8px; }
+.reco-afaire-opp-row input[type="date"] { width: 100%; padding: 8px; font-size: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); box-sizing: border-box; }
+.reco-afaire-opp-btn { width: 100%; padding: 10px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: #f59e0b; color: #000; transition: all 0.2s; }
+.reco-afaire-opp-btn:hover { filter: brightness(1.1); }
+.reco-opp-created { margin-top: 8px; padding: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; text-align: center; }
+.reco-opp-created .reco-opp-created-icon { font-size: 20px; margin-bottom: 4px; }
+.reco-opp-created .reco-opp-created-text { font-size: 11px; font-weight: 600; color: #10b981; }
+.reco-opp-created .reco-opp-created-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+</style>
+
+<!-- Main Category Tabs -->
+<div class="reco-main-tabs">
+    <button class="reco-main-tab active" data-main="assurance" onclick="switchMainRecoTab('assurance')">
+        🛡️ Recommandations Assurance
+    </button>
+    <button class="reco-main-tab" data-main="epargne" onclick="switchMainRecoTab('epargne')">
+        💰 Recommandations Épargne / Placement
+    </button>
+</div>
+
+<!-- TAB 1: ASSURANCE -->
+<div class="reco-main-content active" id="recoAssuranceContent">
+    <div class="person-tabs-container">
+        <div class="person-tabs" id="conformiteTabs">
+            <div class="person-tab active" data-tab="client" onclick="switchConformiteTab('client')">
+                <span class="tab-icon">✅</span>
+                <span id="conformiteTabClientName">Client</span>
+            </div>
+            <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchConformiteTab('conjoint')">
+                <span class="tab-icon">✅</span>
+                <span id="conformiteTabConjointName">Conjoint</span>
+            </div>
+        </div>
+        <div class="tab-content-wrapper" id="conformiteTabsContent">
+            <!-- Generated dynamically by renderAllTabs() -->
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2: ÉPARGNE / PLACEMENT -->
+<div class="reco-main-content" id="recoEpargneContent">
+    <div id="recoEpargneBody">
+        <!-- Generated dynamically -->
+    </div>
+</div>
+
+
+<script>
+(async function() {
+    console.log('✅ Module Conformité Recommandations v4.0 - Init');
+    
+    // ==========================================
+    // VARIABLES GLOBALES
+    // ==========================================
+    let isSaving = false;
+    let clientName = 'Client';
+    let conjointName = 'Conjoint';
+    let hasConjoint = false;
+    let enfantsData = [];
+    let client = null;
+    let abfData = {};
+    
+    // Besoins calculés (stockés pour affichage et texte conformité)
+    const besoinsCalcules = {
+        client: { vie: 0, maladie: 0, invalidite: 0, pret: 0, epargneMensuel: 0, epargneTransfert: 0 },
+        conjoint: { vie: 0, maladie: 0, invalidite: 0, pret: 0, epargneMensuel: 0, epargneTransfert: 0 }
+    };
+    
+    // Types de protections
+    const TYPES_ADULTE = ['vie', 'maladie', 'invalidite', 'pret'];
+    const TYPES_ENFANT = ['vie', 'maladie'];
+    
+    // Compagnies d'assurance
+    const COMPAGNIES = [
+        'Assomption Vie', 'Beneva', 'BMO', 'Canada Vie', 'Chevaliers de Colomb', 'Combined', 'CPP',
+        'Desjardins', 'Emma', 'Empire Vie', 'Équitable', 'Foresters', 'Humania',
+        'iA Groupe Financier', 'Ivari', 'Manuvie', 'Primerica', 'RBC', 'Securian',
+        'Sun Life', 'UV Assurance', 'Autre'
+    ];
+    
+    // Options "À faire"
+    const OPTIONS_DELAI = [
+        { value: 'prochaine_rencontre', label: 'Lors de la prochaine rencontre' },
+        { value: 'quelques_mois', label: 'Dans quelques mois' },
+        { value: 'budget_permet', label: 'Quand le budget me le permettra' }
+    ];
+    
+    // ==========================================
+    // UTILITAIRES
+    // ==========================================
+    function capitalize(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    function formatCurrency(num) {
+        if (num === null || num === undefined || isNaN(num)) return '$0';
+        return Math.round(num).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    
+    // Fonction sécurisée pour obtenir un nombre depuis abf_data
+    // Gère les cas où la valeur est un nombre ou une string formatée
+    function getNumericValue(value) {
+        if (value === null || value === undefined) return 0;
+        if (typeof value === 'number') return value;
+        return FINOX.parseNumber(value);
+    }
+    
+    // Fonction pour valider/corriger les valeurs d'invalidité aberrantes
+    // Si le besoin mensuel est > 50000$/mois, c'est probablement une erreur de parsing (virgule)
+    function validateInvaliditeValue(value, revenuAnnuel) {
+        if (value > 50000) {
+            // Valeur aberrante - probablement 510417 au lieu de 5104.17
+            // Essayer de corriger en divisant par 100
+            const corrected = value / 100;
+            // Vérifier si ça a du sens (< 70% du revenu mensuel)
+            const revenuMensuel = (revenuAnnuel || 100000) / 12;
+            if (corrected < revenuMensuel * 0.8) {
+                console.warn('⚠️ Valeur invalidité corrigée:', value, '->', corrected);
+                return corrected;
+            }
+        }
+        return value;
+    }
+    
+    // ==========================================
+    // GÉNÉRATION HTML DYNAMIQUE
+    // ==========================================
+    function generateColumnHTML(type, person, isEnfant = false) {
+        const typeCap = capitalize(type);
+        const personCap = capitalize(person);
+        const prefix = `${typeCap}${personCap}`;
+        
+        const icons = { vie: '🛡️', maladie: '🏥', invalidite: '🩼', pret: '🏦', epargne: '💰' };
+        const titles = { vie: 'Assurance Vie', maladie: 'Maladie Grave', invalidite: 'Invalidité', pret: 'Ass. Prêt', epargne: 'Épargne' };
+        
+        const isEpargne = type === 'epargne';
+        const valueId = `summary${typeCap}${personCap}`;
+        const suffix = (type === 'invalidite' || type === 'pret') ? '/mois' : '';
+        
+        // Raisons selon le type
+        let raisonsHTML = '';
+        if (isEpargne) {
+            raisonsHTML = `
+                <option value="">Sélectionner...</option>
+                <option value="pas_interesse">Pas intéressé</option>
+                <option value="montant_different">Montant différent</option>
+            `;
+        } else {
+            raisonsHTML = `
+                <option value="">Sélectionner...</option>
+                <option value="pas_interesse">Pas intéressé</option>
+                <option value="montant_superieur">Montant supérieur</option>
+                <option value="montant_inferieur">Montant inférieur</option>
+            `;
+        }
+        
+        const compagniesOptions = COMPAGNIES.map(c => `<option value="${c}">${c}</option>`).join('');
+        const delaisOptions = OPTIONS_DELAI.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+        
+        // Subvalue pour épargne
+        const subvalueHTML = isEpargne ? `<div class="conformite-col-subvalue" id="summaryEpargneTransfert${personCap}"></div>` : '';
+
+        // Champs montant
+        let montantFieldsHTML = '';
+        if (isEpargne) {
+            montantFieldsHTML = `
+                <div class="conformite-col-field hidden" id="montantEpargneMensuel${personCap}Div">
+                    <label>Mensuel choisi ($)</label>
+                    <input type="text" class="money-input" id="montantEpargneMensuel${personCap}" oninput="updateConformiteText('${type}', '${person}')">
+                </div>
+            `;
+        } else {
+            montantFieldsHTML = `
+                <div class="conformite-col-field hidden" id="montant${prefix}Div">
+                    <label>Montant choisi${suffix ? ' ($/mois)' : ' ($)'}</label>
+                    <input type="text" class="money-input" id="montant${prefix}" oninput="updateConformiteText('${type}', '${person}')">
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="conformite-column ${type}" id="col${prefix}">
+                <div class="conformite-col-header">
+                    <div class="conformite-col-icon">${icons[type]}</div>
+                    <div class="conformite-col-title">${titles[type]}</div>
+                    <div class="conformite-col-value" id="${valueId}">$0${suffix}</div>
+                    ${subvalueHTML}
+                </div>
+                <div class="conformite-col-body">
+                    <div class="conformite-col-field">
+                        <label>Décision</label>
+                        <select id="reco${prefix}" onchange="handleDecisionChange('${type}', '${person}')">
+                            <option value="">Sélectionner...</option>
+                            <option value="J'accepte">✅ J'accepte</option>
+                            <option value="Je refuse">❌ Je refuse</option>
+                            <option value="À faire">⏳ À faire</option>
+                            <option value="N/A">➖ N/A</option>
+                        </select>
+                    </div>
+                    <div class="conformite-col-field hidden" id="compagnie${prefix}Div">
+                        <label>Compagnie</label>
+                        <select id="compagnie${prefix}" onchange="markUnsaved();if(this.value==='Autre'){document.getElementById('compagnieAutre${prefix}').style.display='block'}else{document.getElementById('compagnieAutre${prefix}').style.display='none'}">
+                            <option value="">Sélectionner...</option>
+                            ${compagniesOptions}
+                        </select>
+                        <input type="text" id="compagnieAutre${prefix}" placeholder="Nom de la compagnie..." style="display:none;margin-top:6px;" onchange="markUnsaved()">
+                    </div>
+                    <div class="conformite-col-field hidden" id="delai${prefix}Div">
+                        <label>Quand?</label>
+                        <select id="delai${prefix}" onchange="markUnsaved()">
+                            <option value="">Sélectionner...</option>
+                            ${delaisOptions}
+                        </select>
+                    </div>
+                    <div class="conformite-col-field hidden" id="raison${prefix}Div">
+                        <label>Raison</label>
+                        <select id="raison${prefix}" onchange="handleRaisonChange('${type}', '${person}')">
+                            ${raisonsHTML}
+                        </select>
+                    </div>
+                    ${montantFieldsHTML}
+                    <div class="conformite-col-text hidden" id="conformite${prefix}"></div>
+                    <div class="reco-objectifs-section">
+                        <div class="reco-objectifs-toggle" onclick="toggleRecoObjectifs('${prefix}')">
+                            🎯 Objectifs liés <span id="objCount${prefix}">0</span> ▾
+                        </div>
+                        <div class="reco-objectifs-pills" id="objPills${prefix}">
+                            ${getObjectifPillsHTML(type, prefix)}
+                        </div>
+                        <input type="text" class="reco-obj-autre-input" id="objAutre${prefix}" placeholder="Autre objectif..." oninput="markUnsaved()">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generatePersonContent(person, types, isEnfant = false) {
+        const personCap = capitalize(person);
+        const columnsClass = isEnfant ? 'conformite-columns-enfant' : 'conformite-columns';
+        let columnsHTML = types.map(type => generateColumnHTML(type, person, isEnfant)).join('');
+        
+        return `
+            <div class="tab-content" id="conformite${personCap}Content">
+                <div class="conformite-onepage">
+                    <div class="${columnsClass}">
+                        ${columnsHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderAllTabs() {
+        const tabsContainer = document.getElementById('conformiteTabs');
+        const contentContainer = document.getElementById('conformiteTabsContent');
+        
+        // Reset tabs enfants
+        tabsContainer.querySelectorAll('.enfant-tab').forEach(tab => tab.remove());
+        
+        // Ajouter onglets enfants si besoin
+        enfantsData.forEach((enfant, index) => {
+            if (enfant.besoin_vie > 0 || enfant.besoin_mg > 0) {
+                const tab = document.createElement('div');
+                tab.className = 'person-tab enfant-tab visible';
+                tab.dataset.tab = `enfant${index}`;
+                tab.onclick = () => switchConformiteTab(`enfant${index}`);
+                tab.innerHTML = `<span class="tab-icon">👶</span><span>${enfant.prenom || 'Enfant ' + (index + 1)}</span>`;
+                tabsContainer.appendChild(tab);
+            }
+        });
+        
+        // Générer contenu
+        let contentHTML = '';
+        contentHTML += generatePersonContent('client', TYPES_ADULTE);
+        contentHTML += generatePersonContent('conjoint', TYPES_ADULTE);
+        
+        enfantsData.forEach((enfant, index) => {
+            if (enfant.besoin_vie > 0 || enfant.besoin_mg > 0) {
+                contentHTML += generatePersonContent(`enfant${index}`, TYPES_ENFANT, true);
+            }
+        });
+        
+        contentContainer.innerHTML = contentHTML;
+        document.getElementById('conformiteClientContent')?.classList.add('active');
+    }
+    
+    // ==========================================
+    // FONCTIONS WINDOW GLOBALES
+    // ==========================================
+    window.markUnsaved = function() {
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+    };
+
+    window.switchMainRecoTab = async function(tab) {
+        // Auto-save avant de changer d'onglet principal
+        if (typeof window.saveModuleData === 'function') {
+            await window.saveModuleData();
+            console.log('💾 Auto-save recommandations (onglet principal →', tab, ')');
+        }
+        document.querySelectorAll('.reco-main-tab').forEach(t => t.classList.toggle('active', t.dataset.main === tab));
+        document.querySelectorAll('.reco-main-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tab === 'assurance' ? 'recoAssuranceContent' : 'recoEpargneContent')?.classList.add('active');
+        if (tab === 'epargne') renderEpargneTab();
+    };
+
+    window.switchConformiteTab = async function(tab) {
+        // Auto-save avant de changer d'onglet
+        if (typeof window.saveModuleData === 'function') {
+            await window.saveModuleData();
+            console.log('💾 Auto-save recommandations (changement onglet →', tab, ')');
+        }
+        document.querySelectorAll('#conformiteTabs .person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#conformiteTabs .person-tab[data-tab="${tab}"]`)?.classList.add('active');
+        document.querySelectorAll('#conformiteTabsContent .tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`conformite${capitalize(tab)}Content`)?.classList.add('active');
+    };
+    
+    window.handleDecisionChange = function(type, person) {
+        const prefix = `${capitalize(type)}${capitalize(person)}`;
+        const select = document.getElementById(`reco${prefix}`);
+        if (!select) return;
+        
+        const decision = select.value;
+        const compagnieDiv = document.getElementById(`compagnie${prefix}Div`);
+        const delaiDiv = document.getElementById(`delai${prefix}Div`);
+        const raisonDiv = document.getElementById(`raison${prefix}Div`);
+        const conformiteDiv = document.getElementById(`conformite${prefix}`);
+        const column = document.getElementById(`col${prefix}`);
+        
+        // Update column status
+        if (column) {
+            column.classList.remove('status-accepte', 'status-refuse', 'status-afaire');
+            if (decision === "J'accepte") column.classList.add('status-accepte');
+            else if (decision === 'Je refuse') column.classList.add('status-refuse');
+            else if (decision === 'À faire') column.classList.add('status-afaire');
+        }
+        
+        // Reset tous les champs conditionnels
+        [compagnieDiv, delaiDiv, raisonDiv, conformiteDiv].forEach(el => el?.classList.add('hidden'));
+        
+        // Reset champs montant
+        if (type === 'epargne') {
+            document.getElementById(`montantEpargneMensuel${capitalize(person)}Div`)?.classList.add('hidden');
+        } else {
+            document.getElementById(`montant${prefix}Div`)?.classList.add('hidden');
+        }
+
+        // Afficher selon décision
+        if (decision === "J'accepte") {
+            compagnieDiv?.classList.remove('hidden');
+            // Montant retenu — permet de documenter le montant réel vs besoin calculé
+            if (type === 'epargne') {
+                const mensuelDiv = document.getElementById(`montantEpargneMensuel${capitalize(person)}Div`);
+                mensuelDiv?.classList.remove('hidden');
+                const mLabel = mensuelDiv?.querySelector('label');
+                if (mLabel) mLabel.textContent = 'Mensuel retenu ($/mois)';
+            } else {
+                const montantDiv = document.getElementById(`montant${prefix}Div`);
+                montantDiv?.classList.remove('hidden');
+                const montantLabel = montantDiv?.querySelector('label');
+                if (montantLabel) {
+                    const suffix = (type === 'invalidite' || type === 'pret') ? ' ($/mois)' : ' ($)';
+                    montantLabel.textContent = 'Montant retenu' + suffix;
+                }
+            }
+            updateConformiteText(type, person);
+        } else if (decision === 'Je refuse') {
+            raisonDiv?.classList.remove('hidden');
+        } else if (decision === 'À faire') {
+            delaiDiv?.classList.remove('hidden');
+        }
+
+        // Show "create opportunity" option for À faire
+        let afaireOppDiv = document.getElementById(`afaireOpp${prefix}`);
+        if (!afaireOppDiv && decision === 'À faire') {
+            // Create it dynamically
+            const colBody = document.querySelector(`#col${prefix} .conformite-col-body`);
+            if (colBody) {
+                const div = document.createElement('div');
+                div.className = 'reco-afaire-opp show';
+                div.id = `afaireOpp${prefix}`;
+                div.innerHTML = `<label>📅 Créer une opportunité</label>
+                    <div class="reco-afaire-opp-row">
+                        <input type="date" id="afaireOppDate${prefix}" max="2099-12-31">
+                        <button class="reco-afaire-opp-btn" onclick="createInsuranceOpportunity('${type}','${person}')">🎯 Créer</button>
+                    </div>`;
+                colBody.appendChild(div);
+            }
+        } else if (afaireOppDiv) {
+            afaireOppDiv.classList.toggle('show', decision === 'À faire');
+        }
+
+        window.markUnsaved();
+    };
+    
+    window.handleRaisonChange = function(type, person) {
+        const prefix = `${capitalize(type)}${capitalize(person)}`;
+        const raison = document.getElementById(`raison${prefix}`)?.value || '';
+        const compagnieDiv = document.getElementById(`compagnie${prefix}Div`);
+        const conformiteDiv = document.getElementById(`conformite${prefix}`);
+        
+        if (type === 'epargne') {
+            const mensuelDiv = document.getElementById(`montantEpargneMensuel${capitalize(person)}Div`);
+
+            if (raison === 'montant_different') {
+                compagnieDiv?.classList.remove('hidden');
+                mensuelDiv?.classList.remove('hidden');
+                conformiteDiv?.classList.add('hidden');
+                const mLabel = mensuelDiv?.querySelector('label');
+                if (mLabel) mLabel.textContent = 'Mensuel choisi ($/mois)';
+            } else if (raison === 'pas_interesse') {
+                compagnieDiv?.classList.add('hidden');
+                mensuelDiv?.classList.add('hidden');
+                updateConformiteText(type, person);
+            } else {
+                compagnieDiv?.classList.add('hidden');
+                mensuelDiv?.classList.add('hidden');
+                conformiteDiv?.classList.add('hidden');
+            }
+        } else {
+            const montantDiv = document.getElementById(`montant${prefix}Div`);
+            
+            if (raison === 'montant_superieur' || raison === 'montant_inferieur') {
+                compagnieDiv?.classList.remove('hidden');
+                montantDiv?.classList.remove('hidden');
+                conformiteDiv?.classList.add('hidden');
+                // Label "choisi" pour le contexte de refus
+                const montantLabel = montantDiv?.querySelector('label');
+                if (montantLabel) {
+                    const suffix = (type === 'invalidite' || type === 'pret') ? ' ($/mois)' : ' ($)';
+                    montantLabel.textContent = 'Montant choisi' + suffix;
+                }
+            } else if (raison === 'pas_interesse') {
+                compagnieDiv?.classList.add('hidden');
+                montantDiv?.classList.add('hidden');
+                updateConformiteText(type, person);
+            } else {
+                compagnieDiv?.classList.add('hidden');
+                montantDiv?.classList.add('hidden');
+                conformiteDiv?.classList.add('hidden');
+            }
+        }
+        window.markUnsaved();
+    };
+    
+    window.updateConformiteText = function(type, person) {
+        const prefix = `${capitalize(type)}${capitalize(person)}`;
+        const personCap = capitalize(person);
+        const raison = document.getElementById(`raison${prefix}`)?.value || '';
+        const conformiteDiv = document.getElementById(`conformite${prefix}`);
+        
+        if (!conformiteDiv) return;
+        
+        // Obtenir le prénom
+        let prenom = '';
+        if (person === 'client') prenom = clientName;
+        else if (person === 'conjoint') prenom = conjointName;
+        else if (person.startsWith('enfant')) {
+            const idx = parseInt(person.replace('enfant', ''));
+            prenom = enfantsData[idx]?.prenom || 'Enfant';
+        }
+        
+        // Obtenir le besoin original depuis les valeurs stockées
+        let besoinOriginal = '';
+        let besoinNum = 0;
+        const personKey = person.startsWith('enfant') ? person : person;
+        
+        if (type === 'vie') {
+            besoinNum = besoinsCalcules[personKey]?.vie || 0;
+            besoinOriginal = formatCurrency(besoinNum);
+        } else if (type === 'maladie') {
+            besoinNum = besoinsCalcules[personKey]?.maladie || 0;
+            besoinOriginal = formatCurrency(besoinNum);
+        } else if (type === 'invalidite') {
+            besoinNum = besoinsCalcules[personKey]?.invalidite || 0;
+            besoinOriginal = formatCurrency(besoinNum) + '/mois';
+        } else if (type === 'pret') {
+            besoinNum = besoinsCalcules[personKey]?.pret || 0;
+            besoinOriginal = formatCurrency(besoinNum) + '/mois';
+        } else if (type === 'epargne') {
+            besoinNum = besoinsCalcules[personKey]?.epargneMensuel || 0;
+            besoinOriginal = formatCurrency(besoinNum) + '/mois';
+        }
+        
+        const typeLabels = {
+            vie: "assurance vie",
+            maladie: "assurance maladie grave",
+            invalidite: "assurance invalidité",
+            pret: "assurance prêt",
+            epargne: "recommandation d'épargne"
+        };
+        const typeLabel = typeLabels[type] || type;
+        
+        // Décision courante + seuil d'écart acceptation (10%)
+        const decision = document.getElementById(`reco${prefix}`)?.value || '';
+        const SEUIL_ECART = 0.10;
+        let text = '';
+        let isWarning = false;
+
+        // ── J'ACCEPTE — texte de conformité avec montant retenu + validation écart ──
+        if (decision === "J'accepte") {
+            if (type === 'epargne') {
+                const mensuelInput = document.getElementById(`montantEpargneMensuel${personCap}`);
+                const mensuelVal = mensuelInput?.value ? FINOX.parseNumber(mensuelInput.value) : null;
+                const besoinMensuel = besoinsCalcules[personKey]?.epargneMensuel || 0;
+
+                if (mensuelVal && mensuelVal > 0) {
+                    if (besoinMensuel > 0) {
+                        const ecartM = Math.abs(mensuelVal - besoinMensuel) / besoinMensuel;
+                        if (ecartM > SEUIL_ECART) {
+                            isWarning = true;
+                            text = `⚠️ <strong>Écart trop important (${Math.round(ecartM * 100)}%)</strong><br>Mensuel retenu: ${formatCurrency(mensuelVal)}/mois vs besoin ${formatCurrency(besoinMensuel)}/mois<br><br>L'écart dépasse le seuil de 10% pour « J'accepte ». Veuillez sélectionner <strong>« Je refuse »</strong> → <strong>« Montant différent »</strong> pour documenter cet écart.`;
+                        } else {
+                            text = `<strong>Déclaration de ${prenom}:</strong> Mon conseiller m'a présenté une analyse de besoins financiers avec une recommandation d'épargne de <strong>${besoinOriginal}</strong>. J'accepte cette recommandation avec un prélèvement mensuel de <strong>${formatCurrency(mensuelVal)}/mois</strong>.`;
+                        }
+                    } else {
+                        text = `<strong>Déclaration de ${prenom}:</strong> Mon conseiller m'a présenté une analyse de besoins financiers avec une recommandation d'épargne. J'accepte cette recommandation avec un prélèvement mensuel de <strong>${formatCurrency(mensuelVal)}/mois</strong>.`;
+                    }
+                } else if (besoinMensuel > 0) {
+                    text = `<strong>Déclaration de ${prenom}:</strong> J'accepte la recommandation d'épargne de mon conseiller: <strong>${besoinOriginal}</strong>.`;
+                }
+            } else {
+                const montantInput = document.getElementById(`montant${prefix}`);
+                const montantVal = montantInput?.value ? FINOX.parseNumber(montantInput.value) : null;
+                const suffix = (type === 'invalidite' || type === 'pret') ? '/mois' : '';
+
+                if (montantVal && montantVal > 0 && besoinNum > 0) {
+                    const ecart = Math.abs(montantVal - besoinNum) / besoinNum;
+
+                    if (ecart > SEUIL_ECART) {
+                        // Écart > 10% — bloquer et diriger vers "Je refuse"
+                        isWarning = true;
+                        const direction = montantVal > besoinNum ? 'supérieur' : 'inférieur';
+                        const montantStr = formatCurrency(montantVal) + suffix;
+                        const ecartPct = Math.round(ecart * 100);
+                        text = `⚠️ <strong>Écart trop important (${ecartPct}%)</strong><br>Montant retenu: <strong>${montantStr}</strong> vs besoin calculé: <strong>${besoinOriginal}</strong><br><br>L'écart dépasse le seuil de 10% pour « J'accepte ». Veuillez sélectionner <strong>« Je refuse »</strong> → <strong>« Montant ${direction} »</strong> pour documenter cet écart.`;
+                    } else {
+                        const montantStr = formatCurrency(montantVal) + suffix;
+                        text = `<strong>Déclaration de ${prenom}:</strong> Mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${typeLabel} de <strong>${besoinOriginal}</strong>. J'accepte cette recommandation avec un montant de couverture retenu de <strong>${montantStr}</strong>.`;
+                    }
+                } else if (besoinNum > 0) {
+                    text = `<strong>Déclaration de ${prenom}:</strong> J'accepte la recommandation de mon conseiller pour une couverture en ${typeLabel} de <strong>${besoinOriginal}</strong>.`;
+                }
+            }
+        }
+        // ── JE REFUSE — textes existants ──
+        else if (raison === 'pas_interesse') {
+            text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${typeLabel} de <strong>${besoinOriginal}</strong>. Après avoir pris connaissance de cette recommandation, je choisis de ne pas donner suite. Je comprends les implications de cette décision et j'assume pleinement les conséquences de ce choix.`;
+        } else if (raison === 'montant_superieur') {
+            const montantInput = document.getElementById(`montant${prefix}`);
+            const suffix = (type === 'invalidite' || type === 'pret') ? '/mois' : '';
+            const montant = montantInput?.value ? formatCurrency(FINOX.parseNumber(montantInput.value)) + suffix : '[montant à préciser]';
+            text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${typeLabel} de <strong>${besoinOriginal}</strong>. Après réflexion, je choisis de souscrire à une protection de <strong>${montant}</strong>, soit un montant supérieur à la recommandation.`;
+        } else if (raison === 'montant_inferieur') {
+            const montantInput = document.getElementById(`montant${prefix}`);
+            const suffix = (type === 'invalidite' || type === 'pret') ? '/mois' : '';
+            const montant = montantInput?.value ? formatCurrency(FINOX.parseNumber(montantInput.value)) + suffix : '[montant à préciser]';
+            text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${typeLabel} de <strong>${besoinOriginal}</strong>. Après réflexion, je choisis de souscrire à une protection de <strong>${montant}</strong>, soit un montant inférieur à la recommandation. Je comprends que cette couverture partielle ne répond pas entièrement à mes besoins identifiés.`;
+        } else if (raison === 'montant_different' && type === 'epargne') {
+            const mensuelInput = document.getElementById(`montantEpargneMensuel${personCap}`);
+            const mensuel = mensuelInput?.value ? formatCurrency(FINOX.parseNumber(mensuelInput.value)) + '/mois' : '[à préciser]';
+            text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers avec une recommandation d'épargne de <strong>${besoinOriginal}</strong>. Après réflexion, je choisis d'épargner <strong>${mensuel}</strong> en prélèvement automatique.`;
+        }
+        
+        if (text) {
+            conformiteDiv.innerHTML = text;
+            conformiteDiv.classList.remove('hidden');
+            // Style warning (rouge) vs normal (or)
+            if (isWarning) {
+                conformiteDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+                conformiteDiv.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                conformiteDiv.style.color = '#fca5a5';
+            } else {
+                conformiteDiv.style.background = '';
+                conformiteDiv.style.borderColor = '';
+                conformiteDiv.style.color = '';
+            }
+        } else {
+            conformiteDiv.classList.add('hidden');
+            conformiteDiv.style.background = '';
+            conformiteDiv.style.borderColor = '';
+            conformiteDiv.style.color = '';
+        }
+        window.markUnsaved();
+    };
+    
+    // ==========================================
+    // OBJECTIFS PAR PRODUIT
+    // ==========================================
+    const OBJECTIFS_PAR_TYPE = {
+        vie: [
+            { key: 'dettes_deces', label: 'Couvrir dettes au décès' },
+            { key: 'frais_funeraires', label: 'Frais funéraires' },
+            { key: 'niveau_vie', label: 'Niveau de vie famille' },
+            { key: 'impots_deces', label: 'Impôts au décès' },
+            { key: 'enrichir_patrimoine', label: 'Enrichir patrimoine' },
+            { key: 'etudes_enfants', label: 'Études des enfants' }
+        ],
+        maladie: [
+            { key: 'revenu_maladie', label: 'Revenu si maladie' },
+            { key: 'enfants_maladie', label: 'Protection enfants' },
+            { key: 'niveau_vie', label: 'Niveau de vie' },
+            { key: 'gerer_dettes', label: 'Gérer les dettes' }
+        ],
+        invalidite: [
+            { key: 'niveau_vie', label: 'Niveau de vie' },
+            { key: 'gerer_dettes', label: 'Gérer les dettes' },
+            { key: 'revenu_maladie', label: 'Remplacement de revenu' }
+        ],
+        pret: [
+            { key: 'protections_prets', label: 'Protéger les prêts' },
+            { key: 'dettes_deces', label: 'Couvrir dettes au décès' }
+        ]
+    };
+
+    const OBJECTIFS_EPARGNE = [
+        { key: 'epargne_mensuelle', label: 'Épargne mensuelle' },
+        { key: 'epargne_retraite', label: 'Épargne retraite' },
+        { key: 'etudes_enfants', label: 'Études des enfants' },
+        { key: 'payer_moins_impot', label: 'Payer moins d\'impôt' },
+        { key: 'enrichir_patrimoine', label: 'Enrichir patrimoine' },
+        { key: 'mise_de_fond', label: 'Mise de fond maison' },
+        { key: 'budget', label: 'Faire un budget' },
+        { key: 'gerer_dettes', label: 'Gérer mes dettes' }
+    ];
+
+    function getObjectifPillsHTML(type, prefix) {
+        const objectifs = OBJECTIFS_PAR_TYPE[type] || [];
+        let html = objectifs.map(o =>
+            `<div class="reco-obj-pill" data-key="${o.key}" data-prefix="${prefix}" onclick="toggleRecoObjPill(this)"><span class="pill-chk">✓</span> ${o.label}</div>`
+        ).join('');
+        html += `<div class="reco-obj-pill" data-key="autre" data-prefix="${prefix}" onclick="toggleRecoObjAutre(this)"><span class="pill-chk">✓</span> Autre</div>`;
+        return html;
+    }
+
+    window.toggleRecoObjectifs = function(prefix) {
+        const pills = document.getElementById('objPills' + prefix);
+        if (pills) pills.classList.toggle('show');
+    };
+
+    window.toggleRecoObjPill = function(el) {
+        el.classList.toggle('selected');
+        updateObjCount(el.dataset.prefix);
+        markUnsaved();
+    };
+
+    window.toggleRecoObjAutre = function(el) {
+        el.classList.toggle('selected');
+        const input = document.getElementById('objAutre' + el.dataset.prefix);
+        if (input) input.classList.toggle('show', el.classList.contains('selected'));
+        updateObjCount(el.dataset.prefix);
+        markUnsaved();
+    };
+
+    function updateObjCount(prefix) {
+        const pills = document.querySelectorAll(`#objPills${prefix} .reco-obj-pill.selected`);
+        const countEl = document.getElementById('objCount' + prefix);
+        if (countEl) countEl.textContent = pills.length;
+    }
+
+    // ==========================================
+    // ONGLET ÉPARGNE / PLACEMENT
+    // ==========================================
+    let epargneItems = [];
+
+    function renderEpargneTab() {
+        const container = document.getElementById('recoEpargneBody');
+        if (!container) return;
+
+        // Load À faire items from abf_data
+        const clientData = FINOX.getClientData();
+        const afaire = clientData?.abf_data?.actifs_a_faire || [];
+
+        // Build items: À faire from portrait + existing epargne needs
+        epargneItems = [];
+
+        // Add "à faire" items from Portrait Financier
+        afaire.forEach((item, idx) => {
+            epargneItems.push({
+                id: item.id || 'af_' + idx,
+                type: item.type,
+                icon: item.icon || '📦',
+                owner: item.owner || '',
+                contribution: item.contribution || 0,
+                notes: item.notes || '',
+                source: 'portrait',
+                source_label: 'Depuis Portrait Financier'
+            });
+        });
+
+        // Empty state if no à faire items
+        if (epargneItems.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#9ca3af;">
+                <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+                <div style="font-size:1.1rem;font-weight:600;color:#e5e7eb;margin-bottom:8px;">Aucun compte à prévoir</div>
+                <div style="font-size:0.9rem;max-width:400px;margin:0 auto;">Ajoutez des comptes dans <strong>Portrait Financier → À faire / À prévoir</strong> pour qu'ils apparaissent ici comme recommandations d'épargne.</div>
+            </div>`;
+            return;
+        }
+
+        // Restore saved decisions
+        const savedEpargne = abfData.recommandations_epargne || {};
+
+        let html = '<div class="reco-epargne-grid">';
+        epargneItems.forEach(item => {
+            const saved = savedEpargne[item.id] || {};
+            const decision = saved.decision || '';
+            const statusClass = decision === "J'accepte" ? 'status-accepte' : decision === 'Je refuse' ? 'status-refuse' : decision === 'À faire' ? 'status-afaire' : '';
+
+            const contribStr = item.contribution > 0 ? formatCurrency(item.contribution) + '/mois' : '';
+            const sourceBadge = item.source === 'portrait' ? `<span class="reco-epargne-source-badge">⏳ ${item.source_label}</span>` : '';
+
+            // Objectifs pills for epargne
+            const objPills = OBJECTIFS_EPARGNE.map(o =>
+                `<div class="reco-obj-pill${saved.objectifs?.[o.key] ? ' selected' : ''}" data-key="${o.key}" data-epid="${item.id}" onclick="toggleEpargneObjPill(this)"><span class="pill-chk">✓</span> ${o.label}</div>`
+            ).join('') + `<div class="reco-obj-pill${saved.objectifs?.autre ? ' selected' : ''}" data-key="autre" data-epid="${item.id}" onclick="toggleEpargneObjAutre(this)"><span class="pill-chk">✓</span> Autre</div>`;
+
+            html += `<div class="reco-epargne-card ${statusClass}" id="epCard_${item.id}">
+                <div class="reco-epargne-card-header">
+                    <div class="reco-epargne-card-icon">${item.icon}</div>
+                    <div>
+                        <div class="reco-epargne-card-title">${item.type}</div>
+                        <div class="reco-epargne-card-owner">👤 ${item.owner || 'Non assigné'} ${sourceBadge}</div>
+                    </div>
+                    ${contribStr ? `<div class="reco-epargne-card-contrib">${contribStr}</div>` : ''}
+                </div>
+                <div class="reco-epargne-card-body">
+                    <div class="reco-epargne-card-field">
+                        <label>Décision</label>
+                        <select id="epDecision_${item.id}" onchange="handleEpargneDecision('${item.id}')">
+                            <option value="">Sélectionner...</option>
+                            <option value="J'accepte"${decision === "J'accepte" ? ' selected' : ''}>✅ J'accepte</option>
+                            <option value="Je refuse"${decision === 'Je refuse' ? ' selected' : ''}>❌ Je refuse</option>
+                            <option value="À faire"${decision === 'À faire' ? ' selected' : ''}>⏳ À faire</option>
+                            <option value="N/A"${decision === 'N/A' ? ' selected' : ''}>➖ N/A</option>
+                        </select>
+                    </div>
+                    <div class="reco-epargne-card-field${decision === "J'accepte" ? '' : ' hidden'}" id="epCompagnie_${item.id}_div">
+                        <label>Institution</label>
+                        <select id="epCompagnie_${item.id}" onchange="markUnsaved()">
+                            <option value="">Sélectionner...</option>
+                            ${COMPAGNIES.map(c => `<option value="${c}"${saved.compagnie === c ? ' selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="reco-epargne-card-field${decision === "J'accepte" ? '' : ' hidden'}" id="epMontant_${item.id}_div">
+                        <label>Mensuel retenu ($/mois)</label>
+                        <input type="text" class="money-input" id="epMontant_${item.id}" value="${saved.montant_mensuel || ''}" oninput="markUnsaved()">
+                    </div>
+                    <div class="reco-afaire-opp${decision === 'À faire' ? ' show' : ''}" id="epAfaire_${item.id}">
+                        <label>📅 Créer une opportunité pour plus tard</label>
+                        <div class="reco-afaire-opp-row">
+                            <input type="date" id="epAfaireDate_${item.id}" value="${saved.opp_date || ''}" max="2099-12-31">
+                            <button class="reco-afaire-opp-btn" onclick="createEpargneOpportunity('${item.id}')">🎯 Créer opportunité</button>
+                        </div>
+                    </div>
+                    <div class="reco-objectifs-section">
+                        <div class="reco-objectifs-toggle" onclick="this.nextElementSibling.classList.toggle('show')">
+                            🎯 Objectifs liés ▾
+                        </div>
+                        <div class="reco-objectifs-pills">${objPills}</div>
+                        <input type="text" class="reco-obj-autre-input${saved.objectifs?.autre_text ? ' show' : ''}" id="epObjAutre_${item.id}" value="${saved.objectifs?.autre_text || ''}" placeholder="Autre objectif..." oninput="markUnsaved()">
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+        // Setup money inputs
+        FINOX.setupAllMoneyInputs();
+    }
+
+    window.handleEpargneDecision = function(itemId) {
+        const decision = document.getElementById('epDecision_' + itemId)?.value || '';
+        const card = document.getElementById('epCard_' + itemId);
+        const compagnieDiv = document.getElementById('epCompagnie_' + itemId + '_div');
+        const montantDiv = document.getElementById('epMontant_' + itemId + '_div');
+        const afaireDiv = document.getElementById('epAfaire_' + itemId);
+
+        if (card) {
+            card.classList.remove('status-accepte', 'status-refuse', 'status-afaire');
+            if (decision === "J'accepte") card.classList.add('status-accepte');
+            else if (decision === 'Je refuse') card.classList.add('status-refuse');
+            else if (decision === 'À faire') card.classList.add('status-afaire');
+        }
+
+        compagnieDiv?.classList.toggle('hidden', decision !== "J'accepte");
+        montantDiv?.classList.toggle('hidden', decision !== "J'accepte");
+        afaireDiv?.classList.toggle('show', decision === 'À faire');
+        markUnsaved();
+    };
+
+    window.toggleEpargneObjPill = function(el) {
+        el.classList.toggle('selected');
+        markUnsaved();
+    };
+
+    window.toggleEpargneObjAutre = function(el) {
+        el.classList.toggle('selected');
+        const itemId = el.dataset.epid;
+        const input = document.getElementById('epObjAutre_' + itemId);
+        if (input) input.classList.toggle('show', el.classList.contains('selected'));
+        markUnsaved();
+    };
+
+    window.createEpargneOpportunity = async function(itemId) {
+        const item = epargneItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        const dateInput = document.getElementById('epAfaireDate_' + itemId);
+        const targetDate = dateInput?.value || null;
+
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+
+        try {
+            const { data: profile } = await FINOX.supabase
+                .from('profiles').select('organization_id').eq('id', user.id).single();
+            if (!profile) return;
+
+            const { error } = await FINOX.supabase
+                .from('client_opportunities')
+                .insert({
+                    organization_id: profile.organization_id,
+                    client_id: FINOX.CLIENT_ID,
+                    conseiller_id: user.id,
+                    category: 'epargne',
+                    title: `${item.type} — ${item.owner || 'Client'}`,
+                    description: item.notes || `Recommandation épargne: ${item.type}`,
+                    target_date: targetDate,
+                    stage: 'active',
+                    priority: 'normal',
+                    source: 'recommandation',
+                    metadata: { source_type: 'recommandation_epargne', item_type: item.type, owner: item.owner }
+                });
+
+            if (error) throw error;
+
+            // Transform UI to show success
+            const container = document.getElementById('epAfaire_' + itemId);
+            if (container) {
+                const dateStr = targetDate ? new Date(targetDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                container.className = 'reco-opp-created';
+                container.innerHTML = `
+                    <div class="reco-opp-created-icon">✅</div>
+                    <div class="reco-opp-created-text">Opportunité créée</div>
+                    ${dateStr ? `<div class="reco-opp-created-date">📅 Échéance: ${dateStr}</div>` : ''}
+                `;
+            }
+            FINOX.showNotification(`🎯 Opportunité créée: ${item.type}`, 'success');
+            FINOX.addTimelineEntry('opportunity', `🎯 Opportunité: ${item.type}`, `Depuis recommandation — ${item.owner}`);
+        } catch (e) {
+            console.error('Erreur:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    };
+
+    window.createInsuranceOpportunity = async function(type, person) {
+        const prefix = `${capitalize(type)}${capitalize(person)}`;
+        const dateInput = document.getElementById('afaireOppDate' + prefix);
+        const targetDate = dateInput?.value || null;
+
+        const typeLabels = { vie: 'Assurance Vie', maladie: 'Maladie Grave', invalidite: 'Invalidité', pret: 'Ass. Prêt' };
+        const typeCategoryMap = { vie: 'assurance_vie', maladie: 'maladie_grave', invalidite: 'invalidite', pret: 'assurance_pret' };
+        const personName = person === 'client' ? clientName : person === 'conjoint' ? conjointName : person;
+
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+
+        try {
+            const { data: profile } = await FINOX.supabase
+                .from('profiles').select('organization_id').eq('id', user.id).single();
+            if (!profile) return;
+
+            const { error } = await FINOX.supabase
+                .from('client_opportunities')
+                .insert({
+                    organization_id: profile.organization_id,
+                    client_id: FINOX.CLIENT_ID,
+                    conseiller_id: user.id,
+                    category: typeCategoryMap[type] || 'cross_sell',
+                    title: `${typeLabels[type] || type} — ${personName}`,
+                    description: `Recommandation ABF à faire: ${typeLabels[type]} pour ${personName}`,
+                    target_date: targetDate,
+                    stage: 'active',
+                    priority: 'normal',
+                    source: 'recommandation',
+                    metadata: { source_type: 'recommandation_assurance', insurance_type: type, person: person }
+                });
+
+            if (error) throw error;
+
+            // Transform UI to show success
+            const container = document.getElementById('afaireOpp' + prefix);
+            if (container) {
+                const dateStr = targetDate ? new Date(targetDate).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                container.className = 'reco-opp-created';
+                container.innerHTML = `
+                    <div class="reco-opp-created-icon">✅</div>
+                    <div class="reco-opp-created-text">Opportunité créée</div>
+                    ${dateStr ? `<div class="reco-opp-created-date">📅 Échéance: ${dateStr}</div>` : ''}
+                `;
+            }
+            FINOX.showNotification(`🎯 Opportunité créée: ${typeLabels[type]}`, 'success');
+            FINOX.addTimelineEntry('opportunity', `🎯 Opp.: ${typeLabels[type]}`, `Pour ${personName} — depuis ABF`);
+        } catch (e) {
+            console.error('Erreur:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    };
+
+    // ==========================================
+    // COLLECTE ET RESTAURATION DES DONNÉES
+    // ==========================================
+    function collectAllData() {
+        const data = { client: {}, conjoint: {}, enfants: {} };
+        
+        ['client', 'conjoint'].forEach(person => {
+            const personCap = capitalize(person);
+            data[person] = {};
+            
+            TYPES_ADULTE.forEach(type => {
+                const prefix = `${capitalize(type)}${personCap}`;
+                data[person][type] = {
+                    decision: document.getElementById(`reco${prefix}`)?.value || '',
+                    compagnie: document.getElementById(`compagnie${prefix}`)?.value || '',
+                    delai: document.getElementById(`delai${prefix}`)?.value || '',
+                    raison: document.getElementById(`raison${prefix}`)?.value || ''
+                };
+                
+                if (type === 'epargne') {
+                    data[person][type].montant_mensuel = FINOX.parseNumber(document.getElementById(`montantEpargneMensuel${personCap}`)?.value) || null;
+                } else {
+                    data[person][type].montant = FINOX.parseNumber(document.getElementById(`montant${prefix}`)?.value) || null;
+                }
+            });
+        });
+        
+        enfantsData.forEach((enfant, index) => {
+            if (enfant.besoin_vie > 0 || enfant.besoin_mg > 0) {
+                const person = `enfant${index}`;
+                const personCap = capitalize(person);
+                data.enfants[person] = {};
+                
+                TYPES_ENFANT.forEach(type => {
+                    const prefix = `${capitalize(type)}${personCap}`;
+                    data.enfants[person][type] = {
+                        decision: document.getElementById(`reco${prefix}`)?.value || '',
+                        compagnie: document.getElementById(`compagnie${prefix}`)?.value || '',
+                        delai: document.getElementById(`delai${prefix}`)?.value || '',
+                        raison: document.getElementById(`raison${prefix}`)?.value || '',
+                        montant: FINOX.parseNumber(document.getElementById(`montant${prefix}`)?.value) || null
+                    };
+                });
+            }
+        });
+
+        // Collect per-product objectifs
+        data.objectifs_par_produit = {};
+        ['client', 'conjoint'].forEach(person => {
+            const personCap = capitalize(person);
+            TYPES_ADULTE.forEach(type => {
+                const prefix = `${capitalize(type)}${personCap}`;
+                const pills = document.querySelectorAll(`#objPills${prefix} .reco-obj-pill.selected`);
+                const selected = {};
+                pills.forEach(p => { selected[p.dataset.key] = true; });
+                const autreInput = document.getElementById('objAutre' + prefix);
+                if (autreInput?.value) selected.autre_text = autreInput.value;
+                if (Object.keys(selected).length > 0) {
+                    data.objectifs_par_produit[prefix] = selected;
+                }
+            });
+        });
+
+        // Collect epargne decisions
+        data.epargne = {};
+        epargneItems.forEach(item => {
+            const decision = document.getElementById('epDecision_' + item.id)?.value || '';
+            if (!decision) return;
+            const entry = { decision };
+            if (decision === "J'accepte") {
+                entry.compagnie = document.getElementById('epCompagnie_' + item.id)?.value || '';
+                entry.montant_mensuel = FINOX.parseNumber(document.getElementById('epMontant_' + item.id)?.value) || null;
+            }
+            if (decision === 'À faire') {
+                entry.opp_date = document.getElementById('epAfaireDate_' + item.id)?.value || null;
+            }
+            // Collect objectifs for this epargne item
+            const objPills = document.querySelectorAll(`.reco-obj-pill[data-epid="${item.id}"].selected`);
+            const objSelected = {};
+            objPills.forEach(p => { objSelected[p.dataset.key] = true; });
+            const autreInput = document.getElementById('epObjAutre_' + item.id);
+            if (autreInput?.value) objSelected.autre_text = autreInput.value;
+            if (Object.keys(objSelected).length > 0) entry.objectifs = objSelected;
+            data.epargne[item.id] = entry;
+        });
+
+        return data;
+    }
+
+    function restoreObjectifsParProduit(data) {
+        if (!data) return;
+        Object.keys(data).forEach(prefix => {
+            const selected = data[prefix];
+            Object.keys(selected).forEach(key => {
+                if (key === 'autre_text') {
+                    const input = document.getElementById('objAutre' + prefix);
+                    if (input) { input.value = selected.autre_text; input.classList.add('show'); }
+                } else {
+                    const pill = document.querySelector(`#objPills${prefix} .reco-obj-pill[data-key="${key}"]`);
+                    if (pill) pill.classList.add('selected');
+                }
+            });
+            updateObjCount(prefix);
+        });
+    }
+
+    function restoreAllData(data) {
+        if (!data) return;
+
+        ['client', 'conjoint'].forEach(person => {
+            if (!data[person]) return;
+            const personCap = capitalize(person);
+
+            TYPES_ADULTE.forEach(type => {
+                const d = data[person][type];
+                if (!d) return;
+                const prefix = `${capitalize(type)}${personCap}`;
+                
+                const decisionEl = document.getElementById(`reco${prefix}`);
+                if (decisionEl && d.decision) {
+                    decisionEl.value = d.decision;
+                    handleDecisionChange(type, person);
+                }
+                
+                if (d.compagnie) {
+                    const el = document.getElementById(`compagnie${prefix}`);
+                    if (el) el.value = d.compagnie;
+                }
+                
+                if (d.delai) {
+                    const el = document.getElementById(`delai${prefix}`);
+                    if (el) el.value = d.delai;
+                }
+                
+                if (d.raison) {
+                    const raisonEl = document.getElementById(`raison${prefix}`);
+                    if (raisonEl) {
+                        raisonEl.value = d.raison;
+                        handleRaisonChange(type, person);
+                    }
+                }
+                
+                if (type === 'epargne') {
+                    if (d.montant_mensuel) {
+                        const el = document.getElementById(`montantEpargneMensuel${personCap}`);
+                        if (el) el.value = d.montant_mensuel;
+                    }
+                } else if (d.montant) {
+                    const el = document.getElementById(`montant${prefix}`);
+                    if (el) el.value = d.montant;
+                }
+
+                if (d.raison || d.decision === "J'accepte") updateConformiteText(type, person);
+            });
+        });
+
+        if (data.enfants) {
+            Object.keys(data.enfants).forEach(person => {
+                const personData = data.enfants[person];
+                const personCap = capitalize(person);
+                
+                TYPES_ENFANT.forEach(type => {
+                    const d = personData[type];
+                    if (!d) return;
+                    const prefix = `${capitalize(type)}${personCap}`;
+                    
+                    const decisionEl = document.getElementById(`reco${prefix}`);
+                    if (decisionEl && d.decision) {
+                        decisionEl.value = d.decision;
+                        handleDecisionChange(type, person);
+                    }
+                    
+                    if (d.compagnie) {
+                        const el = document.getElementById(`compagnie${prefix}`);
+                        if (el) el.value = d.compagnie;
+                    }
+                    
+                    if (d.delai) {
+                        const el = document.getElementById(`delai${prefix}`);
+                        if (el) el.value = d.delai;
+                    }
+                    
+                    if (d.raison) {
+                        const raisonEl = document.getElementById(`raison${prefix}`);
+                        if (raisonEl) {
+                            raisonEl.value = d.raison;
+                            handleRaisonChange(type, person);
+                        }
+                    }
+                    
+                    if (d.montant) {
+                        const el = document.getElementById(`montant${prefix}`);
+                        if (el) el.value = d.montant;
+                    }
+
+                    if (d.raison || d.decision === "J'accepte") updateConformiteText(type, person);
+                });
+            });
+        }
+    }
+    
+    // ==========================================
+    // CHARGEMENT DES BESOINS
+    // ==========================================
+    async function loadAllBesoins() {
+        console.log('📊 Chargement des besoins depuis abf_data...');
+        
+        // Revenus pour validation
+        const revenuClient = client.revenu_emploi || 0;
+        const revenuConjoint = client.revenu_emploi_conjoint || 0;
+        
+        // === ASSURANCE VIE ===
+        // Stocké comme nombre dans vie_client.besoin_calcule
+        besoinsCalcules.client.vie = getNumericValue(abfData.vie_client?.besoin_calcule);
+        besoinsCalcules.conjoint.vie = getNumericValue(abfData.vie_conjoint?.besoin_calcule);
+        
+        // === MALADIE GRAVE ===
+        // Stocké comme nombre dans mg_besoin_client
+        besoinsCalcules.client.maladie = getNumericValue(abfData.mg_besoin_client);
+        besoinsCalcules.conjoint.maladie = getNumericValue(abfData.mg_besoin_conjoint);
+        
+        // === INVALIDITÉ ===
+        // Stocké comme nombre dans inv_client.besoin_calcule
+        // Validation pour corriger les valeurs aberrantes (bug de parsing virgule)
+        let invClient = getNumericValue(abfData.inv_client?.besoin_calcule);
+        let invConjoint = getNumericValue(abfData.inv_conjoint?.besoin_calcule);
+        besoinsCalcules.client.invalidite = validateInvaliditeValue(invClient, revenuClient);
+        besoinsCalcules.conjoint.invalidite = validateInvaliditeValue(invConjoint, revenuConjoint);
+        
+        // === ASSURANCE PRÊT + ÉPARGNE ===
+        // Calculé depuis abf_actifs (prêts: paiement_mensuel, épargne: contributions)
+        besoinsCalcules.client.epargneMensuel = 0;
+        besoinsCalcules.conjoint.epargneMensuel = 0;
+        try {
+            const { data: actifs } = await FINOX.supabase
+                .from('abf_actifs')
+                .select('type, description, paiement_mensuel, proprietaire, projet_type, contribution_mensuelle, contribution_employeur')
+                .eq('client_id', FINOX.CLIENT_ID);
+
+            let pretClient = 0;
+            let pretConjoint = 0;
+
+            if (actifs && actifs.length > 0) {
+                console.log('🏦 Actifs trouvés:', actifs.length);
+
+                actifs.forEach(a => {
+                    const prop = (a.proprietaire || '').toLowerCase();
+                    const clientNameLower = clientName.toLowerCase();
+                    const conjointNameLower = conjointName.toLowerCase();
+
+                    // --- Prêts (paiement mensuel) ---
+                    const paiement = a.paiement_mensuel || 0;
+                    if (paiement > 0) {
+                        if (prop === clientNameLower || prop === 'client' || prop === 'les deux') {
+                            pretClient += paiement;
+                        }
+                        if (prop === conjointNameLower || prop === 'conjoint' || prop === 'les deux') {
+                            pretConjoint += paiement;
+                        }
+                    }
+
+                    // --- Épargne (contributions mensuelles, hors RRPD) ---
+                    if (a.type === 'RRPD') return;
+                    const contrib = (a.contribution_mensuelle || 0) + (a.contribution_employeur || 0);
+                    if (contrib <= 0) return;
+
+                    if (prop === clientNameLower || prop === 'client') {
+                        besoinsCalcules.client.epargneMensuel += contrib;
+                    } else if (prop === conjointNameLower || prop === 'conjoint') {
+                        besoinsCalcules.conjoint.epargneMensuel += contrib;
+                    } else if (prop === 'les deux') {
+                        besoinsCalcules.client.epargneMensuel += contrib / 2;
+                        besoinsCalcules.conjoint.epargneMensuel += contrib / 2;
+                    }
+                });
+            }
+
+            besoinsCalcules.client.pret = pretClient;
+            besoinsCalcules.conjoint.pret = pretConjoint;
+            console.log('🏦 Besoins prêt - Client:', pretClient, 'Conjoint:', pretConjoint);
+            console.log('💰 Besoins épargne - Client:', besoinsCalcules.client.epargneMensuel, '/mois | Conjoint:', besoinsCalcules.conjoint.epargneMensuel, '/mois');
+
+        } catch (err) {
+            console.warn('Erreur chargement actifs:', err);
+            besoinsCalcules.client.pret = 0;
+            besoinsCalcules.conjoint.pret = 0;
+            besoinsCalcules.client.epargneMensuel = 0;
+            besoinsCalcules.conjoint.epargneMensuel = 0;
+        }
+        
+        console.log('📊 Besoins calculés:', besoinsCalcules);
+        
+        // Mettre à jour l'affichage
+        updateBesoinsDisplay();
+    }
+    
+    function updateBesoinsDisplay() {
+        // Client
+        document.getElementById('summaryVieClient').textContent = formatCurrency(besoinsCalcules.client.vie);
+        document.getElementById('summaryMaladieClient').textContent = formatCurrency(besoinsCalcules.client.maladie);
+        document.getElementById('summaryInvaliditeClient').textContent = formatCurrency(besoinsCalcules.client.invalidite) + '/mois';
+        document.getElementById('summaryPretClient').textContent = formatCurrency(besoinsCalcules.client.pret) + '/mois';
+        // Epargne display is now in the separate Épargne tab
+        const epClientEl = document.getElementById('summaryEpargneClient');
+        if (epClientEl) epClientEl.textContent = formatCurrency(besoinsCalcules.client.epargneMensuel) + '/mois';
+        const subEpClient = document.getElementById('summaryEpargneTransfertClient');
+        if (subEpClient) subEpClient.textContent = besoinsCalcules.client.epargneMensuel > 0 ? 'PAC depuis Portrait Financier' : '';
+
+        // Conjoint
+        if (hasConjoint) {
+            document.getElementById('summaryVieConjoint').textContent = formatCurrency(besoinsCalcules.conjoint.vie);
+            document.getElementById('summaryMaladieConjoint').textContent = formatCurrency(besoinsCalcules.conjoint.maladie);
+            document.getElementById('summaryInvaliditeConjoint').textContent = formatCurrency(besoinsCalcules.conjoint.invalidite) + '/mois';
+            document.getElementById('summaryPretConjoint').textContent = formatCurrency(besoinsCalcules.conjoint.pret) + '/mois';
+            const epConjEl = document.getElementById('summaryEpargneConjoint');
+            if (epConjEl) epConjEl.textContent = formatCurrency(besoinsCalcules.conjoint.epargneMensuel) + '/mois';
+            const subEpConj = document.getElementById('summaryEpargneTransfertConjoint');
+            if (subEpConj) subEpConj.textContent = besoinsCalcules.conjoint.epargneMensuel > 0 ? 'PAC depuis Portrait Financier' : '';
+        }
+        
+        // Enfants
+        enfantsData.forEach((enfant, index) => {
+            if (enfant.besoin_vie > 0) {
+                const el = document.getElementById(`summaryVieEnfant${index}`);
+                if (el) el.textContent = formatCurrency(enfant.besoin_vie);
+                
+                // Stocker pour le texte de conformité
+                besoinsCalcules[`enfant${index}`] = besoinsCalcules[`enfant${index}`] || {};
+                besoinsCalcules[`enfant${index}`].vie = enfant.besoin_vie;
+            }
+            if (enfant.besoin_mg > 0) {
+                const el = document.getElementById(`summaryMaladieEnfant${index}`);
+                if (el) el.textContent = formatCurrency(enfant.besoin_mg);
+                
+                besoinsCalcules[`enfant${index}`] = besoinsCalcules[`enfant${index}`] || {};
+                besoinsCalcules[`enfant${index}`].maladie = enfant.besoin_mg;
+            }
+        });
+    }
+    
+    // ==========================================
+    // CHARGEMENT INITIAL
+    // ==========================================
+    client = await FINOX.loadClientData(true);
+    if (!client) { 
+        console.error('❌ Aucun client'); 
+        return; 
+    }
+    
+    clientName = client.first_name || 'Client';
+    conjointName = client.conjoint_first_name || 'Conjoint';
+    hasConjoint = client.has_conjoint || false;
+    abfData = client.abf_data || {};
+    
+    console.log('👤 Client:', clientName, '| Conjoint:', conjointName, '| Has conjoint:', hasConjoint);
+    console.log('📋 ABF Data keys:', Object.keys(abfData));
+    
+    // Afficher tab conjoint
+    if (hasConjoint) {
+        document.querySelector('.conjoint-tab').classList.add('visible');
+    }
+    
+    // Noms dans les tabs
+    document.getElementById('conformiteTabClientName').textContent = clientName;
+    document.getElementById('conformiteTabConjointName').textContent = conjointName;
+    
+    // Charger enfants
+    try {
+        const { data: enfants } = await FINOX.supabase
+            .from('abf_enfants')
+            .select('id, prenom, date_naissance, protection_vie_active, protection_mg_active, frais_funerailles, heritage, mg_niveau, vie_besoin_calcule, mg_besoin_calcule')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('ordre', { ascending: true });
+        
+        if (enfants && enfants.length > 0) {
+            enfants.forEach(enfant => {
+                // Utiliser besoins pré-calculés si disponibles
+                enfant.besoin_vie = getNumericValue(enfant.vie_besoin_calcule);
+                enfant.besoin_mg = getNumericValue(enfant.mg_besoin_calcule);
+                
+                // Fallback si pas encore calculé
+                if (enfant.protection_vie_active && !enfant.besoin_vie) {
+                    enfant.besoin_vie = (enfant.frais_funerailles || 5000) + (enfant.heritage || 0);
+                }
+                
+                if (enfant.protection_mg_active && !enfant.besoin_mg) {
+                    const revenuRef = Math.max(
+                        (client.revenu_emploi || 0) * 0.7,
+                        (client.revenu_emploi_conjoint || 0) * 0.7
+                    );
+                    const mensuel = revenuRef / 12;
+                    const niveau = enfant.mg_niveau || 'tranquillite';
+                    
+                    if (niveau === 'repit') enfant.besoin_mg = mensuel * 6 + 10000;
+                    else if (niveau === 'tranquillite') enfant.besoin_mg = mensuel * 12 + 25000;
+                    else enfant.besoin_mg = mensuel * 24 + 40000;
+                }
+            });
+            enfantsData = enfants;
+            console.log('👶 Enfants conformité:', enfantsData);
+        }
+    } catch (err) { 
+        console.warn('Erreur enfants:', err); 
+    }
+    
+    // Rendre l'interface
+    renderAllTabs();
+    
+    // Charger et afficher les besoins
+    await loadAllBesoins();
+
+    // Activer le formatage monétaire sur les inputs
+    FINOX.setupAllMoneyInputs();
+
+    // Restaurer données sauvegardées
+    if (abfData.recommandations) {
+        restoreAllData(abfData.recommandations);
+        console.log('📊 Recommandations restaurées');
+    }
+
+    // Restore objectifs par produit from abf_data
+    if (abfData.objectifs_par_produit) {
+        restoreObjectifsParProduit(abfData.objectifs_par_produit);
+    }
+    
+    // ==========================================
+    // FONCTION DE SAUVEGARDE SQL
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) return { success: true };
+        isSaving = true;
+
+        const currentAbfData = client?.abf_data || {};
+        const recommandationsData = collectAllData();
+
+        // ═══ GUARD: Ne pas écraser des recommandations existantes si aucune décision remplie ═══
+        const hasAnyDecision = (() => {
+            for (const person of ['client', 'conjoint']) {
+                const pd = recommandationsData[person] || {};
+                for (const type of Object.keys(pd)) {
+                    if (pd[type]?.decision) return true;
+                }
+            }
+            if (recommandationsData.enfants) {
+                for (const key of Object.keys(recommandationsData.enfants)) {
+                    const pd = recommandationsData.enfants[key] || {};
+                    for (const type of Object.keys(pd)) {
+                        if (pd[type]?.decision) return true;
+                    }
+                }
+            }
+            if (recommandationsData.epargne && Object.keys(recommandationsData.epargne).length > 0) {
+                for (const key of Object.keys(recommandationsData.epargne)) {
+                    if (recommandationsData.epargne[key]?.decision) return true;
+                }
+            }
+            return false;
+        })();
+
+        // Si aucune décision et qu'il y a déjà des recos sauvegardées, ne pas écraser
+        if (!hasAnyDecision && currentAbfData.recommandations) {
+            console.log('⚠️ Aucune décision remplie — recommandations existantes conservées');
+            isSaving = false;
+            return { success: true };
+        }
+
+        console.log('💾 Sauvegarde recommandations...', recommandationsData);
+
+        const abfUpdate = {
+            ...currentAbfData,
+            recommandations: recommandationsData,
+            recommandations_epargne: recommandationsData.epargne || {},
+            objectifs_par_produit: recommandationsData.objectifs_par_produit || {},
+            recommandations_updated: new Date().toISOString()
+        };
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            console.log('✅ Recommandations sauvegardées');
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('❌ Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+    
+    console.log('✅ Module Conformité Recommandations v4.0 chargé');
+})();
+</script>

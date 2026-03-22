@@ -1,0 +1,654 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - PROFIL ENTREPRISE
+     Informations de base de l'entreprise (nom légal, NEQ, industrie, etc.)
+     Intégration REQ (Registraire des entreprises du Québec) pour auto-fill
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.corpo-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.corpo-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.corpo-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.corpo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(156,39,176,0.12); border: 1px solid rgba(156,39,176,0.3); border-radius: 20px; font-size: 12px; font-weight: 600; color: #CE93D8; }
+
+/* RECHERCHE REQ */
+.req-search-card { background: linear-gradient(135deg, rgba(156,39,176,0.08), rgba(232,180,77,0.08)); border: 1px solid rgba(156,39,176,0.2); border-radius: 16px; margin-bottom: 20px; overflow: hidden; }
+.req-search-title {
+    font-size: 13px; font-weight: 600; color: var(--gold); display: flex; align-items: center; gap: 8px;
+    padding: 16px 20px; cursor: pointer; user-select: none; transition: background 0.2s; margin: 0;
+}
+.req-search-title:hover { background: rgba(232,180,77,0.06); }
+.req-search-title::after {
+    content: ''; margin-left: auto; width: 8px; height: 8px;
+    border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg); transition: transform 0.25s ease; flex-shrink: 0; opacity: 0.6;
+}
+.req-search-card.open .req-search-title::after { transform: rotate(-135deg); }
+.req-search-body {
+    max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.25s ease; padding: 0 20px;
+}
+.req-search-card.open .req-search-body { max-height: 800px; padding: 0 20px 20px; }
+.req-search-row { display: flex; gap: 10px; }
+.req-search-input { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; }
+.req-search-input:focus { border-color: var(--gold); }
+.req-search-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.req-search-btn { padding: 10px 18px; background: rgba(156,39,176,0.2); border: 1px solid rgba(156,39,176,0.3); border-radius: 8px; color: #CE93D8; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+.req-search-btn:hover { background: rgba(156,39,176,0.3); }
+.req-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.req-results { margin-top: 12px; max-height: 250px; overflow-y: auto; }
+.req-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; cursor: pointer; transition: background 0.15s; border: 1px solid transparent; }
+.req-result-item:hover { background: rgba(156,39,176,0.1); border-color: rgba(156,39,176,0.2); }
+.req-result-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.req-result-info { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.req-result-neq { font-size: 11px; color: #CE93D8; font-weight: 500; flex-shrink: 0; }
+.req-status { padding: 12px; border-radius: 8px; font-size: 12px; text-align: center; margin-top: 10px; }
+.req-status.loading { background: rgba(33,150,243,0.1); color: #64B5F6; }
+.req-status.success { background: rgba(76,175,80,0.1); color: #81C784; }
+.req-status.error { background: rgba(244,67,54,0.1); color: #ef9a9a; }
+.req-status.empty { background: rgba(255,255,255,0.03); color: var(--text-muted); }
+.req-mapped-info { margin-top: 10px; padding: 10px 14px; background: rgba(76,175,80,0.08); border: 1px solid rgba(76,175,80,0.2); border-radius: 8px; font-size: 12px; color: #81C784; }
+
+.corpo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .corpo-grid { grid-template-columns: 1fr; } }
+
+.corpo-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+.corpo-card-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.corpo-form-group { margin-bottom: 16px; }
+.corpo-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.corpo-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+.corpo-form-input:focus { border-color: var(--gold); }
+.corpo-form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.corpo-form-input.req-filled { border-color: rgba(76,175,80,0.4); background: rgba(76,175,80,0.05); }
+.corpo-form-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; box-sizing: border-box; }
+.corpo-form-select option { background: var(--bg-card); color: var(--text-primary); }
+.corpo-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.corpo-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.corpo-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.corpo-save-btn:hover { filter: brightness(1.1); }
+.corpo-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+
+<!-- HEADER -->
+
+
+<!-- RECHERCHE REQ -->
+<div class="req-search-card" id="reqCard">
+    <div class="req-search-title" onclick="document.getElementById('reqCard').classList.toggle('open')">🔍 Registraire des entreprises du Québec (REQ)</div>
+    <div class="req-search-body">
+    <div id="reqResults"></div>
+
+    <!-- IMPORT REQ -->
+    <div id="reqImportPanel">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Importez les informations de l'entreprise depuis le site du REQ :</div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <!-- ÉTAPE 1 -->
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="min-width:24px; height:24px; background:var(--gold); color:#1a1a2e; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">1</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px; color:var(--text-primary); font-weight:500;">Ouvrir le REQ, chercher l'entreprise et ouvrir sa fiche</div>
+                    <a href="https://www.registreentreprises.gouv.qc.ca/RQAnonymeGR/GR/GR03/GR03A2_20A_PIU_RechEntMob_PC/index.html" target="_blank" rel="noopener" style="display:inline-block; margin-top:6px; padding:7px 14px; background:rgba(232,180,77,0.15); border:1px solid rgba(232,180,77,0.3); border-radius:8px; color:var(--gold); font-size:12px; font-weight:600; text-decoration:none;">🔗 Ouvrir le REQ</a>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 2 -->
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="min-width:24px; height:24px; background:var(--gold); color:#1a1a2e; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">2</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px; color:var(--text-primary); font-weight:500;">Sur la fiche de l'entreprise, cliquer sur le favori <strong style="color:var(--gold);">REQ > Finox</strong></div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Glissez ce bouton dans votre barre de favoris (une seule fois) :</div>
+                    <a id="reqBookmarklet" href="#" onclick="event.preventDefault(); FINOX.showNotification('Glissez ce bouton dans votre barre de favoris!', 'info');" style="display:inline-block; margin-top:6px; padding:6px 14px; background:linear-gradient(135deg, rgba(156,39,176,0.25), rgba(232,180,77,0.25)); border:1px dashed rgba(232,180,77,0.5); border-radius:8px; color:var(--gold); font-size:12px; font-weight:700; text-decoration:none; cursor:grab;">⚡ REQ > Finox</a>
+                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px; opacity:0.7;">Un message confirmera que les données sont copiées.</div>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 3 -->
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="min-width:24px; height:24px; background:var(--gold); color:#1a1a2e; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">3</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px; color:var(--text-primary); font-weight:500;">Revenir ici et cliquer sur <strong style="color:#81C784;">Coller les données</strong></div>
+                    <button class="req-search-btn" onclick="pasteREQData()" style="margin-top:6px; background:rgba(76,175,80,0.2); border-color:rgba(76,175,80,0.3); color:#81C784; font-size:13px; padding:10px 20px;">📋 Coller les données REQ</button>
+                </div>
+            </div>
+
+            <!-- SÉPARATEUR -->
+            <div style="display:flex; align-items:center; gap:10px; margin:4px 0;">
+                <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+                <span style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">ou coller manuellement</span>
+                <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+            </div>
+
+            <!-- OPTION MANUELLE : coller JSON -->
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <span style="min-width:24px; height:24px; background:rgba(255,255,255,0.1); color:var(--text-muted); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0;">?</span>
+                <div style="flex:1;">
+                    <details>
+                        <summary style="font-size:11px; color:var(--text-muted); cursor:pointer;">Coller le JSON manuellement (avancé)</summary>
+                        <div style="margin-top:8px;">
+                            <textarea id="reqJsonInput" class="corpo-form-input" rows="3" placeholder='Collez le JSON ici (Ctrl+V)...' style="font-size:11px; font-family:monospace; resize:vertical;"></textarea>
+                            <button class="req-search-btn" onclick="importREQJson()" style="margin-top:6px; background:rgba(76,175,80,0.2); border-color:rgba(76,175,80,0.3); color:#81C784;">📋 Importer</button>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div><!-- /.req-search-body -->
+</div>
+
+<!-- FORMULAIRE -->
+<div class="corpo-grid">
+    <!-- IDENTITÉ -->
+    <div class="corpo-card">
+        <div class="corpo-card-title">📋 Identité légale</div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Nom légal</label>
+            <input type="text" class="corpo-form-input" id="corpoNomLegal" placeholder="Nom légal de l'entreprise">
+        </div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Nom commercial (DBA)</label>
+            <input type="text" class="corpo-form-input" id="corpoNomCommercial" placeholder="Nom d'exploitation (si différent)">
+        </div>
+        <div class="corpo-form-row">
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">NEQ</label>
+                <input type="text" class="corpo-form-input" id="corpoNEQ" placeholder="1234567890">
+            </div>
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">Date de constitution</label>
+                <input type="date" class="corpo-form-input" id="corpoDateConstitution">
+            </div>
+        </div>
+        <div class="corpo-form-row">
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">Forme juridique</label>
+                <input type="text" class="corpo-form-input" id="corpoFormeJuridique" placeholder="Ex: Société par actions">
+            </div>
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">Nombre d'employés</label>
+                <input type="text" class="corpo-form-input" id="corpoNbEmployes" placeholder="Ex: 25">
+            </div>
+        </div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Statut au REQ</label>
+            <input type="text" class="corpo-form-input" id="corpoStatut" placeholder="Immatriculée, Radiée, etc." readonly style="opacity:0.7;">
+        </div>
+    </div>
+
+    <!-- COORDONNÉES & INDUSTRIE -->
+    <div class="corpo-card">
+        <div class="corpo-card-title">🏢 Coordonnées & Industrie</div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Activité économique</label>
+            <input type="text" class="corpo-form-input" id="corpoActivite" placeholder="Activité principale">
+        </div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Industrie / Secteur</label>
+            <select class="corpo-form-select" id="corpoIndustrie">
+                <option value="">-- Sélectionner --</option>
+                <option value="technologie">Technologie</option>
+                <option value="finance">Finance & Assurance</option>
+                <option value="sante">Santé</option>
+                <option value="construction">Construction</option>
+                <option value="immobilier">Immobilier</option>
+                <option value="commerce_detail">Commerce de détail</option>
+                <option value="restauration">Restauration & Hôtellerie</option>
+                <option value="manufacturier">Manufacturier</option>
+                <option value="transport">Transport & Logistique</option>
+                <option value="services_pro">Services professionnels</option>
+                <option value="education">Éducation</option>
+                <option value="agriculture">Agriculture</option>
+                <option value="energie">Énergie & Ressources</option>
+                <option value="autre">Autre</option>
+            </select>
+        </div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Adresse du siège social</label>
+            <input type="text" class="corpo-form-input" id="corpoAdresse" placeholder="123 rue Exemple, Montréal, QC H1A 1A1">
+        </div>
+        <div class="corpo-form-row">
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">Téléphone principal</label>
+                <input type="tel" class="corpo-form-input" id="corpoTelephone" placeholder="(514) 555-1234">
+            </div>
+            <div class="corpo-form-group">
+                <label class="corpo-form-label">Site web</label>
+                <input type="url" class="corpo-form-input" id="corpoSiteWeb" placeholder="https://www.exemple.com">
+            </div>
+        </div>
+        <div class="corpo-form-group">
+            <label class="corpo-form-label">Description / Notes</label>
+            <textarea class="corpo-form-input" id="corpoDescription" rows="3" placeholder="Description de l'entreprise, activités principales..." style="resize:vertical;"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- DIRIGEANTS (rempli par REQ) -->
+<div class="corpo-card" id="corpoAdminsCard" style="display:none;margin-top:20px;">
+    <div class="corpo-card-title">👔 Dirigeants & Administrateurs <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(source: REQ)</span></div>
+    <div id="corpoAdminsList"></div>
+</div>
+
+<!-- BOUTON SAUVEGARDER -->
+<div class="corpo-save-bar">
+    <button class="corpo-save-btn" onclick="saveCorpoProfil()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('🏛️ Module ABF Corpo - Profil');
+
+    // ==========================================
+    // IMPORT REQ
+    // ==========================================
+    let corpoData = {};
+
+    // Bookmarklet: lit localStorage('fiche') sur la page REQ et copie dans le presse-papier
+    const bookmarkletCode = `javascript:void((function(){try{var f=localStorage.getItem('fiche');if(!f){alert('Aucune fiche trouvee. Ouvrez une entreprise sur le REQ d\\'abord.');return}navigator.clipboard.writeText(f).then(function(){alert('Donnees copiees! Retournez dans le CRM Finox et cliquez sur Coller.')}).catch(function(){prompt('Copie auto impossible. Copiez manuellement (Ctrl+A, Ctrl+C):',f.substring(0,200))})}catch(e){alert('Erreur: '+e.message)}})())`;
+
+    // Mettre le href du bookmarklet
+    requestAnimationFrame(() => {
+        const bm = document.getElementById('reqBookmarklet');
+        if (bm) bm.href = bookmarkletCode;
+    });
+
+    // Coller les données REQ depuis le presse-papier
+    window.pasteREQData = async function() {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (!text || text.length < 50) {
+                FINOX.showNotification('Le presse-papier est vide. Cliquez d\'abord sur le favori REQ.', 'error');
+                return;
+            }
+            const json = JSON.parse(text);
+            const parsed = parseREQRawData(json);
+            if (!parsed.nom_legal) {
+                FINOX.showNotification('Données invalides — aucune entreprise trouvée', 'error');
+                return;
+            }
+            applyREQData(parsed);
+            const resultsDiv = document.getElementById('reqResults');
+            if (resultsDiv) {
+                resultsDiv.innerHTML = `<div class="req-mapped-info">✅ Données importées du REQ pour <strong>${parsed.nom_legal}</strong></div>`;
+            }
+            const panel = document.getElementById('reqImportPanel');
+            if (panel) panel.style.display = 'none';
+        } catch (e) {
+            FINOX.showNotification('Erreur: ' + e.message + '. Utilisez l\'option manuelle.', 'error');
+        }
+    };
+
+    // Parser le JSON brut du REQ (structure réelle de l'API gouvernementale)
+    function parseREQRawData(raw) {
+        const d = raw.d || raw;
+        const general = d.SectionInformationsGenerales || {};
+        const ident = general.SousSecIdentification || {};
+        const adresse = general.SousSecAdresseEntrpr || {};
+        const immat = general.SousSecImmatriculation || {};
+        const forme = general.SousSecFormeJuridique || {};
+        const activite = general.SousSecActiviteNbrEmploye || {};
+        const admin = d.SectionAdministration || {};
+        const admins = admin.SousSecAdministrateurs || {};
+        const noms = d.SectionNomsAutreNoms || {};
+
+        // Autres noms (DBA) — noms "En vigueur" seulement
+        const autresNomsList = [];
+        const autresNomsGrille = noms.SousSecAutresNoms?.GrilleNoms?.Lignes || [];
+        autresNomsGrille.forEach(l => {
+            const cells = l.ListeCellules || [];
+            const statut = cells[4]?.Valeur || '';
+            if (statut === 'En vigueur') {
+                autresNomsList.push(cells[0]?.Valeur || '');
+            }
+        });
+
+        // Dirigeants
+        const dirigeants = (admins.ListeAdministrateurs || []).map(a => ({
+            nom: [a.PrenomAdministrateur, a.NomAdministrateur].filter(Boolean).join(' '),
+            fonction: a.Fonction || '',
+            dateDebut: a.DateDebut || ''
+        }));
+
+        // Activité principale
+        const secteurs = activite.ListeSecteursActivite || [];
+        const activitePrincipale = secteurs.length > 0 ? secteurs[0].Description : '';
+        const activitePrecision = secteurs.length > 0 ? secteurs[0].Precision : '';
+
+        // Date de constitution — extraire la date du texte "2025-06-20 Constitution"
+        let dateConstitution = '';
+        const dateFormeRaw = forme.DateFormation || '';
+        const dateMatch = dateFormeRaw.match(/(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) dateConstitution = dateMatch[1];
+        if (!dateConstitution) dateConstitution = immat.DateImmatriculation || '';
+
+        return {
+            nom_legal: ident.NomEntreprise || '',
+            nom_commercial: autresNomsList.length > 0 ? autresNomsList[0] : '',
+            autres_noms: autresNomsList,
+            neq: ident.NEQ || '',
+            forme_juridique: forme.Type || '',
+            statut: immat.StatutImmatriculation || '',
+            date_constitution: dateConstitution,
+            adresse_siege: adresse.LigneAdresseDomicile || '',
+            nb_employes: activite.NombreEmployes || '',
+            activite: activitePrecision || activitePrincipale,
+            dirigeants: dirigeants
+        };
+    }
+
+    // Import JSON brut collé par l'utilisateur
+    window.importREQJson = function() {
+        const textarea = document.getElementById('reqJsonInput');
+        const text = (textarea?.value || '').trim();
+        if (!text) {
+            FINOX.showNotification('Collez le JSON du REQ dans le champ', 'error');
+            return;
+        }
+        try {
+            const json = JSON.parse(text);
+            const parsed = parseREQRawData(json);
+            if (!parsed.nom_legal) {
+                FINOX.showNotification('JSON invalide — aucun nom d\'entreprise trouvé', 'error');
+                return;
+            }
+            applyREQData(parsed);
+            const resultsDiv = document.getElementById('reqResults');
+            if (resultsDiv) {
+                resultsDiv.innerHTML = `<div class="req-mapped-info">✅ Données importées du REQ pour <strong>${parsed.nom_legal}</strong></div>`;
+            }
+            const panel = document.getElementById('reqImportPanel');
+            if (panel) panel.style.display = 'none';
+        } catch (e) {
+            FINOX.showNotification('JSON invalide: ' + e.message, 'error');
+        }
+    };
+
+    // Charger les données du client
+    const client = await FINOX.loadClientData();
+    if (!client) { console.warn('[REQ] Pas de client chargé'); return; }
+
+    corpoData = client.abf_data?.corpo || {};
+
+    // Peupler les champs
+    const fieldMap = {
+        'corpoNomLegal': corpoData.nom_legal || '',
+        'corpoNomCommercial': corpoData.nom_commercial || '',
+        'corpoNEQ': corpoData.neq || '',
+        'corpoDateConstitution': corpoData.date_constitution || '',
+        'corpoFormeJuridique': corpoData.forme_juridique || '',
+        'corpoNbEmployes': corpoData.nb_employes || '',
+        'corpoStatut': corpoData.statut || '',
+        'corpoActivite': corpoData.activite || '',
+        'corpoIndustrie': corpoData.industrie || '',
+        'corpoAdresse': corpoData.adresse_siege || '',
+        'corpoTelephone': corpoData.telephone || '',
+        'corpoSiteWeb': corpoData.site_web || '',
+        'corpoDescription': corpoData.description || ''
+    };
+
+    Object.entries(fieldMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+
+    // Afficher les dirigeants si sauvegardés
+    if (corpoData.dirigeants && corpoData.dirigeants.length > 0) {
+        renderDirigeants(corpoData.dirigeants);
+    }
+
+    // Appliquer les données REQ aux champs du formulaire
+    function applyREQData(ent) {
+        const mapping = {
+            'corpoNomLegal': ent.nom_legal || '',
+            'corpoNomCommercial': ent.nom_commercial || '',
+            'corpoNEQ': ent.neq || '',
+            'corpoFormeJuridique': ent.forme_juridique || '',
+            'corpoStatut': ent.statut || '',
+            'corpoAdresse': ent.adresse_siege || '',
+            'corpoNbEmployes': ent.nb_employes || '',
+            'corpoActivite': ent.activite || ''
+        };
+
+        // Date de constitution - essayer de parser
+        let dateConst = '';
+        if (ent.date_constitution) {
+            try {
+                const d = new Date(ent.date_constitution);
+                if (!isNaN(d.getTime())) {
+                    dateConst = d.toISOString().split('T')[0];
+                    mapping['corpoDateConstitution'] = dateConst;
+                }
+            } catch(e) {
+                mapping['corpoDateConstitution'] = '';
+            }
+        }
+
+        Object.entries(mapping).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el && val) {
+                el.value = val;
+                el.classList.add('req-filled');
+                setTimeout(() => el.classList.remove('req-filled'), 3000);
+            }
+        });
+
+        // Dirigeants
+        if (ent.dirigeants && ent.dirigeants.length > 0) {
+            corpoData.dirigeants = ent.dirigeants;
+            renderDirigeants(ent.dirigeants);
+        }
+
+        // ══════════════════════════════════════════════
+        // CROSS-MAPPING : pré-remplir les autres modules
+        // ══════════════════════════════════════════════
+        crossMapREQData(ent, dateConst);
+
+        FINOX.showNotification('Données importées du REQ — profil + modules liés mis à jour', 'success');
+    }
+
+    // Propager les données REQ vers Société, Personnes clés, Actionnaires
+    function crossMapREQData(ent, dateConst) {
+        const currentAbf = client.abf_data || {};
+        const currentCorpo = currentAbf.corpo || {};
+        let changed = false;
+
+        // ── 1. Société par actions ──
+        // Pré-remplir date_incorporation et nb_employes si vides
+        const socData = currentCorpo.societe || {};
+        if (!socData.date_incorporation && dateConst) {
+            socData.date_incorporation = dateConst;
+            changed = true;
+        }
+        if (!socData.nb_employes && ent.nb_employes) {
+            socData.nb_employes = ent.nb_employes;
+            changed = true;
+        }
+        // Catégorie: si forme_juridique contient "Société par actions", marquer Privée par défaut
+        if (!socData.categorie && ent.forme_juridique) {
+            const fj = ent.forme_juridique.toLowerCase();
+            if (fj.includes('société par actions') || fj.includes('compagnie') || fj.includes('inc') || fj.includes('ltée') || fj.includes('ltd')) {
+                socData.categorie = 'privee';
+                changed = true;
+            }
+        }
+
+        // ── 2. Personnes clés ──
+        // Ajouter les dirigeants REQ comme personnes clés s'il n'y en a pas encore
+        const pcData = currentCorpo.personnes_cles || [];
+        if (pcData.length === 0 && ent.dirigeants && ent.dirigeants.length > 0) {
+            ent.dirigeants.forEach(d => {
+                if (!d.nom) return;
+                const parts = d.nom.split(' ');
+                pcData.push({
+                    prenom: parts[0] || '',
+                    nom: parts.slice(1).join(' ') || '',
+                    fonction: d.fonction || '',
+                    ddn: '',
+                    sexe: '',
+                    fumeur: '',
+                    salaire: ''
+                });
+            });
+            changed = true;
+        }
+
+        // ── 3. Actionnaires ──
+        // Si pas d'actionnaires et que la forme juridique est une société par actions,
+        // on peut pré-créer les administrateurs comme actionnaires (sans parts)
+        const actData = currentCorpo.actionnaires || [];
+        if (actData.length === 0 && ent.dirigeants && ent.dirigeants.length > 0) {
+            const fj = (ent.forme_juridique || '').toLowerCase();
+            if (fj.includes('société par actions') || fj.includes('compagnie') || fj.includes('inc') || fj.includes('ltée') || fj.includes('ltd')) {
+                ent.dirigeants.forEach(d => {
+                    if (!d.nom) return;
+                    const parts = d.nom.split(' ');
+                    actData.push({
+                        prenom: parts[0] || '',
+                        nom: parts.slice(1).join(' ') || '',
+                        ddn: '',
+                        sexe: '',
+                        fumeur: '',
+                        parts_pct: 0,
+                        type_actions: 'Actions ordinaires'
+                    });
+                });
+                changed = true;
+            }
+        }
+
+        // Sauvegarder les cross-mappings dans le cache + Supabase
+        if (changed) {
+            const updatedCorpo = {
+                ...currentCorpo,
+                societe: socData,
+                personnes_cles: pcData,
+                actionnaires: actData
+            };
+            const updatedAbf = {
+                ...currentAbf,
+                corpo: updatedCorpo,
+                section_corpo_actionnaires_completed: actData.length > 0,
+                section_corpo_personnes_completed: pcData.length > 0
+            };
+            client.abf_data = updatedAbf;
+            corpoData = updatedCorpo;
+
+            // Persistance immédiate en arrière-plan
+            FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID)
+                .then(({ error }) => {
+                    if (error) console.warn('Cross-map save error:', error);
+                    else {
+                        FINOX.updateClientDataCache({ abf_data: updatedAbf });
+                        console.log('🔗 Cross-mapping REQ sauvegardé: societe, personnes_cles, actionnaires');
+                    }
+                });
+        }
+    }
+
+    // Afficher la liste des dirigeants
+    function renderDirigeants(dirigeants) {
+        const card = document.getElementById('corpoAdminsCard');
+        const list = document.getElementById('corpoAdminsList');
+        if (!card || !list || !dirigeants || dirigeants.length === 0) return;
+
+        card.style.display = '';
+        list.innerHTML = dirigeants.map(d => `
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.03);margin-bottom:6px;">
+                <span style="font-size:18px;">👤</span>
+                <div style="flex:1;">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${d.nom || 'N/A'}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">${d.fonction || ''} ${d.dateDebut ? '• Depuis ' + d.dateDebut : ''}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ==========================================
+    // SAUVEGARDER
+    // ==========================================
+    window.saveCorpoProfil = async function() {
+        const btn = document.querySelector('.corpo-save-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Sauvegarde...';
+
+        try {
+            const corpo = {
+                nom_legal: document.getElementById('corpoNomLegal').value.trim(),
+                nom_commercial: document.getElementById('corpoNomCommercial').value.trim(),
+                neq: document.getElementById('corpoNEQ').value.trim(),
+                date_constitution: document.getElementById('corpoDateConstitution').value || null,
+                forme_juridique: document.getElementById('corpoFormeJuridique').value.trim(),
+                nb_employes: document.getElementById('corpoNbEmployes').value.trim(),
+                statut: document.getElementById('corpoStatut').value.trim(),
+                activite: document.getElementById('corpoActivite').value.trim(),
+                industrie: document.getElementById('corpoIndustrie').value,
+                adresse_siege: document.getElementById('corpoAdresse').value.trim(),
+                telephone: document.getElementById('corpoTelephone').value.trim(),
+                site_web: document.getElementById('corpoSiteWeb').value.trim(),
+                description: document.getElementById('corpoDescription').value.trim()
+            };
+
+            // Garder les dirigeants si présents
+            const adminsCard = document.getElementById('corpoAdminsCard');
+            if (adminsCard && adminsCard.style.display !== 'none') {
+                corpo.dirigeants = corpoData.dirigeants || [];
+                // Update from latest REQ data if available
+                const adminItems = adminsCard.querySelectorAll('[style*="flex:1"]');
+                if (adminItems.length > 0) {
+                    corpo.dirigeants = Array.from(adminItems).map(el => ({
+                        nom: el.querySelector('div:first-child')?.textContent?.trim() || '',
+                        fonction: el.querySelector('div:last-child')?.textContent?.trim() || ''
+                    }));
+                }
+            }
+
+            // Merge dans abf_data.corpo (préserver les données des autres modules)
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const mergedCorpo = { ...currentCorpo, ...corpo };
+            const updatedAbf = { ...currentAbf, corpo: mergedCorpo, section_corpo_profil_completed: true };
+
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({
+                    first_name: corpo.nom_legal || client.first_name,
+                    abf_data: updatedAbf,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', FINOX.CLIENT_ID);
+
+            if (error) throw error;
+
+            FINOX.updateClientDataCache({ abf_data: updatedAbf, first_name: corpo.nom_legal || client.first_name });
+            FINOX.showNotification('Profil entreprise sauvegardé', 'success');
+
+            // Mettre à jour le sidebar
+            if (corpo.nom_legal) {
+                const nameEl = document.getElementById('sidebarClientName');
+                if (nameEl) nameEl.textContent = corpo.nom_legal;
+            }
+
+        } catch (err) {
+            console.error('Erreur sauvegarde corpo:', err);
+            FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Sauvegarder';
+        }
+    };
+
+    // Fermer le volet REQ quand on clique ailleurs
+    document.addEventListener('click', function(e) {
+        const reqCard = document.getElementById('reqCard');
+        if (reqCard && reqCard.classList.contains('open') && !reqCard.contains(e.target)) {
+            reqCard.classList.remove('open');
+        }
+    });
+
+    console.log('✅ Module ABF Corpo Profil chargé');
+})();
+</script>

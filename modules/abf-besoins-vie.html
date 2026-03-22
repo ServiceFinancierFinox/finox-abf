@@ -1,0 +1,1355 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-BESOINS-VIE
+     Calcul des besoins en assurance vie
+     AMÉLIORÉ - Intégration des impôts au décès dans le calcul
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Enlever les flèches des inputs number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Person Tabs — style intégré */
+.person-tabs-container { margin-bottom: 0; }
+.person-tabs { display: flex; gap: 4px; margin-bottom: 0; }
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+.person-tab .tab-icon { font-size: 16px; }
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+.conjoint-tab { display: none; }
+.conjoint-tab.visible { display: flex; }
+.enfant-tab { display: none; }
+.enfant-tab.visible { display: flex; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Enfant Protection Toggle */
+.enfant-protection-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(33, 150, 243, 0.08);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.protection-disabled-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.enfant-content-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.enfant-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2196F3, #64B5F6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #666;
+    border-radius: 50%;
+    top: 4px;
+    left: 4px;
+    transition: all 0.3s;
+}
+
+.toggle-switch.active {
+    background: var(--gold);
+}
+
+.toggle-switch.active::after {
+    left: 24px;
+    background: #fff;
+}
+
+/* Vie Compact Container */
+.vie-compact-container {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 16px;
+    border: 1px solid rgba(232, 180, 77, 0.1);
+    overflow: hidden;
+}
+
+.vie-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+    background: rgba(232, 180, 77, 0.08);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.vie-header-extras {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.vie-header-extras .vie-param-inline {
+    background: rgba(0,0,0,0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.vie-header-extras .vie-param-inline label {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.vie-compact-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.vie-compact-toggle-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.vie-compact-toggle-label strong {
+    color: var(--gold);
+}
+
+/* Params Row */
+.vie-params-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vie-param-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vie-param-inline label {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vie-param-inline input {
+    width: 85px;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+.vie-param-inline input:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.auto-tag {
+    font-size: 9px;
+    color: var(--gold);
+    margin-left: 2px;
+}
+
+/* Aide RRQ */
+.aide-rrq-box {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 10px 20px 0;
+}
+
+.aide-rrq-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64B5F6;
+    margin-bottom: 10px;
+}
+
+.aide-rrq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 600px) {
+    .aide-rrq-grid { grid-template-columns: 1fr; }
+}
+
+.aide-rrq-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.aide-rrq-section:first-child {
+    padding-right: 16px;
+    border-right: 1px solid var(--border-color);
+}
+
+.aide-rrq-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+}
+
+.aide-rrq-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    padding: 3px 0;
+}
+
+.aide-rrq-item span { color: var(--text-secondary); flex: 1; }
+.aide-rrq-item strong { color: #4CAF50; font-weight: 700; min-width: 70px; text-align: right; }
+
+.aide-rrq-item.clickable {
+    cursor: pointer;
+    padding: 6px 10px;
+    margin: 2px -10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.aide-rrq-item.clickable:hover {
+    background: rgba(232, 180, 77, 0.15);
+}
+
+.aide-rrq-item.clickable:hover strong {
+    color: var(--gold);
+}
+
+.aide-rrq-formula {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    line-height: 1.4;
+}
+
+/* Result Compact */
+.vie-result-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.vie-result-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.vie-result-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vie-result-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #D4A03D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vie-status-badge {
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vie-status-badge.adequate {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.vie-status-badge.inadequate {
+    background: rgba(232, 180, 77, 0.15);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+}
+
+.vie-breakdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(232, 180, 77, 0.1);
+    border: 1px solid rgba(232, 180, 77, 0.3);
+    border-radius: 8px;
+    color: var(--gold);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vie-breakdown-toggle:hover { background: rgba(232, 180, 77, 0.2); }
+.vie-breakdown-toggle svg { width: 14px; height: 14px; transition: transform 0.3s; }
+.vie-breakdown-toggle.open svg { transform: rotate(180deg); }
+
+/* Breakdown Content */
+.vie-breakdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.vie-breakdown-content.open { max-height: 700px; }
+
+.vie-breakdown-inner {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 24px;
+}
+
+@media (max-width: 600px) {
+    .vie-breakdown-inner { grid-template-columns: 1fr; }
+}
+
+.vie-calc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 12px;
+}
+
+.vie-calc-item-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vie-calc-item-value { font-weight: 600; color: var(--text-primary); }
+.vie-calc-item-value.positive { color: #4CAF50; }
+.vie-calc-item-value.negative { color: #f44336; }
+.vie-calc-item-value.orange { color: #FF9800; }
+
+.vie-remplacement-section {
+    grid-column: 1 / -1;
+    background: rgba(232, 180, 77, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.vie-remplacement-header {
+    font-size: 11px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(232, 180, 77, 0.2);
+}
+
+.vie-remplacement-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 16px;
+}
+
+/* Impots au deces highlight */
+.vie-calc-item.impots-deces {
+    background: rgba(255, 152, 0, 0.1);
+    padding: 8px 12px;
+    margin: 4px -12px;
+    border-radius: 6px;
+    border-left: 3px solid #FF9800;
+}
+
+.vie-calc-total {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(232, 180, 77, 0.1);
+    border-radius: 8px;
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.vie-calc-total-label { color: var(--gold); font-size: 13px; }
+.vie-calc-total-value { color: var(--gold); font-size: 16px; }
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.nav-btn-save:hover { border-color: var(--gold); color: var(--gold); }
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+</style>
+
+
+
+<!-- Person Tabs -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="vieTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchVieTab('client')">
+            <span class="tab-icon">🛡️</span>
+            <span id="vieTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchVieTab('conjoint')">
+            <span class="tab-icon">🛡️</span>
+            <span id="vieTabConjointName">Conjoint</span>
+        </div>
+    </div>
+    <div class="tab-content-wrapper">
+
+<!-- ========== CLIENT TAB ========== -->
+<div class="tab-content active" id="vieClientContent">
+    <div class="vie-compact-container">
+        <!-- Header with toggle -->
+        <div class="vie-compact-header">
+            <div class="vie-header-extras">
+                <div class="vie-param-inline">
+                    <label>💐 Funérailles</label>
+                    <input type="text" class="money-input" id="fraisFunerairesClient" value="10000" oninput="calculateBesoinVieClient()">
+                </div>
+                <div class="vie-param-inline">
+                    <label>🎁 Héritage</label>
+                    <input type="text" class="money-input" id="heritageClient" value="0" oninput="calculateBesoinVieClient()">
+                </div>
+            </div>
+            <div class="vie-compact-toggle">
+                <div class="toggle-switch" id="continuiteRevenuClientToggle" onclick="toggleContinuiteRevenuClient()"></div>
+                <span class="vie-compact-toggle-label"><strong>Continuité du revenu</strong></span>
+            </div>
+        </div>
+
+        <!-- Conditional params row -->
+        <div id="continuiteRevenuClientFields" class="vie-params-row" style="display: none;">
+            <div class="vie-param-inline">
+                <label>Revenu net <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetClientVie" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>% revenu</label>
+                <input type="number" id="pctRevenuVieClient" value="50" min="0" max="100" oninput="calculateBesoinVieClient()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Années</label>
+                <input type="number" id="anneesRevenuClient" value="25" min="1" max="50" oninput="calculateBesoinVieClient()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Rente conj./an</label>
+                <input type="text" class="money-input" id="renteConjointClient" value="0" oninput="calculateBesoinVieClient()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Rente orph./an</label>
+                <input type="text" class="money-input" id="renteOrphelinClient" value="0" oninput="calculateBesoinVieClient()">
+            </div>
+        </div>
+
+        <!-- Aide RRQ -->
+        <div id="aideRRQClient" class="aide-rrq-box" style="display: none;">
+            <div class="aide-rrq-title">📋 Montants RRQ de référence (annuels)</div>
+            <div class="aide-rrq-grid">
+                <div class="aide-rrq-section">
+                    <div class="aide-rrq-subtitle">Rente du conjoint survivant</div>
+                    <div class="aide-rrq-item clickable" onclick="setRenteConjoint('client', 8273)"><span>&lt;45 ans sans enfant</span><strong>8 273 $</strong></div>
+                    <div class="aide-rrq-item clickable" onclick="setRenteConjoint('client', 13102)"><span>&lt;45 ans avec enfant(s)</span><strong>13 102 $</strong></div>
+                    <div class="aide-rrq-item clickable" onclick="setRenteConjoint('client', 13615)"><span>45 à 64 ans</span><strong>13 615 $</strong></div>
+                </div>
+                <div class="aide-rrq-section">
+                    <div class="aide-rrq-subtitle">Rente d'orphelin</div>
+                    <div class="aide-rrq-item clickable" id="renteOrphelinItemClient" onclick="setRenteOrphelin('client')"><span>Par enfant/an (<span id="nbEnfantsClient">0</span> enfant(s))</span><strong>3 621 $</strong></div>
+                    <div class="aide-rrq-formula">
+                        <strong>Formule:</strong> (Revenu × % × Années) − (Rente conj. × Années) − (Rente orph. × Années)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result row -->
+        <div class="vie-result-compact">
+            <div class="vie-result-main">
+                <div>
+                    <div class="vie-result-label">Besoin en assurance vie</div>
+                    <div class="vie-result-value" id="besoinVieClient">0 $</div>
+                </div>
+                <div class="vie-status-badge inadequate" id="statusVieClient">Protection insuffisante</div>
+            </div>
+            <button class="vie-breakdown-toggle" onclick="toggleVieBreakdown('client')">
+                <span>Détail du calcul</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+        </div>
+
+        <!-- Breakdown - AVEC IMPOTS AU DECES -->
+        <div class="vie-breakdown-content" id="vieBreakdownClient">
+            <div class="vie-breakdown-inner">
+                <div class="vie-remplacement-section" id="remplacementSectionClient" style="display: none;">
+                    <div class="vie-remplacement-header">📊 Remplacement de revenu</div>
+                    <div class="vie-remplacement-grid">
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">Revenu × % × Années</span><span class="vie-calc-item-value" id="calcRevenuBrutClient">0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">- Rente conjoint</span><span class="vie-calc-item-value negative" id="calcRenteConjClient">-0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">- Rente orphelin</span><span class="vie-calc-item-value negative" id="calcRenteOrphClient">-0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label"><strong>= Sous-total</strong></span><span class="vie-calc-item-value" id="calcTotalRemplacementClient">0 $</span></div>
+                    </div>
+                </div>
+                <div class="vie-calc-item" id="calcRemplacementRowClient" style="display:none;"><span class="vie-calc-item-label">+ Remplacement revenu</span><span class="vie-calc-item-value" id="calcRemplacementVieClient">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Frais funéraires</span><span class="vie-calc-item-value" id="calcFunerairesClient">10 000 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Héritage souhaité</span><span class="vie-calc-item-value" id="calcHeritageClient">0 $</span></div>
+                <div class="vie-calc-item impots-deces" id="impotsDecesRowClient"><span class="vie-calc-item-label">+ 🧾 Impôts au décès <span class="auto-tag">AUTO</span></span><span class="vie-calc-item-value orange" id="calcImpotsDecesClient">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Passifs <span class="auto-tag">AUTO</span></span><span class="vie-calc-item-value" id="calcPassifsClient">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">- Actifs <span class="auto-tag">AUTO</span></span><span class="vie-calc-item-value negative" id="calcActifsClient">-0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">- Assurance en vigueur <span class="auto-tag">AUTO</span></span><span class="vie-calc-item-value negative" id="calcAssuranceClient">-0 $</span></div>
+                <div class="vie-calc-total"><span class="vie-calc-total-label">= Besoin net en assurance vie</span><span class="vie-calc-total-value" id="calcTotalVieClient">0 $</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CONJOINT TAB ========== -->
+<div class="tab-content" id="vieConjointContent">
+    <div class="vie-compact-container">
+        <div class="vie-compact-header">
+            <div class="vie-header-extras">
+                <div class="vie-param-inline">
+                    <label>💐 Funérailles</label>
+                    <input type="text" class="money-input" id="fraisFunerairesConjoint" value="10000" oninput="calculateBesoinVieConjoint()">
+                </div>
+                <div class="vie-param-inline">
+                    <label>🎁 Héritage</label>
+                    <input type="text" class="money-input" id="heritageConjoint" value="0" oninput="calculateBesoinVieConjoint()">
+                </div>
+            </div>
+            <div class="vie-compact-toggle">
+                <div class="toggle-switch" id="continuiteRevenuConjointToggle" onclick="toggleContinuiteRevenuConjoint()"></div>
+                <span class="vie-compact-toggle-label"><strong>Continuité du revenu</strong></span>
+            </div>
+        </div>
+
+        <div id="continuiteRevenuConjointFields" class="vie-params-row" style="display: none;">
+            <div class="vie-param-inline">
+                <label>Revenu net <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetConjointVie" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>% revenu</label>
+                <input type="number" id="pctRevenuVieConjoint" value="50" min="0" max="100" oninput="calculateBesoinVieConjoint()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Années</label>
+                <input type="number" id="anneesRevenuConjoint" value="25" min="1" max="50" oninput="calculateBesoinVieConjoint()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Rente conj./an</label>
+                <input type="text" class="money-input" id="renteConjointConjoint" value="0" oninput="calculateBesoinVieConjoint()">
+            </div>
+            <div class="vie-param-inline">
+                <label>Rente orph./an</label>
+                <input type="text" class="money-input" id="renteOrphelinConjoint" value="0" oninput="calculateBesoinVieConjoint()">
+            </div>
+        </div>
+
+        <div id="aideRRQConjoint" class="aide-rrq-box" style="display: none;">
+            <div class="aide-rrq-title">📋 Montants RRQ de référence</div>
+            <div class="aide-rrq-grid">
+                <div class="aide-rrq-section">
+                    <div class="aide-rrq-subtitle">Rente conjoint</div>
+                    <div class="aide-rrq-item clickable" onclick="setRenteConjoint('conjoint', 8273)"><span>&lt;45 ans</span><strong>8 273 $</strong></div>
+                    <div class="aide-rrq-item clickable" onclick="setRenteConjoint('conjoint', 13615)"><span>45-64 ans</span><strong>13 615 $</strong></div>
+                </div>
+                <div class="aide-rrq-section">
+                    <div class="aide-rrq-subtitle">Rente orphelin</div>
+                    <div class="aide-rrq-item clickable" id="renteOrphelinItemConjoint" onclick="setRenteOrphelin('conjoint')"><span>Par enfant (<span id="nbEnfantsConjoint">0</span> enf.)</span><strong>3 621 $</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="vie-result-compact">
+            <div class="vie-result-main">
+                <div>
+                    <div class="vie-result-label">Besoin en assurance vie</div>
+                    <div class="vie-result-value" id="besoinVieConjoint">0 $</div>
+                </div>
+                <div class="vie-status-badge inadequate" id="statusVieConjoint">Protection insuffisante</div>
+            </div>
+            <button class="vie-breakdown-toggle" onclick="toggleVieBreakdown('conjoint')">
+                <span>Détail</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+        </div>
+
+        <!-- Breakdown CONJOINT - AVEC IMPOTS AU DECES -->
+        <div class="vie-breakdown-content" id="vieBreakdownConjoint">
+            <div class="vie-breakdown-inner">
+                <div class="vie-remplacement-section" id="remplacementSectionConjoint" style="display: none;">
+                    <div class="vie-remplacement-header">📊 Remplacement de revenu</div>
+                    <div class="vie-remplacement-grid">
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">Revenu × % × Années</span><span class="vie-calc-item-value" id="calcRevenuBrutConjoint">0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">- Rente conjoint</span><span class="vie-calc-item-value negative" id="calcRenteConjConjoint">-0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label">- Rente orphelin</span><span class="vie-calc-item-value negative" id="calcRenteOrphConjoint">-0 $</span></div>
+                        <div class="vie-calc-item"><span class="vie-calc-item-label"><strong>= Sous-total</strong></span><span class="vie-calc-item-value" id="calcTotalRemplacementConjoint">0 $</span></div>
+                    </div>
+                </div>
+                <div class="vie-calc-item" id="calcRemplacementRowConjoint" style="display:none;"><span class="vie-calc-item-label">+ Remplacement</span><span class="vie-calc-item-value" id="calcRemplacementVieConjoint">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Funérailles</span><span class="vie-calc-item-value" id="calcFunerairesConjoint">10 000 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Héritage</span><span class="vie-calc-item-value" id="calcHeritageConjoint">0 $</span></div>
+                <div class="vie-calc-item impots-deces" id="impotsDecesRowConjoint"><span class="vie-calc-item-label">+ 🧾 Impôts au décès <span class="auto-tag">AUTO</span></span><span class="vie-calc-item-value orange" id="calcImpotsDecesConjoint">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">+ Passifs</span><span class="vie-calc-item-value" id="calcPassifsConjoint">0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">- Actifs</span><span class="vie-calc-item-value negative" id="calcActifsConjoint">-0 $</span></div>
+                <div class="vie-calc-item"><span class="vie-calc-item-label">- En vigueur</span><span class="vie-calc-item-value negative" id="calcAssuranceConjoint">-0 $</span></div>
+                <div class="vie-calc-total"><span class="vie-calc-total-label">= Besoin net</span><span class="vie-calc-total-value" id="calcTotalVieConjoint">0 $</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== ENFANTS TABS (générés dynamiquement) ========== -->
+<div id="vieEnfantsContent"></div>
+    </div><!-- /tab-content-wrapper -->
+</div><!-- /person-tabs-container -->
+<script>
+(async function() {
+    console.log('❤️ Module ABF Besoins Vie - Init (avec Impôts au Décès)');
+    let isSaving = false;
+    let continuiteRevenuClient = false;
+    let continuiteRevenuConjoint = false;
+    let totalPassifsClient = 0;
+    let totalActifsClient = 0;
+    let totalPassifsConjoint = 0;
+    let totalActifsConjoint = 0;
+    let vieVigueurClient = 0;
+    let vieVigueurConjoint = 0;
+    let revenuNetClient = 0;
+    let revenuNetConjoint = 0;
+    let nombreEnfants = 0;
+    let enfantsData = [];
+    let enfantsVieVigueur = {};
+    
+    // ★★★ NOUVELLES VARIABLES POUR IMPÔTS AU DÉCÈS ★★★
+    let impotsDecesClient = 0;
+    let impotsDecesConjoint = 0;
+    
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS WINDOW
+    // ==========================================
+    
+    window.switchVieTab = function(tab) {
+        document.querySelectorAll('#vieTabs .person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#vieTabs .person-tab[data-tab="${tab}"]`)?.classList.add('active');
+        
+        document.getElementById('vieClientContent').classList.remove('active');
+        document.getElementById('vieConjointContent').classList.remove('active');
+        document.querySelectorAll('[id^="vieEnfant"]').forEach(el => el.classList.remove('active'));
+        
+        if (tab === 'client') {
+            document.getElementById('vieClientContent').classList.add('active');
+        } else if (tab === 'conjoint') {
+            document.getElementById('vieConjointContent').classList.add('active');
+        } else if (tab.startsWith('enfant-')) {
+            document.getElementById(`vieEnfant${tab.replace('enfant-', '')}Content`)?.classList.add('active');
+        }
+    };
+    
+    window.toggleContinuiteRevenuClient = function() {
+        const toggle = document.getElementById('continuiteRevenuClientToggle');
+        toggle.classList.toggle('active');
+        continuiteRevenuClient = toggle.classList.contains('active');
+        
+        document.getElementById('continuiteRevenuClientFields').style.display = continuiteRevenuClient ? 'flex' : 'none';
+        document.getElementById('aideRRQClient').style.display = continuiteRevenuClient ? 'block' : 'none';
+        document.getElementById('remplacementSectionClient').style.display = continuiteRevenuClient ? 'block' : 'none';
+        document.getElementById('calcRemplacementRowClient').style.display = continuiteRevenuClient ? 'flex' : 'none';
+        
+        calculateBesoinVieClient();
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.toggleContinuiteRevenuConjoint = function() {
+        const toggle = document.getElementById('continuiteRevenuConjointToggle');
+        toggle.classList.toggle('active');
+        continuiteRevenuConjoint = toggle.classList.contains('active');
+        
+        document.getElementById('continuiteRevenuConjointFields').style.display = continuiteRevenuConjoint ? 'flex' : 'none';
+        document.getElementById('aideRRQConjoint').style.display = continuiteRevenuConjoint ? 'block' : 'none';
+        document.getElementById('remplacementSectionConjoint').style.display = continuiteRevenuConjoint ? 'block' : 'none';
+        document.getElementById('calcRemplacementRowConjoint').style.display = continuiteRevenuConjoint ? 'flex' : 'none';
+        
+        calculateBesoinVieConjoint();
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.toggleProtectionVieEnfant = function(index) {
+        const toggle = document.getElementById(`protectionVieEnfant${index}Toggle`);
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
+        
+        document.getElementById(`protectionVieEnfant${index}Content`).style.display = isActive ? 'block' : 'none';
+        document.getElementById(`protectionVieEnfant${index}Disabled`).style.display = isActive ? 'none' : 'flex';
+        
+        if (enfantsData[index]) {
+            enfantsData[index].protection_vie_active = isActive;
+        }
+        
+        if (isActive) {
+            calculateBesoinVieEnfant(index);
+        }
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.calculateBesoinVieEnfant = function(index) {
+        const funerailles = FINOX.parseNumber(document.getElementById(`fraisFuneraillesEnfant${index}`)?.value) || 0;
+        const heritage = FINOX.parseNumber(document.getElementById(`heritageEnfant${index}`)?.value) || 0;
+        const enfant = enfantsData[index];
+        const vigueur = enfant ? (enfantsVieVigueur[enfant.prenom] || 0) : 0;
+        
+        const besoin = Math.max(0, funerailles + heritage - vigueur);
+        
+        const besoinEl = document.getElementById(`besoinVieEnfant${index}`);
+        if (besoinEl) besoinEl.textContent = FINOX.formatCurrency(besoin);
+        
+        if (enfantsData[index]) {
+            enfantsData[index].frais_funerailles = funerailles;
+            enfantsData[index].heritage = heritage;
+        }
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    function renderEnfantsVieTabs() {
+        const tabsContainer = document.getElementById('vieTabs');
+        const contentContainer = document.getElementById('vieEnfantsContent');
+        
+        document.querySelectorAll('#vieTabs .enfant-tab').forEach(el => el.remove());
+        contentContainer.innerHTML = '';
+        
+        enfantsData.forEach((enfant, index) => {
+            const enfantName = enfant.prenom || `Enfant ${index + 1}`;
+            const vigueur = enfantsVieVigueur[enfant.prenom] || 0;
+            
+            const tab = document.createElement('div');
+            tab.className = 'person-tab enfant-tab visible';
+            tab.setAttribute('data-tab', `enfant-${index}`);
+            tab.onclick = () => switchVieTab(`enfant-${index}`);
+            tab.innerHTML = `<span class="tab-icon">👶</span><span>${enfantName}</span>`;
+            tabsContainer.appendChild(tab);
+            
+            const isActive = enfant.protection_vie_active || false;
+            const fraisFunerailles = enfant.frais_funerailles || 5000;
+            const heritage = enfant.heritage || 0;
+            const besoin = Math.max(0, fraisFunerailles + heritage - vigueur);
+            
+            const content = document.createElement('div');
+            content.className = 'tab-content';
+            content.id = `vieEnfant${index}Content`;
+            
+            content.innerHTML = `
+                <div class="vie-compact-container" style="border-color: rgba(33, 150, 243, 0.2);">
+                    <div class="enfant-protection-toggle">
+                        <div class="toggle-switch ${isActive ? 'active' : ''}" id="protectionVieEnfant${index}Toggle" onclick="toggleProtectionVieEnfant(${index})"></div>
+                        <span style="font-weight: 600; color: var(--text-primary);">Activer protection vie pour ${enfantName}</span>
+                    </div>
+                    
+                    <div id="protectionVieEnfant${index}Content" style="display: ${isActive ? 'block' : 'none'};">
+                        <div class="vie-compact-header" style="background: rgba(33, 150, 243, 0.08);">
+                            <div class="enfant-content-header">
+                                <div class="enfant-avatar">👶</div>
+                                <div>
+                                    <h4 style="font-size: 14px; margin: 0; color: var(--text-primary);">${enfantName}</h4>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin: 0;">Assurance vie</p>
+                                </div>
+                            </div>
+                            <div class="vie-param-inline">
+                                <label>💐 Funérailles</label>
+                                <input type="text" class="money-input" id="fraisFuneraillesEnfant${index}" value="${fraisFunerailles}" oninput="calculateBesoinVieEnfant(${index})">
+                            </div>
+                            <div class="vie-param-inline">
+                                <label>🎁 Héritage</label>
+                                <input type="text" class="money-input" id="heritageEnfant${index}" value="${heritage}" oninput="calculateBesoinVieEnfant(${index})">
+                            </div>
+                            <div class="vie-param-inline">
+                                <label style="color: #64B5F6;">🛡️ En vigueur</label>
+                                <input type="text" value="${FINOX.formatCurrency(vigueur)}" readonly style="background:var(--bg-primary); opacity: 0.7; color: #64B5F6;">
+                            </div>
+                        </div>
+                        <div class="vie-result-compact" style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.03));">
+                            <div class="vie-result-main">
+                                <div>
+                                    <div class="vie-result-label">Besoin en assurance vie</div>
+                                    <div class="vie-result-value" id="besoinVieEnfant${index}" style="background: linear-gradient(135deg, #64B5F6, #42A5F5); -webkit-background-clip: text;">${FINOX.formatCurrency(besoin)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="protectionVieEnfant${index}Disabled" class="protection-disabled-msg" style="display: ${isActive ? 'none' : 'flex'};">
+                        <span>🔒</span>
+                        <span>Protection vie désactivée pour cet enfant</span>
+                    </div>
+                </div>
+            `;
+            
+            contentContainer.appendChild(content);
+        });
+
+        // Formater les inputs monétaires dynamiques des enfants
+        FINOX.setupAllMoneyInputs(contentContainer);
+    }
+
+    window.setRenteConjoint = function(person, value) {
+        document.getElementById(`renteConjoint${person === 'client' ? 'Client' : 'Conjoint'}`).value = FINOX.formatNumber(value);
+        person === 'client' ? calculateBesoinVieClient() : calculateBesoinVieConjoint();
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.setRenteOrphelin = function(person) {
+        const value = nombreEnfants * 3621;
+        document.getElementById(`renteOrphelin${person === 'client' ? 'Client' : 'Conjoint'}`).value = FINOX.formatNumber(value);
+        person === 'client' ? calculateBesoinVieClient() : calculateBesoinVieConjoint();
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.toggleVieBreakdown = function(person) {
+        const content = document.getElementById(`vieBreakdown${person === 'client' ? 'Client' : 'Conjoint'}`);
+        const btn = content.previousElementSibling.querySelector('.vie-breakdown-toggle');
+        content.classList.toggle('open');
+        btn.classList.toggle('open');
+    };
+    
+    // ★★★ CALCUL CLIENT AVEC IMPÔTS AU DÉCÈS ★★★
+    window.calculateBesoinVieClient = function() {
+        const funerailles = FINOX.parseNumber(document.getElementById('fraisFunerairesClient').value) || 0;
+        const heritage = FINOX.parseNumber(document.getElementById('heritageClient').value) || 0;
+
+        let remplacementRevenu = 0;
+        if (continuiteRevenuClient) {
+            const pct = parseFloat(document.getElementById('pctRevenuVieClient').value) || 50;
+            const annees = parseFloat(document.getElementById('anneesRevenuClient').value) || 25;
+            const renteConj = FINOX.parseNumber(document.getElementById('renteConjointClient').value) || 0;
+            const renteOrph = FINOX.parseNumber(document.getElementById('renteOrphelinClient').value) || 0;
+            
+            const revenuBrut = revenuNetClient * (pct / 100) * annees;
+            const deductionConj = renteConj * annees;
+            const deductionOrph = renteOrph * annees;
+            remplacementRevenu = Math.max(0, revenuBrut - deductionConj - deductionOrph);
+            
+            document.getElementById('calcRevenuBrutClient').textContent = FINOX.formatCurrency(revenuBrut);
+            document.getElementById('calcRenteConjClient').textContent = '-' + FINOX.formatCurrency(deductionConj);
+            document.getElementById('calcRenteOrphClient').textContent = '-' + FINOX.formatCurrency(deductionOrph);
+            document.getElementById('calcTotalRemplacementClient').textContent = FINOX.formatCurrency(remplacementRevenu);
+            document.getElementById('calcRemplacementVieClient').textContent = FINOX.formatCurrency(remplacementRevenu);
+        }
+        
+        // ★ AJOUT DES IMPÔTS AU DÉCÈS DANS LE CALCUL ★
+        const besoin = Math.max(0, remplacementRevenu + funerailles + heritage + impotsDecesClient + totalPassifsClient - totalActifsClient - vieVigueurClient);
+        
+        document.getElementById('besoinVieClient').textContent = FINOX.formatCurrency(besoin);
+        document.getElementById('calcFunerairesClient').textContent = FINOX.formatCurrency(funerailles);
+        document.getElementById('calcHeritageClient').textContent = FINOX.formatCurrency(heritage);
+        document.getElementById('calcImpotsDecesClient').textContent = FINOX.formatCurrency(impotsDecesClient);
+        document.getElementById('calcPassifsClient').textContent = FINOX.formatCurrency(totalPassifsClient);
+        document.getElementById('calcActifsClient').textContent = '-' + FINOX.formatCurrency(totalActifsClient);
+        document.getElementById('calcAssuranceClient').textContent = '-' + FINOX.formatCurrency(vieVigueurClient);
+        document.getElementById('calcTotalVieClient').textContent = FINOX.formatCurrency(besoin);
+        
+        // Afficher/masquer la ligne impôts au décès selon le montant
+        document.getElementById('impotsDecesRowClient').style.display = impotsDecesClient > 0 ? 'flex' : 'none';
+        
+        const statusEl = document.getElementById('statusVieClient');
+        if (besoin <= 0) {
+            statusEl.className = 'vie-status-badge adequate';
+            statusEl.textContent = 'Protection adéquate';
+        } else {
+            statusEl.className = 'vie-status-badge inadequate';
+            statusEl.textContent = 'Protection insuffisante';
+        }
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    // ★★★ CALCUL CONJOINT AVEC IMPÔTS AU DÉCÈS ★★★
+    window.calculateBesoinVieConjoint = function() {
+        const funerailles = FINOX.parseNumber(document.getElementById('fraisFunerairesConjoint').value) || 0;
+        const heritage = FINOX.parseNumber(document.getElementById('heritageConjoint').value) || 0;
+
+        let remplacementRevenu = 0;
+        if (continuiteRevenuConjoint) {
+            const pct = parseFloat(document.getElementById('pctRevenuVieConjoint').value) || 50;
+            const annees = parseFloat(document.getElementById('anneesRevenuConjoint').value) || 25;
+            const renteConj = FINOX.parseNumber(document.getElementById('renteConjointConjoint').value) || 0;
+            const renteOrph = FINOX.parseNumber(document.getElementById('renteOrphelinConjoint').value) || 0;
+            
+            const revenuBrut = revenuNetConjoint * (pct / 100) * annees;
+            remplacementRevenu = Math.max(0, revenuBrut - (renteConj * annees) - (renteOrph * annees));
+            
+            document.getElementById('calcRevenuBrutConjoint').textContent = FINOX.formatCurrency(revenuBrut);
+            document.getElementById('calcRenteConjConjoint').textContent = '-' + FINOX.formatCurrency(renteConj * annees);
+            document.getElementById('calcRenteOrphConjoint').textContent = '-' + FINOX.formatCurrency(renteOrph * annees);
+            document.getElementById('calcTotalRemplacementConjoint').textContent = FINOX.formatCurrency(remplacementRevenu);
+            document.getElementById('calcRemplacementVieConjoint').textContent = FINOX.formatCurrency(remplacementRevenu);
+        }
+        
+        // ★ AJOUT DES IMPÔTS AU DÉCÈS DANS LE CALCUL ★
+        const besoin = Math.max(0, remplacementRevenu + funerailles + heritage + impotsDecesConjoint + totalPassifsConjoint - totalActifsConjoint - vieVigueurConjoint);
+
+        document.getElementById('besoinVieConjoint').textContent = FINOX.formatCurrency(besoin);
+        document.getElementById('calcFunerairesConjoint').textContent = FINOX.formatCurrency(funerailles);
+        document.getElementById('calcHeritageConjoint').textContent = FINOX.formatCurrency(heritage);
+        document.getElementById('calcImpotsDecesConjoint').textContent = FINOX.formatCurrency(impotsDecesConjoint);
+        document.getElementById('calcPassifsConjoint').textContent = FINOX.formatCurrency(totalPassifsConjoint);
+        document.getElementById('calcActifsConjoint').textContent = '-' + FINOX.formatCurrency(totalActifsConjoint);
+        document.getElementById('calcAssuranceConjoint').textContent = '-' + FINOX.formatCurrency(vieVigueurConjoint);
+        document.getElementById('calcTotalVieConjoint').textContent = FINOX.formatCurrency(besoin);
+        
+        // Afficher/masquer la ligne impôts au décès selon le montant
+        document.getElementById('impotsDecesRowConjoint').style.display = impotsDecesConjoint > 0 ? 'flex' : 'none';
+        
+        const statusEl = document.getElementById('statusVieConjoint');
+        statusEl.className = 'vie-status-badge ' + (besoin <= 0 ? 'adequate' : 'inadequate');
+        statusEl.textContent = besoin <= 0 ? 'Protection adéquate' : 'Protection insuffisante';
+    };
+    
+    window.saveAndNext = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Besoins vie sauvegardés', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-besoins-invalidite');
+        } else {
+            FINOX.showNotification('Erreur: ' + result.error, 'error');
+        }
+    };
+    
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    console.log('📋 Client chargé:', client.first_name, client.last_name);
+    
+    // Afficher/masquer onglets
+    if (client.has_conjoint) {
+        document.querySelector('.conjoint-tab').classList.add('visible');
+    }
+    
+    // Noms
+    document.getElementById('vieTabClientName').textContent = client.first_name || 'Client';
+    document.getElementById('vieTabConjointName').textContent = client.conjoint_first_name || 'Conjoint';
+    
+    // Revenus nets - Priorité: abf_data.emploi_client.revenu_net (calcul réel), sinon revenu_emploi × 0.7 (estimation)
+    const abfDataEmploi = client.abf_data || {};
+    if (abfDataEmploi.emploi_client?.revenu_net) {
+        revenuNetClient = parseFloat(abfDataEmploi.emploi_client.revenu_net);
+        console.log('💰 Revenu net Client depuis module Emploi:', revenuNetClient);
+    } else {
+        revenuNetClient = Math.round((client.revenu_emploi || 0) * 0.7);
+        console.log('💰 Revenu net Client estimé (70%):', revenuNetClient);
+    }
+    
+    if (abfDataEmploi.emploi_conjoint?.revenu_net) {
+        revenuNetConjoint = parseFloat(abfDataEmploi.emploi_conjoint.revenu_net);
+        console.log('💰 Revenu net Conjoint depuis module Emploi:', revenuNetConjoint);
+    } else {
+        revenuNetConjoint = Math.round((client.revenu_emploi_conjoint || 0) * 0.7);
+        console.log('💰 Revenu net Conjoint estimé (70%):', revenuNetConjoint);
+    }
+    
+    document.getElementById('revenuNetClientVie').value = revenuNetClient;
+    document.getElementById('revenuNetConjointVie').value = revenuNetConjoint;
+    
+    // Totaux actifs/passifs ajustés pour assurance vie (garder au décès exclu des actifs)
+    const abfDataActifs = client.abf_data || {};
+    totalActifsClient = abfDataActifs.vie_actifs_client ?? (client.total_actifs || 0);
+    totalPassifsClient = abfDataActifs.vie_passifs_client ?? (client.total_passifs || 0);
+    totalActifsConjoint = abfDataActifs.vie_actifs_conjoint ?? 0;
+    totalPassifsConjoint = abfDataActifs.vie_passifs_conjoint ?? 0;
+    console.log('💰 Actifs vie Client:', totalActifsClient, 'Passifs:', totalPassifsClient);
+    console.log('💰 Actifs vie Conjoint:', totalActifsConjoint, 'Passifs:', totalPassifsConjoint);
+    
+    // Charger nombre d'enfants depuis abf_enfants
+    try {
+        const { data: enfants } = await FINOX.supabase
+            .from('abf_enfants')
+            .select('id, prenom, date_naissance, protection_vie_active, frais_funerailles, heritage')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('ordre', { ascending: true });
+        
+        if (enfants && enfants.length > 0) {
+            enfantsData = enfants;
+            nombreEnfants = enfants.length;
+            console.log('👶 Enfants chargés:', nombreEnfants, enfantsData);
+        }
+        
+        // Mettre à jour l'affichage du nombre d'enfants
+        const nbEnfantsClientEl = document.getElementById('nbEnfantsClient');
+        const nbEnfantsConjointEl = document.getElementById('nbEnfantsConjoint');
+        if (nbEnfantsClientEl) nbEnfantsClientEl.textContent = nombreEnfants;
+        if (nbEnfantsConjointEl) nbEnfantsConjointEl.textContent = nombreEnfants;
+        
+        // Désactiver si aucun enfant
+        if (nombreEnfants === 0) {
+            const itemClient = document.getElementById('renteOrphelinItemClient');
+            const itemConjoint = document.getElementById('renteOrphelinItemConjoint');
+            if (itemClient) {
+                itemClient.classList.remove('clickable');
+                itemClient.style.opacity = '0.5';
+                itemClient.style.cursor = 'not-allowed';
+                itemClient.onclick = null;
+            }
+            if (itemConjoint) {
+                itemConjoint.classList.remove('clickable');
+                itemConjoint.style.opacity = '0.5';
+                itemConjoint.style.cursor = 'not-allowed';
+                itemConjoint.onclick = null;
+            }
+        }
+        
+        // Désactiver onglet conjoint si pas de conjoint
+        if (!client.has_conjoint) {
+            const itemConjoint = document.querySelector('.person-tab[data-tab="conjoint"]');
+            if (itemConjoint) {
+                itemConjoint.style.opacity = '0.5';
+                itemConjoint.style.cursor = 'not-allowed';
+                itemConjoint.onclick = null;
+            }
+        }
+    } catch (err) { 
+        console.warn('Erreur chargement enfants:', err);
+        nombreEnfants = 0;
+    }
+    
+    // Charger assurance vie en vigueur
+    try {
+        const { data: assurances } = await FINOX.supabase
+            .from('abf_assurances')
+            .select('type, assure, montant_couverture, exclure_calcul')
+            .eq('client_id', FINOX.CLIENT_ID);
+        
+        if (assurances) {
+            const clientPrenom = client.first_name || 'Client';
+            const conjointPrenom = client.conjoint_first_name || 'Conjoint';
+            
+            assurances.forEach(a => {
+                if (a.exclure_calcul) return;
+                if (a.type?.includes('Vie')) {
+                    if (a.assure === clientPrenom || a.assure === 'client' || a.assure === 'Client') {
+                        vieVigueurClient += a.montant_couverture || 0;
+                    } else if (a.assure === conjointPrenom || a.assure === 'conjoint' || a.assure === 'Conjoint') {
+                        vieVigueurConjoint += a.montant_couverture || 0;
+                    } else {
+                        enfantsVieVigueur[a.assure] = (enfantsVieVigueur[a.assure] || 0) + (a.montant_couverture || 0);
+                    }
+                }
+            });
+            
+            console.log('🛡️ Assurance vie en vigueur - Client:', vieVigueurClient, 'Conjoint:', vieVigueurConjoint);
+        }
+    } catch (err) { console.warn('Erreur assurances:', err); }
+    
+    // ★★★ CHARGER IMPÔTS AU DÉCÈS ★★★
+    const abfData = client.abf_data || {};
+    impotsDecesClient = abfData.impots_client?.impot_estime || 0;
+    impotsDecesConjoint = abfData.impots_conjoint?.impot_estime || 0;
+    console.log('🧾 Impôts au décès - Client:', impotsDecesClient, 'Conjoint:', impotsDecesConjoint);
+    
+    // Rendre les onglets enfants
+    if (enfantsData.length > 0) {
+        renderEnfantsVieTabs();
+    }
+
+    // Charger valeurs sauvegardées depuis abf_data
+    const vieClient = abfData.vie_client || {};
+    const vieConjoint = abfData.vie_conjoint || {};
+
+    if (vieClient.frais_funerailles) document.getElementById('fraisFunerairesClient').value = vieClient.frais_funerailles;
+    if (vieClient.heritage) document.getElementById('heritageClient').value = vieClient.heritage;
+    if (vieClient.pct_revenu) document.getElementById('pctRevenuVieClient').value = vieClient.pct_revenu;
+    if (vieClient.annees_revenu) document.getElementById('anneesRevenuClient').value = vieClient.annees_revenu;
+    if (vieClient.rente_conjoint) document.getElementById('renteConjointClient').value = vieClient.rente_conjoint;
+    if (vieClient.rente_orphelin) document.getElementById('renteOrphelinClient').value = vieClient.rente_orphelin;
+    
+    if (vieConjoint.frais_funerailles) document.getElementById('fraisFunerairesConjoint').value = vieConjoint.frais_funerailles;
+    if (vieConjoint.heritage) document.getElementById('heritageConjoint').value = vieConjoint.heritage;
+    if (vieConjoint.pct_revenu) document.getElementById('pctRevenuVieConjoint').value = vieConjoint.pct_revenu;
+    if (vieConjoint.annees_revenu) document.getElementById('anneesRevenuConjoint').value = vieConjoint.annees_revenu;
+    if (vieConjoint.rente_conjoint) document.getElementById('renteConjointConjoint').value = vieConjoint.rente_conjoint;
+    if (vieConjoint.rente_orphelin) document.getElementById('renteOrphelinConjoint').value = vieConjoint.rente_orphelin;
+    
+    // Restaurer toggle continuité
+    if (vieClient.continuite_revenu) {
+        document.getElementById('continuiteRevenuClientToggle').classList.add('active');
+        continuiteRevenuClient = true;
+        document.getElementById('continuiteRevenuClientFields').style.display = 'flex';
+        document.getElementById('aideRRQClient').style.display = 'block';
+        document.getElementById('remplacementSectionClient').style.display = 'block';
+        document.getElementById('calcRemplacementRowClient').style.display = 'flex';
+    }
+    
+    if (vieConjoint.continuite_revenu) {
+        document.getElementById('continuiteRevenuConjointToggle').classList.add('active');
+        continuiteRevenuConjoint = true;
+        document.getElementById('continuiteRevenuConjointFields').style.display = 'flex';
+        document.getElementById('aideRRQConjoint').style.display = 'block';
+        document.getElementById('remplacementSectionConjoint').style.display = 'block';
+        document.getElementById('calcRemplacementRowConjoint').style.display = 'flex';
+    }
+    
+    // Formater les inputs monétaires
+    FINOX.setupAllMoneyInputs();
+
+    // Calcul initial
+    calculateBesoinVieClient();
+    calculateBesoinVieConjoint();
+    
+    // ==========================================
+    // 3. FONCTION DE SAUVEGARDE SQL
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) return { success: true };
+        isSaving = true;
+        
+        const currentAbfData = client.abf_data || {};
+
+        // Recalculer les besoins
+        const funClient = FINOX.parseNumber(document.getElementById('fraisFunerairesClient').value) || 10000;
+        const herClient = FINOX.parseNumber(document.getElementById('heritageClient').value) || 0;
+        let remplacementClient = 0;
+        if (continuiteRevenuClient) {
+            const pct = parseFloat(document.getElementById('pctRevenuVieClient').value) || 50;
+            const annees = parseFloat(document.getElementById('anneesRevenuClient').value) || 25;
+            const renteConj = FINOX.parseNumber(document.getElementById('renteConjointClient').value) || 0;
+            const renteOrph = FINOX.parseNumber(document.getElementById('renteOrphelinClient').value) || 0;
+            const revenuBrut = revenuNetClient * (pct / 100) * annees;
+            remplacementClient = Math.max(0, revenuBrut - (renteConj * annees) - (renteOrph * annees));
+        }
+        const besoinVieClientCalc = Math.max(0, remplacementClient + funClient + herClient + impotsDecesClient + totalPassifsClient - totalActifsClient - vieVigueurClient);
+        
+        const funConjoint = FINOX.parseNumber(document.getElementById('fraisFunerairesConjoint').value) || 10000;
+        const herConjoint = FINOX.parseNumber(document.getElementById('heritageConjoint').value) || 0;
+        let remplacementConjoint = 0;
+        if (continuiteRevenuConjoint) {
+            const pct = parseFloat(document.getElementById('pctRevenuVieConjoint').value) || 50;
+            const annees = parseFloat(document.getElementById('anneesRevenuConjoint').value) || 25;
+            const renteConj = FINOX.parseNumber(document.getElementById('renteConjointConjoint').value) || 0;
+            const renteOrph = FINOX.parseNumber(document.getElementById('renteOrphelinConjoint').value) || 0;
+            const revenuBrut = revenuNetConjoint * (pct / 100) * annees;
+            remplacementConjoint = Math.max(0, revenuBrut - (renteConj * annees) - (renteOrph * annees));
+        }
+        const besoinVieConjointCalc = Math.max(0, remplacementConjoint + funConjoint + herConjoint + impotsDecesConjoint + totalPassifsConjoint - totalActifsConjoint - vieVigueurConjoint);
+        
+        const abfUpdate = {
+            ...currentAbfData,
+            vie_client: {
+                continuite_revenu: continuiteRevenuClient,
+                frais_funerailles: funClient,
+                heritage: herClient,
+                pct_revenu: parseInt(document.getElementById('pctRevenuVieClient').value) || 50,
+                annees_revenu: parseInt(document.getElementById('anneesRevenuClient').value) || 25,
+                rente_conjoint: FINOX.parseNumber(document.getElementById('renteConjointClient').value) || 0,
+                rente_orphelin: FINOX.parseNumber(document.getElementById('renteOrphelinClient').value) || 0,
+                besoin_calcule: Math.round(besoinVieClientCalc)
+            },
+            vie_conjoint: {
+                continuite_revenu: continuiteRevenuConjoint,
+                frais_funerailles: funConjoint,
+                heritage: herConjoint,
+                pct_revenu: parseInt(document.getElementById('pctRevenuVieConjoint').value) || 50,
+                annees_revenu: parseInt(document.getElementById('anneesRevenuConjoint').value) || 25,
+                rente_conjoint: FINOX.parseNumber(document.getElementById('renteConjointConjoint').value) || 0,
+                rente_orphelin: FINOX.parseNumber(document.getElementById('renteOrphelinConjoint').value) || 0,
+                besoin_calcule: Math.round(besoinVieConjointCalc)
+            }
+        };
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            // Sauvegarder les données des enfants
+            for (let i = 0; i < enfantsData.length; i++) {
+                const enfant = enfantsData[i];
+                if (enfant && enfant.id) {
+                    const fraisFunerailles = FINOX.parseNumber(document.getElementById(`fraisFuneraillesEnfant${i}`)?.value) || 5000;
+                    const heritage = FINOX.parseNumber(document.getElementById(`heritageEnfant${i}`)?.value) || 0;
+                    const toggle = document.getElementById(`protectionVieEnfant${i}Toggle`);
+                    const protectionActive = toggle ? toggle.classList.contains('active') : false;
+                    
+                    let besoinVieEnfant = 0;
+                    if (protectionActive) {
+                        besoinVieEnfant = fraisFunerailles + heritage;
+                    }
+                    
+                    await FINOX.supabase
+                        .from('abf_enfants')
+                        .update({
+                            protection_vie_active: protectionActive,
+                            frais_funerailles: fraisFunerailles,
+                            heritage: heritage,
+                            vie_besoin_calcule: besoinVieEnfant
+                        })
+                        .eq('id', enfant.id);
+                }
+            }
+            
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            await FINOX.loadClientData(true);
+            
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+    
+    console.log('✅ Module ABF Besoins Vie chargé (avec Impôts au Décès)');
+})();
+</script>

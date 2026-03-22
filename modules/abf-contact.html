@@ -1,0 +1,1397 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-CONTACT
+     Informations de contact: Client, Conjoint, Enfants
+     CORRIGÉ - Mapping SQL correct (colonnes directes, pas abf_data)
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ====== FORM GRID ====== */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    transition: all 0.3s;
+}
+
+.form-group select {
+    min-height: 48px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23E8B44D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(232, 180, 77, 0.15);
+    outline: none;
+}
+
+/* ====== TOGGLE SWITCH ====== */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid var(--border-color);
+}
+
+.toggle-switch.active {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.toggle-switch.active::after {
+    left: 26px;
+}
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ====== PERSON TABS ====== */
+.person-tabs-container {
+    margin-bottom: 0;
+}
+
+.person-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0;
+}
+
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+
+.person-tab .tab-icon {
+    font-size: 16px;
+}
+
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Hide conjoint tab when no conjoint */
+.person-tab.conjoint-tab {
+    display: none;
+}
+
+.person-tab.conjoint-tab.visible {
+    display: flex;
+}
+
+/* ====== ENFANT TAB STYLES ====== */
+.person-tab.enfant-tab {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.person-tab.enfant-tab:hover {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+}
+
+.person-tab.enfant-tab.active {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.enfant-content-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.enfant-content-header .enfant-avatar {
+    width: 48px;
+    height: 48px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 2px solid #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.enfant-content-header h4 {
+    color: #10b981;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.enfant-content-header p {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* ====== NAVIGATION ====== */
+.nav-btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.nav-btn-next {
+    background: linear-gradient(135deg, var(--gold), #d4a03d);
+    border: none;
+    color: #000;
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nav-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.nav-btn-save {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.nav-btn-save:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+    transition: all 0.3s;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .person-tab { padding: 12px 16px; font-size: 13px; }
+}
+
+/* ═══ RELATIONS TAB ═══ */
+.rel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.rel-add-btn { padding: 6px 14px; background: rgba(232,180,77,0.15); border: 1px solid rgba(232,180,77,0.3); border-radius: 8px; color: var(--gold); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.rel-add-btn:hover { background: rgba(232,180,77,0.25); }
+.rel-list { display: flex; flex-direction: column; gap: 8px; }
+.rel-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; opacity: 0.7; }
+.rel-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+.rel-item:hover { background: rgba(232,180,77,0.08); border-color: rgba(232,180,77,0.3); }
+.rel-item-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(232,180,77,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.rel-item-info { flex: 1; min-width: 0; }
+.rel-item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rel-item-type { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rel-item-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; background: rgba(76,175,80,0.15); color: #4CAF50; }
+.rel-item-delete { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.2s; }
+.rel-item:hover .rel-item-delete { opacity: 1; }
+.rel-item-delete:hover { background: rgba(244,67,54,0.15); color: #f44336; }
+
+/* Modal relation */
+.rel-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.rel-modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; width: 440px; max-width: 90vw; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+.rel-modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.rel-modal-header h3 { font-size: 15px; color: var(--gold); margin: 0; }
+.rel-modal-close { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px; }
+.rel-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.rel-search-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; margin-bottom: 12px; }
+.rel-search-input:focus { border-color: var(--gold); }
+.rel-search-input::placeholder { color: var(--text-muted); }
+.rel-search-results { max-height: 200px; overflow-y: auto; margin-bottom: 16px; }
+.rel-search-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.rel-search-item:hover { background: rgba(232,180,77,0.1); }
+.rel-search-item.selected { background: rgba(232,180,77,0.15); border: 1px solid rgba(232,180,77,0.3); }
+.rel-search-item-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.rel-search-item-type { font-size: 11px; color: var(--text-muted); }
+.rel-type-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; margin-bottom: 12px; appearance: auto; }
+.rel-type-select option { background: var(--bg-card); color: var(--text-primary); }
+.rel-label-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; margin-bottom: 16px; }
+.rel-modal-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; }
+.rel-modal-btn { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+.rel-modal-btn.cancel { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+.rel-modal-btn.confirm { background: var(--gold); color: #1a1a2e; }
+.rel-modal-btn.confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+.rel-no-results { text-align: center; padding: 16px; color: var(--text-muted); font-size: 12px; }
+</style>
+
+
+
+<!-- Toggle Conjoint + Nombre d'enfants -->
+<div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+    <div class="toggle-container" style="flex: 1; min-width: 280px; padding: 16px; background: var(--finox-gray, #2b2b2b); border-radius: 12px; margin: 0;">
+        <div class="toggle-switch" id="conjointToggle" onclick="toggleConjoint()"></div>
+        <span class="toggle-label" style="font-weight: 600;">Inclure un(e) conjoint(e) dans l'analyse</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--finox-gray, #2b2b2b); border-radius: 12px;">
+        <label style="font-size: 14px; color: var(--text-secondary); white-space: nowrap; margin: 0; text-transform: none;">Enfants à charge</label>
+        <select id="nombreEnfants" onchange="updateEnfantsTabs()" style="width: 80px; padding: 8px 12px; background: var(--finox-dark, #1a1a1a); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px; min-height: auto;">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+        </select>
+    </div>
+</div>
+
+<!-- Person Tabs -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="contactTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchContactTab('client')">
+            <span class="tab-icon">👤</span>
+            <span id="contactTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchContactTab('conjoint')">
+            <span class="tab-icon">👥</span>
+            <span id="contactTabConjointName">Conjoint</span>
+        </div>
+        <div class="person-tab" data-tab="relations" onclick="switchContactTab('relations')">
+            <span class="tab-icon">🌳</span>
+            <span>Relations</span>
+            <span id="relCountBadge" style="display:none; background:rgba(232,180,77,0.2); color:var(--gold); font-size:10px; font-weight:700; padding:2px 7px; border-radius:8px; margin-left:4px;">0</span>
+        </div>
+    </div>
+
+    <div class="tab-content-wrapper" id="contactTabContents">
+        <!-- Client Tab Content -->
+        <div class="tab-content active" id="contactClientContent">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Prénom *</label>
+                    <input type="text" id="clientPrenom" oninput="updateAllNames()">
+                </div>
+                <div class="form-group">
+                    <label>Nom *</label>
+                    <input type="text" id="clientNom" oninput="updateAllNames()">
+                </div>
+                <div class="form-group">
+                    <label>Courriel *</label>
+                    <input type="email" id="clientEmail">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone *</label>
+                    <input type="tel" id="clientTelephone">
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance *</label>
+                    <input type="date" id="clientDOB">
+                </div>
+                <div class="form-group">
+                    <label>Sexe *</label>
+                    <select id="clientSex">
+                        <option value="">Sélectionner...</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Statut Fumeur *</label>
+                    <select id="clientSmoker">
+                        <option value="">Sélectionner...</option>
+                        <option value="false">Non Fumeur</option>
+                        <option value="true">Fumeur</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>État civil</label>
+                    <select id="clientEtatCivil">
+                        <option value="">Sélectionner...</option>
+                        <option value="celibataire">Célibataire</option>
+                        <option value="marie">Marié(e)</option>
+                        <option value="conjoint_fait">Conjoint de fait</option>
+                        <option value="separe">Séparé(e)</option>
+                        <option value="divorce">Divorcé(e)</option>
+                        <option value="veuf">Veuf/Veuve</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Testament</label>
+                    <select id="clientTestament">
+                        <option value="">Sélectionner...</option>
+                        <option value="aucun">Aucun</option>
+                        <option value="olographe">Olographe</option>
+                        <option value="notarie">Notarié</option>
+                        <option value="notarie_a_reviser">Notarié — À réviser</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conjoint Tab Content -->
+        <div class="tab-content" id="contactConjointContent">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Prénom *</label>
+                    <input type="text" id="conjointPrenom" oninput="updateAllNames()">
+                </div>
+                <div class="form-group">
+                    <label>Nom *</label>
+                    <input type="text" id="conjointNom">
+                </div>
+                <div class="form-group">
+                    <label>Courriel</label>
+                    <input type="email" id="conjointEmail">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" id="conjointPhone">
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance *</label>
+                    <input type="date" id="conjointDOB">
+                </div>
+                <div class="form-group">
+                    <label>Sexe *</label>
+                    <select id="conjointSex">
+                        <option value="">Sélectionner...</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Statut fumeur *</label>
+                    <select id="conjointSmoker">
+                        <option value="">Sélectionner...</option>
+                        <option value="false">Non Fumeur</option>
+                        <option value="true">Fumeur</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>État civil</label>
+                    <select id="conjointEtatCivil">
+                        <option value="">Sélectionner...</option>
+                        <option value="celibataire">Célibataire</option>
+                        <option value="marie">Marié(e)</option>
+                        <option value="conjoint_fait">Conjoint de fait</option>
+                        <option value="separe">Séparé(e)</option>
+                        <option value="divorce">Divorcé(e)</option>
+                        <option value="veuf">Veuf/Veuve</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Testament</label>
+                    <select id="conjointTestament">
+                        <option value="">Sélectionner...</option>
+                        <option value="aucun">Aucun</option>
+                        <option value="olographe">Olographe</option>
+                        <option value="notarie">Notarié</option>
+                        <option value="notarie_a_reviser">Notarié — À réviser</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relations Tab Content -->
+        <div class="tab-content" id="contactRelationsContent">
+            <div class="rel-header">
+                <div style="font-size:14px; font-weight:600; color:var(--text-primary);">🌳 Relations personnelles & professionnelles</div>
+                <button class="rel-add-btn" onclick="openRelationModal()">+ Ajouter</button>
+            </div>
+            <div class="rel-list" id="relList">
+                <div class="rel-empty">Aucune relation. Cliquez sur + Ajouter pour relier ce contact à un autre.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AJOUT RELATION -->
+<div class="rel-modal-overlay" id="relModalOverlay" style="display:none;" onclick="closeRelationModal()">
+    <div class="rel-modal" onclick="event.stopPropagation()">
+        <div class="rel-modal-header">
+            <h3>🌳 Ajouter une relation</h3>
+            <button class="rel-modal-close" onclick="closeRelationModal()">✕</button>
+        </div>
+        <div class="rel-modal-body">
+            <input type="text" class="rel-search-input" id="relSearchInput" placeholder="Rechercher un contact par nom..." oninput="searchRelContacts(this.value)">
+            <div class="rel-search-results" id="relSearchResults">
+                <div class="rel-no-results">Tapez un nom pour chercher...</div>
+            </div>
+            <select class="rel-type-select" id="relTypeSelect">
+                <option value="">-- Type de relation --</option>
+                <option value="conjoint">💍 Conjoint(e)</option>
+                <option value="parent_enfant">👨‍👧 Parent / Enfant</option>
+                <option value="frere_soeur">👫 Frère / Sœur</option>
+                <option value="oncle_tante_neveu">👪 Oncle-Tante / Neveu-Nièce</option>
+                <option value="grands_parents">👴 Grands-parents / Petit-enfant</option>
+                <option value="ami">🤝 Ami(e)</option>
+                <option value="collegue">💼 Collègue</option>
+                <option value="associe">🤝 Associé(e) d'affaires</option>
+                <option value="directeur">🏛️ Directeur (Personne → Corpo)</option>
+                <option value="actionnaire">📊 Actionnaire (Personne → Corpo)</option>
+                <option value="employe">👷 Employé (Personne ↔ Corpo)</option>
+                <option value="referent">🔗 Référent / Référé par</option>
+                <option value="autre">📎 Autre</option>
+            </select>
+            <input type="text" class="rel-label-input" id="relLabelInput" placeholder="Précision optionnelle (ex: Père, Directeur des ventes...)">
+        </div>
+        <div class="rel-modal-footer">
+            <button class="rel-modal-btn cancel" onclick="closeRelationModal()">Annuler</button>
+            <button class="rel-modal-btn confirm" id="relConfirmBtn" onclick="confirmAddRelation()" disabled>Ajouter</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(async function() {
+    console.log('📇 Module ABF Contact - Init');
+    // ==========================================
+    // VARIABLES D'ÉTAT
+    // ==========================================
+    let hasConjoint = false;
+    let currentEnfantsCount = 0;
+    let enfantsData = {};
+    let clientId = null;
+    let isInitialLoad = true;  // Flag pour savoir si c'est le premier chargement
+    
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS D'ABORD
+    // ==========================================
+    
+    window.toggleConjoint = function() {
+        const toggle = document.getElementById('conjointToggle');
+        hasConjoint = !hasConjoint;
+        toggle.classList.toggle('active', hasConjoint);
+        
+        document.querySelectorAll('.conjoint-tab').forEach(tab => {
+            tab.classList.toggle('visible', hasConjoint);
+        });
+        
+        if (!hasConjoint) {
+            window.switchContactTab('client');
+        }
+        
+        // Marquer comme non enregistré
+        if (!isInitialLoad) {
+            FINOX_NAV.markAsUnsaved();
+        }
+        
+        console.log('Toggle conjoint:', hasConjoint);
+    };
+    
+    window.switchContactTab = function(tabId) {
+        const tabsContainer = document.getElementById('contactTabs');
+        const contentsContainer = document.getElementById('contactTabContents');
+
+        tabsContainer.querySelectorAll('.person-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabId);
+        });
+
+        contentsContainer.querySelectorAll('.tab-content').forEach(content => {
+            const contentId = content.id;
+            let isActive = false;
+
+            if (tabId === 'client' && contentId === 'contactClientContent') isActive = true;
+            else if (tabId === 'conjoint' && contentId === 'contactConjointContent') isActive = true;
+            else if (tabId === 'relations' && contentId === 'contactRelationsContent') isActive = true;
+            else if (tabId.startsWith('enfant') && contentId === `contact${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Content`) isActive = true;
+
+            content.classList.toggle('active', isActive);
+        });
+    };
+    
+    window.updateEnfantsTabs = function() {
+        const count = parseInt(document.getElementById('nombreEnfants').value) || 0;
+        
+        // Ne PAS sauvegarder les données pendant l'initialisation
+        // (enfantsData est déjà rempli depuis la DB)
+        if (!isInitialLoad) {
+            // Marquer comme non enregistré
+            FINOX_NAV.markAsUnsaved();
+            
+            // Sauvegarder les données des enfants existants depuis les inputs DOM
+            const existingTabs = document.querySelectorAll('#contactTabs .person-tab.enfant-tab');
+            if (existingTabs.length > 0) {
+                for (let i = 1; i <= currentEnfantsCount; i++) {
+                    const prenomEl = document.getElementById(`enfant${i}Prenom`);
+                    if (prenomEl) {
+                        enfantsData[i] = {
+                            prenom: prenomEl.value,
+                            nom: document.getElementById(`enfant${i}Nom`)?.value || '',
+                            date_naissance: document.getElementById(`enfant${i}DOB`)?.value || '',
+                            sexe: document.getElementById(`enfant${i}Sexe`)?.value || ''
+                        };
+                    }
+                }
+            }
+        }
+
+        updateEnfantsContactTabs(count);
+        currentEnfantsCount = count;
+    };
+    
+    function updateEnfantsContactTabs(count) {
+        console.log('🔄 updateEnfantsContactTabs appelé avec count:', count, 'enfantsData:', JSON.stringify(enfantsData));
+        
+        const tabsContainer = document.getElementById('contactTabs');
+        const contentsContainer = document.getElementById('contactTabContents');
+
+        // Supprimer les onglets enfants existants
+        document.querySelectorAll('#contactTabs .person-tab.enfant-tab').forEach(tab => tab.remove());
+        document.querySelectorAll('#contactTabContents .tab-content.enfant-content').forEach(content => content.remove());
+
+        // Créer les nouveaux onglets
+        for (let i = 1; i <= count; i++) {
+            const savedData = enfantsData[i] || { prenom: '', nom: '', date_naissance: '', sexe: '' };
+            console.log(`👶 Création onglet enfant ${i}:`, savedData);
+            const enfantName = savedData.prenom || `Enfant ${i}`;
+
+            const tab = document.createElement('div');
+            tab.className = 'person-tab enfant-tab';
+            tab.dataset.tab = `enfant${i}`;
+            tab.onclick = () => window.switchContactTab(`enfant${i}`);
+            tab.innerHTML = `<span class="tab-icon">👶</span><span id="contactTabEnfant${i}Name">${enfantName}</span>`;
+            // Insérer avant l'onglet Relations pour garder Relations toujours en dernier
+            const relTab = tabsContainer.querySelector('.person-tab[data-tab="relations"]');
+            if (relTab) {
+                tabsContainer.insertBefore(tab, relTab);
+            } else {
+                tabsContainer.appendChild(tab);
+            }
+
+            const content = document.createElement('div');
+            content.className = 'tab-content enfant-content';
+            content.id = `contactEnfant${i}Content`;
+            content.innerHTML = `
+                <div class="enfant-content-header">
+                    <div class="enfant-avatar">👶</div>
+                    <div>
+                        <h4 id="enfant${i}Title">${enfantName}</h4>
+                        <p>Informations de l'enfant ${i}</p>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Prénom *</label>
+                        <input type="text" id="enfant${i}Prenom" value="${savedData.prenom}" oninput="updateEnfantName(${i})">
+                    </div>
+                    <div class="form-group">
+                        <label>Nom de famille</label>
+                        <input type="text" id="enfant${i}Nom" value="${savedData.nom}">
+                    </div>
+                    <div class="form-group">
+                        <label>Date de naissance *</label>
+                        <input type="date" id="enfant${i}DOB" value="${savedData.date_naissance}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sexe</label>
+                        <select id="enfant${i}Sexe">
+                            <option value="">Sélectionner...</option>
+                            <option value="Garçon" ${savedData.sexe === 'Garçon' ? 'selected' : ''}>Garçon</option>
+                            <option value="Fille" ${savedData.sexe === 'Fille' ? 'selected' : ''}>Fille</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            contentsContainer.appendChild(content);
+        }
+
+        // Si l'onglet actif a été supprimé, revenir au client
+        const activeTab = tabsContainer.querySelector('.person-tab.active');
+        if (activeTab && activeTab.classList.contains('enfant-tab')) {
+            const tabNum = parseInt(activeTab.dataset.tab.replace('enfant', ''));
+            if (tabNum > count) {
+                window.switchContactTab('client');
+            }
+        }
+    }
+    
+    window.updateEnfantName = function(num) {
+        const prenom = document.getElementById(`enfant${num}Prenom`)?.value || `Enfant ${num}`;
+        const tabName = document.getElementById(`contactTabEnfant${num}Name`);
+        const title = document.getElementById(`enfant${num}Title`);
+        if (tabName) tabName.textContent = prenom;
+        if (title) title.textContent = prenom;
+    };
+    
+    window.updateAllNames = function() {
+        const prenom = document.getElementById('clientPrenom').value;
+        const nom = document.getElementById('clientNom').value;
+        
+        const clientTabName = document.getElementById('contactTabClientName');
+        if (clientTabName) clientTabName.textContent = prenom || 'Client';
+        
+        const prenomC = document.getElementById('conjointPrenom').value;
+        const conjointTabName = document.getElementById('contactTabConjointName');
+        if (conjointTabName) conjointTabName.textContent = prenomC || 'Conjoint';
+        
+        if (prenom || nom) {
+            const sidebarName = document.getElementById('sidebarClientName');
+            if (sidebarName) sidebarName.textContent = `${prenom} ${nom}`.trim();
+        }
+    };
+    
+    window.saveAndNext = async function() {
+        console.log('💾 Sauvegarde Contact et navigation...');
+        
+        // Utiliser saveModuleData (sera défini plus tard, mais accessible via window)
+        const result = await window.saveModuleData();
+        
+        if (result.success) {
+            FINOX.showNotification('Contact sauvegardé', 'success');
+            FINOX_NAV.markAsSaved();
+            
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') {
+                FINOX_NAV.updateABFCheckmarks();
+            }
+            
+            FINOX_NAV.loadModule('abf-adresse');
+        } else {
+            FINOX.showNotification('Erreur de sauvegarde: ' + result.error, 'error');
+        }
+    };
+    
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) {
+        console.error('❌ Aucun client trouvé');
+        return;
+    }
+    
+    clientId = client.id;
+    console.log('📋 Client chargé:', client.first_name, client.last_name);
+    
+    // ==========================================
+    // 3. REMPLIR LES CHAMPS - COLONNES DIRECTES
+    // ==========================================
+    document.getElementById('clientPrenom').value = client.first_name || '';
+    document.getElementById('clientNom').value = client.last_name || '';
+    document.getElementById('clientEmail').value = client.email || '';
+    document.getElementById('clientTelephone').value = client.phone || '';
+    document.getElementById('clientDOB').value = client.date_of_birth || '';
+    document.getElementById('clientSex').value = client.sex || '';
+    document.getElementById('clientSmoker').value = client.smoker ? 'true' : 'false';
+    document.getElementById('clientEtatCivil').value = client.etat_civil || '';
+    document.getElementById('clientTestament').value = client.testament || '';
+
+    // Conjoint - colonnes directes
+    console.log('👥 has_conjoint:', client.has_conjoint, 'conjoint_first_name:', client.conjoint_first_name);
+    if (client.has_conjoint) {
+        hasConjoint = true;
+        document.getElementById('conjointToggle').classList.add('active');
+        document.querySelectorAll('.conjoint-tab').forEach(tab => tab.classList.add('visible'));
+        console.log('👥 Onglet conjoint activé');
+    }
+    
+    document.getElementById('conjointPrenom').value = client.conjoint_first_name || '';
+    document.getElementById('conjointNom').value = client.conjoint_last_name || '';
+    document.getElementById('conjointEmail').value = client.conjoint_email || '';
+    document.getElementById('conjointPhone').value = client.conjoint_phone || '';
+    document.getElementById('conjointDOB').value = client.conjoint_dob || '';
+    document.getElementById('conjointSex').value = client.conjoint_sex || '';
+    document.getElementById('conjointSmoker').value = client.conjoint_smoker ? 'true' : 'false';
+    document.getElementById('conjointEtatCivil').value = client.conjoint_etat_civil || '';
+    document.getElementById('conjointTestament').value = client.conjoint_testament || '';
+
+    // Enfants - TOUJOURS charger depuis la table abf_enfants (source de vérité)
+    // puis synchroniser nombre_enfants si désynchronisé
+    let nbEnfants = 0;
+
+    try {
+        const { data: enfantsDB } = await FINOX.supabase
+            .from('abf_enfants')
+            .select('*')
+            .eq('client_id', clientId)
+            .order('ordre');
+
+        console.log('📋 Enfants DB raw:', JSON.stringify(enfantsDB, null, 2));
+
+        if (enfantsDB && enfantsDB.length > 0) {
+            nbEnfants = enfantsDB.length;
+
+            // Grouper par ordre pour éviter les doublons
+            const enfantsParOrdre = {};
+            enfantsDB.forEach(enfant => {
+                if (!enfantsParOrdre[enfant.ordre]) {
+                    enfantsParOrdre[enfant.ordre] = enfant;
+                }
+            });
+
+            Object.values(enfantsParOrdre).forEach((enfant, index) => {
+                console.log(`👶 Enfant ${index + 1}:`, enfant);
+                enfantsData[index + 1] = {
+                    prenom: enfant.prenom || '',
+                    nom: enfant.nom || '',
+                    date_naissance: enfant.date_naissance || '',
+                    sexe: enfant.sexe || ''
+                };
+            });
+            // Utiliser le nombre réel d'enfants uniques
+            nbEnfants = Object.keys(enfantsParOrdre).length;
+            console.log('✅ Enfants chargés depuis table abf_enfants:', nbEnfants);
+        } else {
+            // Fallback: nombre depuis le client
+            nbEnfants = client.nombre_enfants || 0;
+        }
+    } catch (e) {
+        console.warn('⚠️ Erreur chargement enfants depuis DB:', e);
+        nbEnfants = client.nombre_enfants || 0;
+    }
+
+    // Auto-sync: si nombre_enfants est désynchronisé, corriger silencieusement
+    if (client.nombre_enfants !== nbEnfants && nbEnfants > 0) {
+        console.log('🔄 Auto-sync nombre_enfants:', client.nombre_enfants, '->', nbEnfants);
+        FINOX.supabase.from('clients').update({ nombre_enfants: nbEnfants }).eq('id', clientId).then(() => {});
+    }
+
+    document.getElementById('nombreEnfants').value = nbEnfants;
+    currentEnfantsCount = nbEnfants;
+
+    console.log('👶 Nombre enfants final:', nbEnfants, 'Enfants data:', enfantsData);
+    
+    // ==========================================
+    // 4. INITIALISER L'UI (APRÈS avoir chargé toutes les données)
+    // ==========================================
+    window.updateAllNames();
+    
+    // Appeler directement updateEnfantsContactTabs avec les données chargées
+    updateEnfantsContactTabs(currentEnfantsCount);
+    
+    // Marquer la fin de l'initialisation
+    isInitialLoad = false;
+    
+    // ==========================================
+    // 5. FONCTION DE SAUVEGARDE POUR AUTO-SAVE
+    // ==========================================
+    let isSaving = false;  // Protection contre double sauvegarde
+    
+    window.saveModuleData = async function() {
+        // Empêcher double sauvegarde simultanée
+        if (isSaving) {
+            console.log('⚠️ Sauvegarde déjà en cours, skip');
+            return { success: true };
+        }
+        isSaving = true;
+        
+        console.log('💾 saveModuleData Contact appelé');
+        
+        const nbEnfants = parseInt(document.getElementById('nombreEnfants').value) || 0;
+
+        // Récupérer abf_data existant pour ne pas l'écraser
+        const currentClient = FINOX.getClientData();
+        const currentAbfData = currentClient?.abf_data || {};
+        
+        const clientUpdate = {
+            first_name: document.getElementById('clientPrenom').value,
+            last_name: document.getElementById('clientNom').value,
+            email: document.getElementById('clientEmail').value,
+            phone: document.getElementById('clientTelephone').value,
+            date_of_birth: document.getElementById('clientDOB').value || null,
+            sex: document.getElementById('clientSex').value,
+            smoker: document.getElementById('clientSmoker').value === 'true',
+            etat_civil: document.getElementById('clientEtatCivil').value || null,
+            testament: document.getElementById('clientTestament').value || null,
+
+            has_conjoint: hasConjoint,
+            // Toujours sauvegarder les valeurs du conjoint, même si toggle est off
+            // (permet de récupérer les données si on réactive le conjoint)
+            conjoint_first_name: document.getElementById('conjointPrenom').value || null,
+            conjoint_last_name: document.getElementById('conjointNom').value || null,
+            conjoint_email: document.getElementById('conjointEmail').value || null,
+            conjoint_phone: document.getElementById('conjointPhone').value || null,
+            conjoint_dob: document.getElementById('conjointDOB').value || null,
+            conjoint_sex: document.getElementById('conjointSex').value || null,
+            conjoint_smoker: document.getElementById('conjointSmoker').value === 'true',
+            conjoint_etat_civil: document.getElementById('conjointEtatCivil').value || null,
+            conjoint_testament: document.getElementById('conjointTestament').value || null,
+
+            nombre_enfants: nbEnfants,
+            
+            abf_data: {
+                ...currentAbfData
+            }
+        };
+        
+        try {
+            const { error: clientError } = await FINOX.supabase
+                .from('clients')
+                .update(clientUpdate)
+                .eq('id', clientId);
+            
+            if (clientError) throw clientError;
+
+            // ★ Mise à jour IMMÉDIATE du cache en mémoire (évite les données stales lors du changement de module)
+            FINOX.updateClientDataCache(clientUpdate);
+            console.log('💾 Cache client mis à jour immédiatement');
+
+            // Sauvegarder les enfants — mise à jour intelligente pour préserver les données d'assurance
+            const { data: existingEnfants } = await FINOX.supabase
+                .from('abf_enfants')
+                .select('id, ordre')
+                .eq('client_id', clientId)
+                .order('ordre');
+
+            const existingByOrdre = {};
+            (existingEnfants || []).forEach(e => { existingByOrdre[e.ordre] = e.id; });
+
+            if (nbEnfants > 0) {
+                for (let i = 1; i <= nbEnfants; i++) {
+                    const prenomEl = document.getElementById(`enfant${i}Prenom`);
+                    const nomEl = document.getElementById(`enfant${i}Nom`);
+                    const dobEl = document.getElementById(`enfant${i}DOB`);
+                    const sexeEl = document.getElementById(`enfant${i}Sexe`);
+
+                    // PROTECTION: ne jamais écraser avec des placeholders si le DOM n'existe pas
+                    if (!prenomEl) {
+                        console.warn(`⚠️ DOM enfant ${i} inexistant, skip update pour préserver les données`);
+                        if (existingByOrdre[i]) delete existingByOrdre[i];
+                        continue;
+                    }
+
+                    const contactFields = {
+                        prenom: prenomEl.value || `Enfant ${i}`,
+                        nom: nomEl?.value || '',
+                        date_naissance: dobEl?.value || null,
+                        sexe: sexeEl?.value || '',
+                        ordre: i,
+                        a_charge: true
+                    };
+
+                    if (existingByOrdre[i]) {
+                        // Mettre à jour (préserve protection_vie_active, protection_mg_active, etc.)
+                        await FINOX.supabase
+                            .from('abf_enfants')
+                            .update(contactFields)
+                            .eq('id', existingByOrdre[i]);
+                        delete existingByOrdre[i];
+                    } else {
+                        // Nouvel enfant
+                        await FINOX.supabase
+                            .from('abf_enfants')
+                            .insert({ client_id: clientId, ...contactFields });
+                    }
+                }
+            }
+
+            // Supprimer les enfants en trop (ceux qui ne sont plus dans la liste)
+            const idsToDelete = Object.values(existingByOrdre);
+            if (idsToDelete.length > 0) {
+                await FINOX.supabase
+                    .from('abf_enfants')
+                    .delete()
+                    .in('id', idsToDelete);
+            }
+            
+            // Refresh complet depuis la DB + invalider tout cache de requête stale
+            FINOX.invalidateCache();
+            await FINOX.loadClientData();
+
+            // Auto-sync contact vers RingCentral (silencieux, ne bloque pas)
+            if (typeof syncClientToRingCentral === 'function') {
+                syncClientToRingCentral(clientId); // fire-and-forget
+            }
+
+            // Auto-créer opportunité testament si nécessaire
+            await checkTestamentOpportunity();
+
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ==========================================
+    // 5b. AUTO-CRÉATION OPPORTUNITÉ TESTAMENT
+    // ==========================================
+    async function checkTestamentOpportunity() {
+        try {
+            const clientTest = document.getElementById('clientTestament').value;
+            const conjointTest = document.getElementById('conjointTestament').value;
+
+            const needsOpp = (val) => val === 'aucun' || val === 'olographe' || val === 'notarie_a_reviser';
+
+            const clientNeeds = needsOpp(clientTest);
+            const conjointNeeds = hasConjoint && needsOpp(conjointTest);
+
+            if (!clientNeeds && !conjointNeeds) return;
+
+            // Vérifier s'il existe déjà une opportunité testament active
+            const { data: existing } = await FINOX.supabase
+                .from('client_opportunities')
+                .select('id,stage')
+                .eq('client_id', clientId)
+                .eq('category', 'testament');
+
+            const activeStages = ['active', 'identified', 'qualified', 'action_planned', 'in_progress', 'proposal_sent'];
+            if (existing && existing.some(o => activeStages.includes(o.stage))) return;
+
+            // Prénoms
+            const clientPrenom = document.getElementById('clientPrenom').value || 'Client';
+            const conjointPrenom = document.getElementById('conjointPrenom').value || 'Conjoint';
+
+            // Construire le titre avec les prénoms
+            let titleNames = [];
+            if (clientNeeds) titleNames.push(clientPrenom);
+            if (conjointNeeds) titleNames.push(conjointPrenom);
+            const title = 'Testament à faire — ' + titleNames.join(' & ');
+
+            // Construire la description détaillée
+            const labels = { aucun: 'Aucun testament', olographe: 'Testament olographe', notarie_a_reviser: 'Notarié à réviser' };
+            let desc = [];
+            if (clientNeeds) desc.push(clientPrenom + ': ' + labels[clientTest]);
+            if (conjointNeeds) desc.push(conjointPrenom + ': ' + labels[conjointTest]);
+
+            // Récupérer le profil conseiller pour organization_id
+            const profile = await FINOX.loadUserProfile();
+            if (!profile) return;
+
+            const { error } = await FINOX.supabase
+                .from('client_opportunities')
+                .insert({
+                    organization_id: profile.organization_id,
+                    client_id: clientId,
+                    conseiller_id: profile.id,
+                    category: 'testament',
+                    title,
+                    description: desc.join('\n'),
+                    stage: 'active',
+                    priority: 'normal',
+                    source: 'auto'
+                });
+
+            if (error) {
+                console.warn('⚠️ Erreur création opp testament:', error);
+                return;
+            }
+
+            FINOX.showNotification('📜 Opportunité « ' + title + ' » créée', 'success');
+            FINOX.addTimelineEntry('opportunity', '📜 Opportunité auto: ' + title, desc.join(' | '));
+        } catch (err) {
+            console.warn('⚠️ checkTestamentOpportunity error:', err);
+        }
+    }
+
+    // ==========================================
+    // 6. DÉTECTER LES CHANGEMENTS (marquer non enregistré)
+    // ==========================================
+    function setupChangeListeners() {
+        // Tous les inputs et selects du module
+        const inputs = document.querySelectorAll('#module-content input, #module-content select');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if (!isInitialLoad) {
+                    FINOX_NAV.markAsUnsaved();
+                }
+            });
+            input.addEventListener('change', () => {
+                if (!isInitialLoad) {
+                    FINOX_NAV.markAsUnsaved();
+                }
+            });
+        });
+    }
+    
+    // Attendre un petit délai pour que les onglets enfants soient créés
+    setTimeout(setupChangeListeners, 100);
+
+    // Formater les numéros de téléphone
+    FINOX.setupPhoneInput(document.getElementById('clientTelephone'));
+    FINOX.setupPhoneInput(document.getElementById('conjointPhone'));
+
+    // Limiter les champs date à 4 chiffres pour l'année
+    FINOX.setupAllDateInputs();
+
+    // ==========================================
+    // 7. ARBRE DE RELATIONS
+    // ==========================================
+    const RELATION_TYPES = {
+        'conjoint':           { icon: '💍', label: 'Conjoint(e)' },
+        'parent_enfant':      { icon: '👨‍👧', label: 'Parent / Enfant' },
+        'frere_soeur':        { icon: '👫', label: 'Frère / Sœur' },
+        'oncle_tante_neveu':  { icon: '👪', label: 'Oncle-Tante / Neveu-Nièce' },
+        'grands_parents':     { icon: '👴', label: 'Grands-parents / Petit-enfant' },
+        'ami':                { icon: '🤝', label: 'Ami(e)' },
+        'collegue':           { icon: '💼', label: 'Collègue' },
+        'associe':            { icon: '🤝', label: "Associé(e) d'affaires" },
+        'directeur':          { icon: '🏛️', label: 'Directeur' },
+        'actionnaire':        { icon: '📊', label: 'Actionnaire' },
+        'employe':            { icon: '👷', label: 'Employé' },
+        'referent':           { icon: '🔗', label: 'Référent' },
+        'autre':              { icon: '📎', label: 'Autre' }
+    };
+
+    const REL_TYPE_CONTACT_CONFIG = {
+        'prospect': { icon: '🎯', label: 'Prospect' },
+        'client': { icon: '✅', label: 'Client' },
+        'corpo': { icon: '🏛️', label: 'Corporation' },
+        'conseiller': { icon: '👔', label: 'Conseiller' },
+        'fournisseur': { icon: '🏢', label: 'Fournisseur' },
+        'inactif': { icon: '💤', label: 'Inactif' }
+    };
+
+    let selectedRelContact = null;
+    let relSearchTimeout = null;
+
+    async function loadRelations() {
+        if (!FINOX.CLIENT_ID || !FINOX.supabase) return;
+        const container = document.getElementById('relList');
+        const badge = document.getElementById('relCountBadge');
+        if (!container) return;
+
+        try {
+            const { data: rels, error } = await FINOX.supabase
+                .from('client_relationships')
+                .select('*')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            if (!rels || rels.length === 0) {
+                container.innerHTML = '<div class="rel-empty">Aucune relation. Cliquez sur + Ajouter pour relier ce contact.</div>';
+                if (badge) badge.style.display = 'none';
+                return;
+            }
+
+            // Badge compteur
+            if (badge) {
+                badge.textContent = rels.length;
+                badge.style.display = 'inline';
+            }
+
+            const otherIds = rels.map(r => r.related_client_id);
+            const { data: contacts } = await FINOX.supabase
+                .from('clients')
+                .select('id, first_name, last_name, type_contact')
+                .in('id', otherIds);
+
+            const contactMap = {};
+            (contacts || []).forEach(c => contactMap[c.id] = c);
+
+            container.innerHTML = rels.map(r => {
+                const otherId = r.related_client_id;
+                const contact = contactMap[otherId];
+                if (!contact) return '';
+
+                const relType = RELATION_TYPES[r.relationship_type] || { icon: '📎', label: r.relationship_type };
+                const typeConfig = REL_TYPE_CONTACT_CONFIG[contact.type_contact] || { icon: '👤', label: '' };
+                const fullName = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Sans nom';
+                const labelText = r.relationship_label || relType.label;
+
+                return `<div class="rel-item" onclick="navigateToRelation('${otherId}')">
+                    <div class="rel-item-avatar">${relType.icon}</div>
+                    <div class="rel-item-info">
+                        <div class="rel-item-name">${fullName}</div>
+                        <div class="rel-item-type">${labelText}</div>
+                    </div>
+                    <div class="rel-item-badge">${typeConfig.icon} ${typeConfig.label || contact.type_contact || ''}</div>
+                    <button class="rel-item-delete" onclick="event.stopPropagation(); deleteRelation('${r.id}')" title="Supprimer">🗑️</button>
+                </div>`;
+            }).filter(Boolean).join('');
+
+        } catch (err) {
+            console.error('Erreur chargement relations:', err);
+            container.innerHTML = '<div class="rel-empty">Erreur de chargement</div>';
+        }
+    }
+
+    window.openRelationModal = function() {
+        selectedRelContact = null;
+        document.getElementById('relSearchInput').value = '';
+        document.getElementById('relSearchResults').innerHTML = '<div class="rel-no-results">Tapez un nom pour chercher...</div>';
+        document.getElementById('relTypeSelect').value = '';
+        document.getElementById('relLabelInput').value = '';
+        document.getElementById('relConfirmBtn').disabled = true;
+        document.getElementById('relModalOverlay').style.display = 'flex';
+        setTimeout(() => document.getElementById('relSearchInput').focus(), 100);
+    };
+
+    window.closeRelationModal = function() {
+        document.getElementById('relModalOverlay').style.display = 'none';
+    };
+
+    window.searchRelContacts = function(query) {
+        clearTimeout(relSearchTimeout);
+        const resultsDiv = document.getElementById('relSearchResults');
+
+        if (!query || query.length < 2) {
+            resultsDiv.innerHTML = '<div class="rel-no-results">Tapez au moins 2 caractères...</div>';
+            return;
+        }
+
+        relSearchTimeout = setTimeout(async () => {
+            try {
+                const q = query.trim().toLowerCase();
+                const { data, error } = await FINOX.supabase
+                    .from('clients')
+                    .select('id, first_name, last_name, type_contact')
+                    .eq('organization_id', '7572c420-6c4d-4313-8284-7ba5a4351f2c')
+                    .neq('id', FINOX.CLIENT_ID)
+                    .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+                    .order('last_name')
+                    .limit(15);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="rel-no-results">Aucun contact trouvé</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = data.map(c => {
+                    const typeConfig = REL_TYPE_CONTACT_CONFIG[c.type_contact] || { icon: '👤', label: c.type_contact || '' };
+                    const fullName = [c.first_name, c.last_name].filter(Boolean).join(' ');
+                    return `<div class="rel-search-item ${selectedRelContact?.id === c.id ? 'selected' : ''}" onclick="selectRelContact('${c.id}', '${fullName.replace(/'/g, "\\'")}', '${c.type_contact || ''}')">
+                        <span>${typeConfig.icon}</span>
+                        <span class="rel-search-item-name">${fullName}</span>
+                        <span class="rel-search-item-type">${typeConfig.label || ''}</span>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                console.error('Erreur recherche:', err);
+                resultsDiv.innerHTML = '<div class="rel-no-results">Erreur de recherche</div>';
+            }
+        }, 300);
+    };
+
+    window.selectRelContact = function(id, name, typeContact) {
+        selectedRelContact = { id, name, typeContact };
+        document.querySelectorAll('.rel-search-item').forEach(el => el.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        updateRelConfirmBtn();
+    };
+
+    function updateRelConfirmBtn() {
+        const hasContact = !!selectedRelContact;
+        const hasType = !!document.getElementById('relTypeSelect').value;
+        document.getElementById('relConfirmBtn').disabled = !(hasContact && hasType);
+    }
+
+    document.getElementById('relTypeSelect')?.addEventListener('change', updateRelConfirmBtn);
+
+    window.confirmAddRelation = async function() {
+        if (!selectedRelContact) return;
+        const relType = document.getElementById('relTypeSelect').value;
+        if (!relType) return;
+        const label = document.getElementById('relLabelInput').value.trim() || null;
+
+        try {
+            const { error: err1 } = await FINOX.supabase
+                .from('client_relationships')
+                .insert({
+                    client_id: FINOX.CLIENT_ID,
+                    related_client_id: selectedRelContact.id,
+                    relationship_type: relType,
+                    relationship_label: label,
+                    organization_id: '7572c420-6c4d-4313-8284-7ba5a4351f2c',
+                    created_by: (await FINOX.supabase.auth.getUser()).data.user?.id
+                });
+
+            if (err1) {
+                if (err1.code === '23505') {
+                    FINOX.showNotification('Cette relation existe déjà', 'error');
+                    return;
+                }
+                throw err1;
+            }
+
+            // Créer la relation inverse (bidirectionnelle)
+            const { error: err2 } = await FINOX.supabase
+                .from('client_relationships')
+                .insert({
+                    client_id: selectedRelContact.id,
+                    related_client_id: FINOX.CLIENT_ID,
+                    relationship_type: relType,
+                    relationship_label: label,
+                    organization_id: '7572c420-6c4d-4313-8284-7ba5a4351f2c',
+                    created_by: (await FINOX.supabase.auth.getUser()).data.user?.id
+                });
+
+            if (err2 && err2.code !== '23505') console.warn('Relation inverse:', err2);
+
+            FINOX.showNotification(`Relation ajoutée: ${selectedRelContact.name}`, 'success');
+            closeRelationModal();
+            loadRelations();
+
+        } catch (err) {
+            console.error('Erreur ajout relation:', err);
+            FINOX.showNotification('Erreur: ' + (err.message || "Impossible d'ajouter"), 'error');
+        }
+    };
+
+    window.deleteRelation = async function(relId) {
+        if (!await FINOX.confirm('Supprimer cette relation?')) return;
+
+        try {
+            const { data: rel } = await FINOX.supabase
+                .from('client_relationships')
+                .select('*')
+                .eq('id', relId)
+                .single();
+
+            if (rel) {
+                await FINOX.supabase.from('client_relationships').delete().eq('id', relId);
+                await FINOX.supabase
+                    .from('client_relationships')
+                    .delete()
+                    .eq('client_id', rel.related_client_id)
+                    .eq('related_client_id', rel.client_id)
+                    .eq('relationship_type', rel.relationship_type);
+            }
+
+            FINOX.showNotification('Relation supprimée', 'success');
+            loadRelations();
+
+        } catch (err) {
+            console.error('Erreur suppression:', err);
+            FINOX.showNotification('Erreur suppression', 'error');
+        }
+    };
+
+    window.navigateToRelation = function(relClientId) {
+        window.location.href = 'abf.html?client=' + relClientId;
+    };
+
+    // Charger les relations au démarrage
+    loadRelations();
+
+    console.log('✅ Module ABF Contact chargé');
+})();
+</script>

@@ -1,0 +1,1346 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: CONFORMITE-LETTRE v1.0
+     Lettre Explicative AMF avec génération Claude API
+     Historique des lettres, sauvegarde SQL, export
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Layout principal */
+.lettre-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    min-height: 600px;
+}
+
+@media (max-width: 1000px) {
+    .lettre-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Panel historique */
+.lettre-historique-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    height: fit-content;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.lettre-historique-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lettre-historique-title {
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lettre-historique-count {
+    background: rgba(232, 180, 77, 0.2);
+    color: var(--gold);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.lettre-historique-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lettre-historique-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.lettre-historique-item:hover {
+    border-color: var(--gold);
+    background: rgba(232, 180, 77, 0.05);
+}
+
+.lettre-historique-item.active {
+    border-color: var(--gold);
+    background: rgba(232, 180, 77, 0.1);
+}
+
+.lettre-historique-item-title {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lettre-historique-item-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.lettre-historique-item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.lettre-historique-item-actions button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.lettre-historique-item-actions button:hover {
+    color: var(--gold);
+}
+
+.lettre-empty-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 30px 20px;
+    font-size: 13px;
+}
+
+/* Panel principal */
+.lettre-main-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.lettre-toolbar {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.lettre-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.lettre-btn-primary {
+    background: linear-gradient(135deg, var(--gold), #c9a040);
+    border: none;
+    color: #000;
+}
+
+.lettre-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(232, 180, 77, 0.3);
+}
+
+.lettre-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.lettre-btn-secondary {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.lettre-btn-secondary:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.lettre-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.lettre-btn.spinning svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Contenu lettre */
+.lettre-content-wrapper {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.lettre-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.lettre-placeholder-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.lettre-placeholder-text {
+    font-size: 14px;
+    max-width: 300px;
+    line-height: 1.6;
+}
+
+.lettre-output {
+    display: none;
+}
+
+.lettre-output.visible {
+    display: block;
+}
+
+.lettre-saved-indicator {
+    display: none;
+    padding: 10px 16px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    color: #10b981;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.lettre-saved-indicator.visible {
+    display: block;
+}
+
+.lettre-paper {
+    background: #fff;
+    color: #1a1a1a;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    line-height: 1.8;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.lettre-paper p {
+    margin-bottom: 16px;
+    text-align: justify;
+}
+
+.lettre-paper p:last-child {
+    margin-bottom: 0;
+}
+
+/* Mode édition */
+.lettre-paper.editing {
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 20px rgba(232, 180, 77, 0.3);
+}
+
+.lettre-paper[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+}
+
+.lettre-paper[contenteditable="true"]:focus {
+    background: #fffef8;
+}
+
+.lettre-edit-hint {
+    display: none;
+    background: rgba(232, 180, 77, 0.15);
+    border: 1px solid rgba(232, 180, 77, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--gold);
+}
+
+.lettre-edit-hint.visible {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lettre-btn.editing {
+    background: rgba(232, 180, 77, 0.2);
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+</style>
+
+<!-- Main Container -->
+<div class="lettre-container">
+    <!-- Panel Historique -->
+    <div class="lettre-historique-panel">
+        <div class="lettre-historique-header">
+            <div class="lettre-historique-title">
+                📚 Historique
+                <span class="lettre-historique-count" id="lettreCount">0</span>
+            </div>
+        </div>
+        <div class="lettre-historique-list" id="lettreHistoriqueList">
+            <div class="lettre-empty-message">
+                📝 Aucune lettre dans l'historique.<br>
+                Générez votre première lettre!
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel Principal -->
+    <div class="lettre-main-panel">
+        <div class="lettre-toolbar">
+            <button class="lettre-btn lettre-btn-primary" id="btnGenerateLettre" onclick="generateLettreExplicative()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                Générer avec IA
+            </button>
+            <button class="lettre-btn lettre-btn-secondary" id="btnEditLettre" onclick="toggleEditMode()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span id="btnEditLettreText">Éditer</span>
+            </button>
+            <button class="lettre-btn lettre-btn-secondary" id="btnSaveLettre" onclick="saveCurrentLettre()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Sauvegarder
+            </button>
+            <button class="lettre-btn lettre-btn-secondary" id="btnCopyLettre" onclick="copyLettreToClipboard()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                Copier
+            </button>
+            <button class="lettre-btn lettre-btn-secondary" id="btnPrintLettre" onclick="printLettre()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Imprimer
+            </button>
+        </div>
+        
+        <div class="lettre-content-wrapper">
+            <!-- Placeholder -->
+            <div class="lettre-placeholder" id="lettrePlaceholder">
+                <div class="lettre-placeholder-icon">📄</div>
+                <div class="lettre-placeholder-text">
+                    Cliquez sur "Générer avec IA" pour créer une lettre explicative personnalisée basée sur l'analyse des besoins du client.
+                </div>
+            </div>
+            
+            <!-- Output -->
+            <div class="lettre-output" id="lettreOutput">
+                <div class="lettre-saved-indicator" id="lettreSavedIndicator"></div>
+                <div class="lettre-edit-hint" id="lettreEditHint">
+                    ✏️ <strong>Mode édition actif</strong> - Cliquez dans la lettre pour modifier le texte. Cliquez sur "Terminer" quand vous avez fini.
+                </div>
+                <div class="lettre-paper" id="lettreContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(async function() {
+    console.log('📄 Module Lettre Explicative v1.0 - Init');
+    
+    // ==========================================
+    // CONFIGURATION
+    // ==========================================
+    const CLAUDE_WORKER_URL = 'https://claudelettreexplicative.dany-michaud.workers.dev';
+    
+    let client = null;
+    let abfData = {};
+    let currentLettreId = null;
+    let lettresHistorique = [];
+    
+    // ==========================================
+    // UTILITAIRES
+    // ==========================================
+    function formatMoney(amount) {
+        if (!amount || isNaN(amount)) return '0 $';
+        return new Intl.NumberFormat('fr-CA', { 
+            style: 'currency', 
+            currency: 'CAD', 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+        }).format(amount);
+    }
+    
+    function calculateAge(ddn) {
+        if (!ddn) return null;
+        const birthDate = new Date(ddn);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+        return age;
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('fr-CA', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+    
+    function generateAutoTitle() {
+        const today = new Date();
+        const mois = today.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' });
+        return `Analyse - ${mois}`;
+    }
+    
+    const OPTIONS_DELAI = {
+        'prochaine_rencontre': 'lors de notre prochaine rencontre',
+        'quelques_mois': 'dans quelques mois',
+        'budget_permet': 'quand le budget le permettra'
+    };
+    
+    // ==========================================
+    // COLLECTE DES DONNÉES
+    // ==========================================
+    async function collectAllDataForLettre() {
+        // Charger le profil conseiller depuis Supabase (données réelles)
+        let conseiller = {};
+        try {
+            const user = FINOX.getCurrentUser();
+            console.log('[Lettre] getCurrentUser:', user?.id, user?.email);
+            if (user) {
+                const { data: profile, error } = await FINOX.supabase
+                    .from('profiles')
+                    .select('first_name, last_name, title, amf_number, phone, email')
+                    .eq('id', user.id)
+                    .single();
+                console.log('[Lettre] Profile query result:', profile, error);
+                if (profile) {
+                    conseiller = {
+                        firstName: profile.first_name || '',
+                        lastName: profile.last_name || '',
+                        titre: profile.title || 'Conseiller en sécurité financière',
+                        amf: profile.amf_number || '',
+                        phone: profile.phone || '',
+                        email: profile.email || user.email || ''
+                    };
+                }
+            }
+            // Si la query n'a rien retourné, essayer via conseiller_id du client
+            if (!conseiller.firstName && client?.conseiller_id) {
+                console.log('[Lettre] Fallback: query par conseiller_id:', client.conseiller_id);
+                const { data: profile2 } = await FINOX.supabase
+                    .from('profiles')
+                    .select('first_name, last_name, title, amf_number, phone, email')
+                    .eq('id', client.conseiller_id)
+                    .single();
+                if (profile2) {
+                    conseiller = {
+                        firstName: profile2.first_name || '',
+                        lastName: profile2.last_name || '',
+                        titre: profile2.title || 'Conseiller en sécurité financière',
+                        amf: profile2.amf_number || '',
+                        phone: profile2.phone || '',
+                        email: profile2.email || ''
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn('[Lettre] Erreur chargement profil conseiller:', e.message);
+        }
+        // Fallback sessionStorage (secureStorage) si toujours vide
+        if (!conseiller.firstName) {
+            try {
+                const saved = JSON.parse(sessionStorage.getItem('finox_conseiller') || localStorage.getItem('finox_conseiller') || '{}');
+                if (saved.firstName) conseiller = { ...saved };
+            } catch(e) {}
+        }
+        console.log('[Lettre] Conseiller final:', JSON.stringify(conseiller));
+        const today = new Date().toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // Client
+        const clientData = {
+            prenom: client.first_name || '',
+            nom: client.last_name || '',
+            sexe: client.sex || 'Homme',
+            ddn: client.date_of_birth || '',
+            fumeur: client.smoker || false,
+            emploi: client.titre_emploi || '',
+            employeur: client.employeur || '',
+            revenuEmploi: client.revenu_emploi || 0,
+            revenuAutre: client.revenu_autre || 0
+        };
+        clientData.nomComplet = `${clientData.prenom} ${clientData.nom}`.trim();
+        clientData.age = clientData.ddn ? calculateAge(clientData.ddn) : null;
+        clientData.revenuTotal = clientData.revenuEmploi + clientData.revenuAutre;
+        
+        // Conjoint
+        const hasConjoint = client.has_conjoint || false;
+        let conjointData = null;
+        if (hasConjoint) {
+            conjointData = {
+                prenom: client.conjoint_first_name || '',
+                nom: client.conjoint_last_name || '',
+                sexe: client.conjoint_sex || '',
+                ddn: client.conjoint_dob || '',
+                fumeur: client.conjoint_smoker || false,
+                emploi: client.conjoint_titre_emploi || '',
+                employeur: client.conjoint_employeur || '',
+                revenuEmploi: client.revenu_emploi_conjoint || 0,
+                revenuAutre: client.revenu_autre_conjoint || 0
+            };
+            conjointData.nomComplet = `${conjointData.prenom} ${conjointData.nom}`.trim();
+            conjointData.age = conjointData.ddn ? calculateAge(conjointData.ddn) : null;
+            conjointData.revenuTotal = conjointData.revenuEmploi + conjointData.revenuAutre;
+        }
+        
+        // Charger les enfants depuis abf_enfants
+        let enfantsData = [];
+        try {
+            const { data: enfants } = await FINOX.supabase
+                .from('abf_enfants')
+                .select('prenom, date_naissance, protection_vie_active, protection_mg_active, vie_besoin_calcule, mg_besoin_calcule')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .order('ordre', { ascending: true });
+            
+            if (enfants && enfants.length > 0) {
+                enfantsData = enfants.map(e => ({
+                    prenom: e.prenom,
+                    age: e.date_naissance ? calculateAge(e.date_naissance) : null,
+                    protectionVie: e.protection_vie_active,
+                    protectionMG: e.protection_mg_active,
+                    besoinVie: e.vie_besoin_calcule || 0,
+                    besoinMG: e.mg_besoin_calcule || 0
+                }));
+            }
+        } catch (err) {
+            console.warn('Erreur chargement enfants:', err);
+        }
+        
+        // Besoins calculés
+        const besoins = {
+            client: {
+                vie: abfData.vie_client?.besoin_calcule || 0,
+                maladie: abfData.mg_besoin_client || 0,
+                invalidite: abfData.inv_client?.besoin_calcule || 0
+            },
+            conjoint: {
+                vie: abfData.vie_conjoint?.besoin_calcule || 0,
+                maladie: abfData.mg_besoin_conjoint || 0,
+                invalidite: abfData.inv_conjoint?.besoin_calcule || 0
+            }
+        };
+        
+        // Calculer épargne
+        let epargneClient = { mensuel: 0, transfert: 0 };
+        let epargneConjoint = { mensuel: 0, transfert: 0 };
+        if (abfData.projets_epargne && Array.isArray(abfData.projets_epargne)) {
+            abfData.projets_epargne.forEach(p => {
+                const monthly = p.monthlyAmount || 0;
+                const initial = p.initialAmount || 0;
+                const owner = (p.owner || '').toLowerCase();
+                
+                if (owner === 'client') {
+                    epargneClient.mensuel += monthly;
+                    epargneClient.transfert += initial;
+                } else if (owner === 'conjoint') {
+                    epargneConjoint.mensuel += monthly;
+                    epargneConjoint.transfert += initial;
+                } else if (owner === 'both') {
+                    epargneClient.mensuel += monthly / 2;
+                    epargneClient.transfert += initial / 2;
+                    epargneConjoint.mensuel += monthly / 2;
+                    epargneConjoint.transfert += initial / 2;
+                }
+            });
+        }
+        besoins.client.epargneMensuel = epargneClient.mensuel;
+        besoins.client.epargneTransfert = epargneClient.transfert;
+        besoins.conjoint.epargneMensuel = epargneConjoint.mensuel;
+        besoins.conjoint.epargneTransfert = epargneConjoint.transfert;
+        
+        // Charger les passifs pour assurance prêt
+        let pretClient = 0, pretConjoint = 0;
+        try {
+            const { data: actifs } = await FINOX.supabase
+                .from('abf_actifs')
+                .select('paiement_mensuel, proprietaire')
+                .eq('client_id', FINOX.CLIENT_ID);
+            
+            if (actifs) {
+                actifs.forEach(a => {
+                    const paiement = a.paiement_mensuel || 0;
+                    if (paiement > 0) {
+                        const prop = (a.proprietaire || '').toLowerCase();
+                        if (prop === clientData.prenom.toLowerCase() || prop === 'client' || prop === 'les deux') {
+                            pretClient += paiement;
+                        }
+                        if (prop === (conjointData?.prenom || '').toLowerCase() || prop === 'conjoint' || prop === 'les deux') {
+                            pretConjoint += paiement;
+                        }
+                    }
+                });
+            }
+        } catch (err) { console.warn('Erreur passifs:', err); }
+        
+        besoins.client.pret = pretClient;
+        besoins.conjoint.pret = pretConjoint;
+        
+        // Actifs/Passifs totaux
+        const actifs = {
+            totalActifs: client.total_actifs || 0,
+            totalPassifs: client.total_passifs || 0,
+            valeurNette: (client.total_actifs || 0) - (client.total_passifs || 0)
+        };
+        
+        // Recommandations
+        const recommandations = abfData.recommandations || { client: {}, conjoint: {}, enfants: {} };
+        
+        return {
+            date: today,
+            conseiller,
+            client: clientData,
+            hasConjoint,
+            conjoint: conjointData,
+            enfants: enfantsData,
+            actifs,
+            besoins,
+            recommandations
+        };
+    }
+    
+    // ==========================================
+    // CONSTRUCTION DU CONTEXTE POUR CLAUDE
+    // ==========================================
+    function roundAmount(amount) {
+        // Arrondir au millier le plus proche pour les gros montants
+        if (amount >= 100000) return Math.round(amount / 10000) * 10000;
+        if (amount >= 10000) return Math.round(amount / 1000) * 1000;
+        if (amount >= 1000) return Math.round(amount / 100) * 100;
+        return Math.round(amount);
+    }
+    
+    function buildContextSummary(data) {
+        const { client, conjoint, hasConjoint, enfants, actifs, besoins, recommandations } = data;
+        
+        let context = '';
+        
+        // Situation familiale
+        context += `SITUATION FAMILIALE:\n`;
+        context += `- ${client.prenom} ${client.nom}`;
+        if (client.age) context += `, ${client.age} ans`;
+        if (client.emploi) context += `, ${client.emploi}`;
+        if (client.employeur) context += ` chez ${client.employeur}`;
+        context += `\n`;
+        
+        if (hasConjoint && conjoint) {
+            context += `- Conjoint(e): ${conjoint.prenom}`;
+            if (conjoint.age) context += `, ${conjoint.age} ans`;
+            if (conjoint.emploi) context += `, ${conjoint.emploi}`;
+            context += `\n`;
+        }
+        
+        if (enfants && enfants.length > 0) {
+            const enfantsStr = enfants.map(e => `${e.prenom}${e.age ? ` (${e.age} ans)` : ''}`).join(', ');
+            context += `- Enfants: ${enfantsStr}\n`;
+        }
+        
+        // Situation financière
+        context += `\nSITUATION FINANCIÈRE:\n`;
+        context += `- Revenus familiaux: ${formatMoney(client.revenuTotal + (conjoint?.revenuTotal || 0))}/an\n`;
+        context += `- Actifs totaux: ${formatMoney(actifs.totalActifs)}\n`;
+        context += `- Passifs totaux: ${formatMoney(actifs.totalPassifs)}\n`;
+        context += `- Valeur nette: ${formatMoney(actifs.valeurNette)}\n`;
+        
+        // Besoins identifiés - CLIENT
+        context += `\n═══════════════════════════════════════\n`;
+        context += `BESOINS ET DÉCISIONS - ${client.prenom.toUpperCase()}\n`;
+        context += `═══════════════════════════════════════\n`;
+        
+        const recoClient = recommandations.client || {};
+        
+        // Vie Client
+        context += `\n🛡️ ASSURANCE VIE:\n`;
+        context += `   Besoin identifié: ${formatMoney(besoins.client.vie)}\n`;
+        context += formatDecisionDetails('vie', recoClient.vie, besoins.client.vie);
+        
+        // Maladie Grave Client
+        context += `\n🏥 MALADIE GRAVE:\n`;
+        context += `   Besoin identifié: ${formatMoney(besoins.client.maladie)}\n`;
+        context += formatDecisionDetails('maladie', recoClient.maladie, besoins.client.maladie);
+        
+        // Invalidité Client
+        context += `\n🩼 INVALIDITÉ:\n`;
+        context += `   Besoin identifié: ${formatMoney(besoins.client.invalidite)}/mois\n`;
+        context += formatDecisionDetails('invalidite', recoClient.invalidite, besoins.client.invalidite);
+        
+        // Prêt Client
+        if (besoins.client.pret > 0) {
+            context += `\n🏦 ASSURANCE PRÊT:\n`;
+            context += `   Paiements mensuels à protéger: ${formatMoney(besoins.client.pret)}/mois\n`;
+            context += formatDecisionDetails('pret', recoClient.pret, besoins.client.pret);
+        }
+        
+        // Épargne Client
+        if (besoins.client.epargneMensuel > 0 || besoins.client.epargneTransfert > 0) {
+            context += `\n💰 ÉPARGNE:\n`;
+            context += `   Recommandation: ${formatMoney(besoins.client.epargneMensuel)}/mois`;
+            if (besoins.client.epargneTransfert > 0) context += ` + ${formatMoney(besoins.client.epargneTransfert)} transfert`;
+            context += `\n`;
+            context += formatDecisionDetailsEpargne(recoClient.epargne, besoins.client);
+        }
+        
+        // CONJOINT
+        if (hasConjoint && conjoint) {
+            const recoConjoint = recommandations.conjoint || {};
+            
+            context += `\n═══════════════════════════════════════\n`;
+            context += `BESOINS ET DÉCISIONS - ${conjoint.prenom.toUpperCase()}\n`;
+            context += `═══════════════════════════════════════\n`;
+            
+            // Vie Conjoint
+            context += `\n🛡️ ASSURANCE VIE:\n`;
+            context += `   Besoin identifié: ${formatMoney(besoins.conjoint.vie)}\n`;
+            context += formatDecisionDetails('vie', recoConjoint.vie, besoins.conjoint.vie);
+            
+            // Maladie Grave Conjoint
+            context += `\n🏥 MALADIE GRAVE:\n`;
+            context += `   Besoin identifié: ${formatMoney(besoins.conjoint.maladie)}\n`;
+            context += formatDecisionDetails('maladie', recoConjoint.maladie, besoins.conjoint.maladie);
+            
+            // Invalidité Conjoint
+            context += `\n🩼 INVALIDITÉ:\n`;
+            context += `   Besoin identifié: ${formatMoney(besoins.conjoint.invalidite)}/mois\n`;
+            context += formatDecisionDetails('invalidite', recoConjoint.invalidite, besoins.conjoint.invalidite);
+            
+            // Prêt Conjoint
+            if (besoins.conjoint.pret > 0) {
+                context += `\n🏦 ASSURANCE PRÊT:\n`;
+                context += `   Paiements mensuels à protéger: ${formatMoney(besoins.conjoint.pret)}/mois\n`;
+                context += formatDecisionDetails('pret', recoConjoint.pret, besoins.conjoint.pret);
+            }
+            
+            // Épargne Conjoint
+            if (besoins.conjoint.epargneMensuel > 0 || besoins.conjoint.epargneTransfert > 0) {
+                context += `\n💰 ÉPARGNE:\n`;
+                context += `   Recommandation: ${formatMoney(besoins.conjoint.epargneMensuel)}/mois`;
+                if (besoins.conjoint.epargneTransfert > 0) context += ` + ${formatMoney(besoins.conjoint.epargneTransfert)} transfert`;
+                context += `\n`;
+                context += formatDecisionDetailsEpargne(recoConjoint.epargne, besoins.conjoint);
+            }
+        }
+        
+        // ENFANTS
+        if (enfants && enfants.length > 0) {
+            const recoEnfants = recommandations.enfants || {};
+            
+            enfants.forEach((enfant, idx) => {
+                if (enfant.besoinVie > 0 || enfant.besoinMG > 0) {
+                    const recoEnfant = recoEnfants[`enfant${idx}`] || {};
+                    
+                    context += `\n═══════════════════════════════════════\n`;
+                    context += `BESOINS ET DÉCISIONS - ${enfant.prenom.toUpperCase()} (enfant)\n`;
+                    context += `═══════════════════════════════════════\n`;
+                    
+                    if (enfant.besoinVie > 0) {
+                        context += `\n🛡️ ASSURANCE VIE:\n`;
+                        context += `   Besoin identifié: ${formatMoney(enfant.besoinVie)}\n`;
+                        context += formatDecisionDetails('vie', recoEnfant.vie, enfant.besoinVie);
+                    }
+                    
+                    if (enfant.besoinMG > 0) {
+                        context += `\n🏥 MALADIE GRAVE:\n`;
+                        context += `   Besoin identifié: ${formatMoney(enfant.besoinMG)}\n`;
+                        context += formatDecisionDetails('maladie', recoEnfant.maladie, enfant.besoinMG);
+                    }
+                }
+            });
+        }
+        
+        return context;
+    }
+    
+    function formatDecisionDetails(type, reco, besoin) {
+        if (!reco || !reco.decision || reco.decision === '' || reco.decision === 'N/A') {
+            return `   Décision: Non applicable ou non discuté\n`;
+        }
+        
+        let text = '';
+        const suffix = (type === 'invalidite' || type === 'pret') ? '/mois' : '';
+        
+        if (reco.decision === "J'accepte") {
+            text += `   ✅ ACCEPTÉ\n`;
+            text += `   → Montant souscrit: ~${formatMoney(roundAmount(besoin))}${suffix}\n`;
+            if (reco.compagnie) text += `   → Compagnie: ${reco.compagnie}\n`;
+        } else if (reco.decision === 'Je refuse') {
+            if (reco.raison === 'pas_interesse') {
+                text += `   ❌ REFUSÉ - Pas intéressé pour le moment\n`;
+                text += `   → Le client comprend les risques de ne pas souscrire cette protection\n`;
+            } else if (reco.raison === 'montant_superieur') {
+                const montantChoisi = reco.montant || besoin;
+                text += `   ✅ MONTANT SUPÉRIEUR CHOISI\n`;
+                text += `   → Montant souscrit: ${formatMoney(roundAmount(montantChoisi))}${suffix} (supérieur à la recommandation)\n`;
+                if (reco.compagnie) text += `   → Compagnie: ${reco.compagnie}\n`;
+            } else if (reco.raison === 'montant_inferieur') {
+                const montantChoisi = reco.montant || 0;
+                text += `   ⚠️ MONTANT INFÉRIEUR CHOISI\n`;
+                text += `   → Montant souscrit: ${formatMoney(roundAmount(montantChoisi))}${suffix}\n`;
+                text += `   → Écart avec la recommandation: ${formatMoney(besoin - montantChoisi)}${suffix} non couverts\n`;
+                if (reco.compagnie) text += `   → Compagnie: ${reco.compagnie}\n`;
+                text += `   → Le client comprend que cette couverture partielle ne répond pas entièrement au besoin identifié\n`;
+            }
+        } else if (reco.decision === 'À faire') {
+            text += `   ⏳ À FAIRE - Reporter à plus tard\n`;
+            if (reco.delai === 'prochaine_rencontre') {
+                text += `   → Sera discuté lors de la prochaine rencontre\n`;
+            } else if (reco.delai === 'quelques_mois') {
+                text += `   → Sera réévalué dans quelques mois\n`;
+            } else if (reco.delai === 'budget_permet') {
+                text += `   → Sera souscrit quand le budget le permettra\n`;
+            }
+        }
+        
+        return text;
+    }
+    
+    function formatDecisionDetailsEpargne(reco, besoins) {
+        if (!reco || !reco.decision || reco.decision === '' || reco.decision === 'N/A') {
+            return `   Décision: Non applicable ou non discuté\n`;
+        }
+        
+        let text = '';
+        
+        if (reco.decision === "J'accepte") {
+            text += `   ✅ ACCEPTÉ\n`;
+            text += `   → Épargne mensuelle: ${formatMoney(besoins.epargneMensuel)}/mois\n`;
+            if (besoins.epargneTransfert > 0) {
+                text += `   → Transfert initial: ${formatMoney(besoins.epargneTransfert)}\n`;
+            }
+            if (reco.compagnie) text += `   → Institution: ${reco.compagnie}\n`;
+        } else if (reco.decision === 'Je refuse') {
+            if (reco.raison === 'pas_interesse') {
+                text += `   ❌ REFUSÉ - Pas prêt à épargner pour le moment\n`;
+            } else if (reco.raison === 'montant_different') {
+                text += `   ⚠️ MONTANT DIFFÉRENT CHOISI\n`;
+                if (reco.montant_mensuel) text += `   → Épargne mensuelle choisie: ${formatMoney(reco.montant_mensuel)}/mois\n`;
+                if (reco.montant_transfert) text += `   → Transfert choisi: ${formatMoney(reco.montant_transfert)}\n`;
+                if (reco.compagnie) text += `   → Institution: ${reco.compagnie}\n`;
+            }
+        } else if (reco.decision === 'À faire') {
+            text += `   ⏳ À FAIRE - Reporter à plus tard\n`;
+            if (reco.delai) {
+                const delais = {
+                    'prochaine_rencontre': 'lors de la prochaine rencontre',
+                    'quelques_mois': 'dans quelques mois',
+                    'budget_permet': 'quand le budget le permettra'
+                };
+                text += `   → ${delais[reco.delai] || 'ultérieurement'}\n`;
+            }
+        }
+        
+        return text;
+    }
+    
+    // ==========================================
+    // PROMPT POUR CLAUDE
+    // ==========================================
+    function buildLettrePrompt(data) {
+        const { conseiller, client, conjoint, hasConjoint, enfants } = data;
+        const contextSummary = buildContextSummary(data);
+        
+        let personnes = client.prenom;
+        if (hasConjoint && conjoint) personnes += ` et ${conjoint.prenom}`;
+        
+        const enfantsAvecBesoins = enfants.filter(e => e.besoinVie > 0 || e.besoinMG > 0);
+        const enfantsNames = enfantsAvecBesoins.map(e => e.prenom).join(', ');
+        
+        const salutation = hasConjoint
+            ? `Bonjour ${client.prenom} et ${conjoint.prenom},`
+            : `Bonjour ${client.prenom},`;
+
+        return `Tu es un conseiller en sécurité financière au Québec. Rédige une lettre explicative AMF professionnelle et complète.
+
+═══════════════════════════════════════════════════════════════
+RÈGLES DE RÉDACTION IMPORTANTES
+═══════════════════════════════════════════════════════════════
+1. Prose fluide et naturelle - AUCUNE liste à puces
+2. Pas de markdown (##, ###, **, -)
+3. Ton professionnel mais chaleureux et humain
+4. Organise par personne (d'abord ${client.prenom}${hasConjoint ? `, puis ${conjoint.prenom}` : ''}${enfantsNames ? `, puis les enfants (${enfantsNames})` : ''})
+5. TOUJOURS mentionner les MONTANTS SOUSCRITS (arrondis) avec la compagnie choisie
+6. Pour les refus: expliquer brièvement pourquoi le client a fait ce choix
+7. Pour les "À faire": mentionner quand ce sera réévalué
+8. Maximum 600 mots pour le corps de la lettre
+9. Utilise le tutoiement si le client est jeune (<35 ans), sinon vouvoiement
+
+═══════════════════════════════════════════════════════════════
+DONNÉES COMPLÈTES DU DOSSIER
+═══════════════════════════════════════════════════════════════
+${contextSummary}
+
+═══════════════════════════════════════════════════════════════
+STRUCTURE DE LA LETTRE
+═══════════════════════════════════════════════════════════════
+
+Lettre explicative – Recommandation d'un produit d'assurance
+
+${salutation}
+
+[PARAGRAPHE 1 - Introduction]
+Suite à notre rencontre du [date approximative], je souhaitais vous faire un résumé des recommandations que nous avons discutées ensemble concernant votre protection en assurance de personnes.
+
+[PARAGRAPHE 2 - Contexte familial]
+Brève description de leur situation familiale et financière qui montre que tu comprends leur réalité (responsabilités, obligations, etc.)
+
+[PARAGRAPHES SUIVANTS - Décisions par personne]
+Pour ${client.prenom}:
+- Détaille chaque protection ACCEPTÉE avec le MONTANT SOUSCRIT et la COMPAGNIE
+- Mentionne les protections REFUSÉES et explique brièvement le contexte (budget, priorités, etc.)
+- Indique les protections À FAIRE et quand elles seront réévaluées
+
+${hasConjoint ? `Pour ${conjoint.prenom}:
+- Même structure que pour ${client.prenom}` : ''}
+
+${enfantsNames ? `Pour les enfants (${enfantsNames}):
+- Mentionne les protections souscrites ou reportées pour chaque enfant` : ''}
+
+[PARAGRAPHE FINAL - Rappels déontologiques]
+Rappelle que ces recommandations sont faites dans leur intérêt, qu'ils sont libres d'accepter ou refuser, et que tu restes disponible pour les accompagner.
+
+Sincèrement,
+
+${conseiller.firstName || '[Prénom]'} ${conseiller.lastName || '[Nom]'}
+${conseiller.titre || 'Conseiller en sécurité financière'}
+No de certificat AMF : ${conseiller.amf || '[À compléter]'}
+Cabinet : Services Financiers Finox inc.
+Date : ${data.date}
+
+═══════════════════════════════════════════════════════════════
+RÈGLES ABSOLUES (NE PAS DÉROGER):
+1. La salutation DOIT être EXACTEMENT: "${salutation}" — NE PAS utiliser "Madame, Monsieur" ou toute autre forme
+2. La signature DOIT être EXACTEMENT:
+   ${conseiller.firstName || '[Prénom]'} ${conseiller.lastName || '[Nom]'}
+   ${conseiller.titre || 'Conseiller en sécurité financière'}
+   No de certificat AMF : ${conseiller.amf || '[À compléter]'}
+   Cabinet : Services Financiers Finox inc.
+   Date : ${data.date}
+3. Génère UNIQUEMENT la lettre finale, sans les instructions entre crochets
+4. Assure-toi de mentionner TOUS les montants et compagnies pour les protections acceptées
+5. La lettre doit être un reflet fidèle et complet du volet Recommandations
+═══════════════════════════════════════════════════════════════`;
+    }
+    
+    const SYSTEM_PROMPT = `Tu es un conseiller en sécurité financière chevronné au Québec avec 15 ans d'expérience.
+
+Tu rédiges des lettres explicatives conformes aux exigences de l'AMF (Autorité des marchés financiers).
+
+RÈGLES CRITIQUES:
+- La SALUTATION et la SIGNATURE te sont fournies dans le prompt — tu DOIS les reproduire EXACTEMENT telles quelles, mot pour mot. NE JAMAIS remplacer par "Madame, Monsieur" ou inventer un nom/numéro AMF.
+- La signature inclut le nom du conseiller, son titre, son numéro AMF et le cabinet — copie-les EXACTEMENT.
+
+Ton style:
+- Prose narrative fluide et professionnelle, jamais de listes à puces
+- Tu personnalises chaque lettre selon la situation du client
+- Tu montres que tu comprends leur réalité familiale et financière
+- Tu expliques le "pourquoi" des décisions, pas juste le "quoi"
+- Tu utilises des transitions naturelles entre les sujets
+- Tu mentionnes toujours les montants et les compagnies d'assurance
+
+Tu évites:
+- Le jargon technique excessif
+- Les formulations robotiques ou génériques
+- Les listes à puces dans la lettre
+- Le markdown (##, **, etc.)
+- Les phrases trop longues ou complexes`;
+    
+    // ==========================================
+    // GÉNÉRATION DE LA LETTRE
+    // ==========================================
+    let isEditMode = false;
+    
+    window.toggleEditMode = function() {
+        const content = document.getElementById('lettreContent');
+        const btn = document.getElementById('btnEditLettre');
+        const btnText = document.getElementById('btnEditLettreText');
+        const hint = document.getElementById('lettreEditHint');
+        
+        if (!content || !content.textContent.trim()) {
+            FINOX.showNotification('Aucune lettre à éditer', 'warning');
+            return;
+        }
+        
+        isEditMode = !isEditMode;
+        
+        if (isEditMode) {
+            content.setAttribute('contenteditable', 'true');
+            content.classList.add('editing');
+            btn.classList.add('editing');
+            btnText.textContent = 'Terminer';
+            hint.classList.add('visible');
+            content.focus();
+        } else {
+            content.setAttribute('contenteditable', 'false');
+            content.classList.remove('editing');
+            btn.classList.remove('editing');
+            btnText.textContent = 'Éditer';
+            hint.classList.remove('visible');
+            FINOX.showNotification('Modifications enregistrées. N\'oubliez pas de sauvegarder!', 'info');
+        }
+    };
+    
+    window.generateLettreExplicative = async function() {
+        const data = await collectAllDataForLettre();
+        const btn = document.getElementById('btnGenerateLettre');
+        
+        btn.disabled = true;
+        btn.classList.add('spinning');
+        btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Génération en cours...';
+        
+        try {
+            const prompt = buildLettrePrompt(data);
+            console.log('📝 Conseiller data:', JSON.stringify(data.conseiller));
+            console.log('📝 Prompt lettre:', prompt.substring(0, 500) + '...');
+            
+            const response = await fetch(CLAUDE_WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, systemPrompt: SYSTEM_PROMPT })
+            });
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            if (result.error) throw new Error(result.error.message || JSON.stringify(result.error));
+            
+            let lettreText = result.content?.[0]?.text;
+            if (!lettreText) throw new Error('Réponse vide');
+            
+            // Nettoyer le markdown résiduel
+            lettreText = lettreText
+                .replace(/^##\s+/gm, '')
+                .replace(/^###\s+/gm, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/^[-•]\s+/gm, '')
+                .replace(/^\*\s+/gm, '');
+            
+            displayLettre(lettreText);
+            await saveLettreToHistory(lettreText, generateAutoTitle());
+            FINOX.showNotification('Lettre générée et sauvegardée!', 'success');
+            
+        } catch (error) {
+            console.error('Erreur génération lettre:', error);
+            await showLettreFallback(data);
+            FINOX.showNotification('Erreur API - lettre de base générée', 'warning');
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('spinning');
+            btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg> Générer avec IA';
+        }
+    };
+    
+    function displayLettre(text, date = null, titre = null) {
+        document.getElementById('lettrePlaceholder').style.display = 'none';
+        const output = document.getElementById('lettreOutput');
+        output.classList.add('visible');
+        
+        document.getElementById('lettreContent').innerHTML = text
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p>')
+            .replace(/$/, '</p>');
+        
+        if (date) {
+            const indicator = document.getElementById('lettreSavedIndicator');
+            indicator.innerHTML = `✅ ${titre || 'Lettre'} - Sauvegardée le ${formatDate(date)}`;
+            indicator.classList.add('visible');
+        }
+    }
+    
+    async function showLettreFallback(data) {
+        const { conseiller, client, conjoint, hasConjoint, recommandations } = data;
+        const salutation = hasConjoint
+            ? `Bonjour ${client.prenom} et ${conjoint.prenom},`
+            : `Bonjour ${client.prenom},`;
+        
+        const lettreText = `Lettre explicative – Recommandation d'un produit d'assurance
+
+${salutation}
+
+À la suite de notre rencontre, je souhaite vous résumer les recommandations qui vous ont été faites concernant votre protection en assurance de personnes.
+
+Votre situation personnelle, vos objectifs et les informations fournies m'ont permis de bien comprendre vos besoins. Ensemble, nous avons analysé plusieurs aspects de votre situation, dont vos responsabilités familiales, vos obligations financières, votre budget, ainsi que vos priorités à court et long terme.
+
+Les recommandations spécifiques ont été discutées lors de notre rencontre et sont basées sur l'analyse de vos besoins financiers.
+
+Je vous rappelle que cette recommandation est faite en toute indépendance et dans votre intérêt. Conformément à mes obligations déontologiques, vous êtes libre d'accepter ou de refuser ces recommandations.
+
+Je demeure à votre entière disposition pour vous accompagner dans cette démarche.
+
+Sincèrement,
+
+${conseiller.firstName || '[Prénom]'} ${conseiller.lastName || '[Nom]'}
+${conseiller.titre || 'Conseiller en sécurité financière'}
+No de certificat AMF : ${conseiller.amf || '[À compléter]'}
+Cabinet : Services Financiers Finox inc.
+Date : ${data.date}`;
+        
+        displayLettre(lettreText);
+    }
+    
+    // ==========================================
+    // SAUVEGARDE AVEC HISTORIQUE
+    // ==========================================
+    async function saveLettreToHistory(lettreText, titre) {
+        try {
+            const currentAbfData = client.abf_data || {};
+            
+            if (!currentAbfData.lettres_historique) {
+                currentAbfData.lettres_historique = [];
+            }
+            
+            const nouvelleLettre = {
+                id: `lettre_${Date.now()}`,
+                titre: titre || generateAutoTitle(),
+                contenu: lettreText,
+                created_at: new Date().toISOString(),
+                conseiller: JSON.parse(sessionStorage.getItem('finox_conseiller') || localStorage.getItem('finox_conseiller') || '{}').firstName || 'Conseiller'
+            };
+            
+            currentAbfData.lettres_historique.unshift(nouvelleLettre);
+            currentAbfData.lettre_explicative = {
+                contenu: lettreText,
+                generated_at: nouvelleLettre.created_at
+            };
+            
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: currentAbfData, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            FINOX.updateClientDataCache({ abf_data: currentAbfData });
+            abfData = currentAbfData;
+            lettresHistorique = currentAbfData.lettres_historique;
+            currentLettreId = nouvelleLettre.id;
+            
+            renderHistorique();
+            
+            return nouvelleLettre.id;
+        } catch (err) {
+            console.error('Erreur sauvegarde lettre:', err);
+            FINOX.showNotification('Erreur sauvegarde: ' + err.message, 'error');
+        }
+    }
+    
+    window.saveCurrentLettre = async function() {
+        const content = document.getElementById('lettreContent');
+        if (!content || !content.textContent.trim()) {
+            FINOX.showNotification('Aucune lettre à sauvegarder', 'warning');
+            return;
+        }
+        
+        const titre = prompt('Titre pour cette lettre:', generateAutoTitle());
+        if (titre === null) return;
+        
+        await saveLettreToHistory(content.innerText, titre || generateAutoTitle());
+        FINOX.showNotification('Lettre sauvegardée!', 'success');
+    };
+    
+    // ==========================================
+    // AFFICHAGE HISTORIQUE
+    // ==========================================
+    function renderHistorique() {
+        const container = document.getElementById('lettreHistoriqueList');
+        const countEl = document.getElementById('lettreCount');
+        
+        countEl.textContent = lettresHistorique.length;
+        
+        if (!lettresHistorique || lettresHistorique.length === 0) {
+            container.innerHTML = `
+                <div class="lettre-empty-message">
+                    📝 Aucune lettre dans l'historique.<br>
+                    Générez votre première lettre!
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = lettresHistorique.map((lettre, idx) => `
+            <div class="lettre-historique-item ${lettre.id === currentLettreId ? 'active' : ''}" 
+                 data-id="${lettre.id}"
+                 onclick="loadLettreFromHistory('${lettre.id}')">
+                <div class="lettre-historique-item-title">
+                    ${idx === 0 ? '⭐ ' : ''}${lettre.titre || 'Sans titre'}
+                </div>
+                <div class="lettre-historique-item-date">
+                    ${formatDate(lettre.created_at)} ${lettre.conseiller ? `• ${lettre.conseiller}` : ''}
+                </div>
+                <div class="lettre-historique-item-actions">
+                    <button onclick="event.stopPropagation(); editLettreTitre('${lettre.id}')" title="Modifier">✏️</button>
+                    <button onclick="event.stopPropagation(); deleteLettreFromHistory('${lettre.id}')" title="Supprimer">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    window.loadLettreFromHistory = function(lettreId) {
+        const lettre = lettresHistorique.find(l => l.id === lettreId);
+        if (!lettre) return;
+        
+        currentLettreId = lettreId;
+        displayLettre(lettre.contenu, lettre.created_at, lettre.titre);
+        
+        document.querySelectorAll('.lettre-historique-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.id === lettreId);
+        });
+    };
+    
+    window.editLettreTitre = async function(lettreId) {
+        const lettre = lettresHistorique.find(l => l.id === lettreId);
+        if (!lettre) return;
+        
+        const nouveauTitre = prompt('Nouveau titre:', lettre.titre);
+        if (!nouveauTitre || nouveauTitre === lettre.titre) return;
+        
+        lettre.titre = nouveauTitre;
+        abfData.lettres_historique = lettresHistorique;
+        
+        await FINOX.supabase
+            .from('clients')
+            .update({ abf_data: abfData })
+            .eq('id', FINOX.CLIENT_ID);
+        
+        renderHistorique();
+        FINOX.showNotification('Titre modifié!', 'success');
+    };
+    
+    window.deleteLettreFromHistory = async function(lettreId) {
+        if (!(await FINOX.confirm('Supprimer cette lettre?'))) return;
+        
+        lettresHistorique = lettresHistorique.filter(l => l.id !== lettreId);
+        abfData.lettres_historique = lettresHistorique;
+        
+        await FINOX.supabase
+            .from('clients')
+            .update({ abf_data: abfData })
+            .eq('id', FINOX.CLIENT_ID);
+        
+        if (currentLettreId === lettreId) {
+            document.getElementById('lettreContent').innerHTML = '';
+            document.getElementById('lettreSavedIndicator').classList.remove('visible');
+            currentLettreId = null;
+        }
+        
+        renderHistorique();
+        FINOX.showNotification('Lettre supprimée', 'success');
+    };
+    
+    // ==========================================
+    // AUTRES ACTIONS
+    // ==========================================
+    window.copyLettreToClipboard = function() {
+        const content = document.getElementById('lettreContent');
+        if (!content || !content.textContent.trim()) {
+            FINOX.showNotification('Aucune lettre à copier', 'warning');
+            return;
+        }
+        
+        navigator.clipboard.writeText(content.innerText).then(() => {
+            FINOX.showNotification('Lettre copiée!', 'success');
+        });
+    };
+    
+    window.printLettre = function() {
+        const content = document.getElementById('lettreContent');
+        if (!content || !content.textContent.trim()) {
+            FINOX.showNotification('Aucune lettre à imprimer', 'warning');
+            return;
+        }
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Lettre Explicative</title>
+                <style>
+                    body { font-family: Georgia, serif; font-size: 14px; line-height: 1.8; padding: 40px; max-width: 800px; margin: 0 auto; }
+                    p { margin-bottom: 16px; text-align: justify; }
+                </style>
+            </head>
+            <body>${content.innerHTML}</body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    };
+    
+    window.saveModuleData = async function() {
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfData, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: abfData });
+            return { success: true };
+        } catch (err) {
+            console.error('❌ Erreur sauvegarde lettre:', err);
+            return { success: false, error: err.message };
+        }
+    };
+    
+    // ==========================================
+    // CHARGEMENT INITIAL
+    // ==========================================
+    client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    abfData = client.abf_data || {};
+    lettresHistorique = abfData.lettres_historique || [];
+    
+    // Afficher l'historique
+    renderHistorique();
+    
+    // Charger la dernière lettre si existe
+    if (lettresHistorique.length > 0) {
+        currentLettreId = lettresHistorique[0].id;
+        displayLettre(lettresHistorique[0].contenu, lettresHistorique[0].created_at, lettresHistorique[0].titre);
+    }
+    
+    console.log('✅ Module Lettre Explicative v1.0 chargé');
+})();
+</script>

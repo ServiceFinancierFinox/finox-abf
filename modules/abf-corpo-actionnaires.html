@@ -1,0 +1,229 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - ACTIONNAIRES
+     Gestion des actionnaires et parts
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.act-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.act-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.act-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.act-add-btn { padding: 10px 20px; background: rgba(156,39,176,0.2); border: 1px solid rgba(156,39,176,0.3); border-radius: 10px; color: #CE93D8; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.act-add-btn:hover { background: rgba(156,39,176,0.3); }
+
+.act-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+@media (max-width: 700px) { .act-summary { grid-template-columns: 1fr; } }
+.act-stat { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; text-align: center; }
+.act-stat-value { font-size: 24px; font-weight: 700; color: var(--gold); }
+.act-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.act-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+.act-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+.act-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+.act-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.act-person { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px; position: relative; }
+.act-person-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.act-person-role { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.act-person-parts { font-size: 20px; font-weight: 700; color: var(--gold); margin-top: 10px; }
+.act-person-parts-label { font-size: 11px; color: var(--text-muted); }
+.act-person-details { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.act-person-detail { font-size: 11px; padding: 2px 8px; background: rgba(255,255,255,0.05); border-radius: 8px; color: var(--text-muted); }
+.act-person-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+.act-person-btn { width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.act-person-edit { background: rgba(33,150,243,0.15); color: #64B5F6; }
+.act-person-del { background: rgba(244,67,54,0.15); color: #ef9a9a; }
+
+/* MODAL */
+.act-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.act-modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; width: 480px; max-width: 90vw; }
+.act-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; }
+.act-form-group { margin-bottom: 14px; }
+.act-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.act-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; }
+.act-form-input:focus { border-color: var(--gold); }
+.act-form-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; box-sizing: border-box; }
+.act-form-select option { background: var(--bg-card); color: var(--text-primary); }
+.act-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.act-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.act-modal-cancel { padding: 10px 20px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.act-modal-save { padding: 10px 20px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.act-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.act-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.act-save-btn:hover { filter: brightness(1.1); }
+</style>
+
+<!-- HEADER -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+    <button class="act-add-btn" onclick="openActModal()">+ Ajouter un actionnaire</button>
+</div>
+
+<!-- SOMMAIRE -->
+<div class="act-summary">
+    <div class="act-stat"><div class="act-stat-value" id="actTotalPersonnes">0</div><div class="act-stat-label">Actionnaires</div></div>
+    <div class="act-stat"><div class="act-stat-value" id="actTotalParts">0%</div><div class="act-stat-label">Parts attribuées</div></div>
+    <div class="act-stat"><div class="act-stat-value" id="actPartsRestantes">100%</div><div class="act-stat-label">Parts restantes</div></div>
+</div>
+
+<!-- GRILLE -->
+<div class="act-card">
+    <div id="actContainer"></div>
+</div>
+
+<!-- MODAL -->
+<div id="actModalOverlay" class="act-modal-overlay" style="display:none;">
+    <div class="act-modal">
+        <div class="act-modal-title" id="actModalTitle">Ajouter un actionnaire</div>
+        <input type="hidden" id="actEditIndex" value="-1">
+        <div class="act-form-row">
+            <div class="act-form-group">
+                <label class="act-form-label">Prénom</label>
+                <input type="text" class="act-form-input" id="actPrenom" placeholder="Prénom">
+            </div>
+            <div class="act-form-group">
+                <label class="act-form-label">Nom</label>
+                <input type="text" class="act-form-input" id="actNom" placeholder="Nom">
+            </div>
+        </div>
+        <div class="act-form-row">
+            <div class="act-form-group">
+                <label class="act-form-label">Date de naissance</label>
+                <input type="date" class="act-form-input" id="actDDN">
+            </div>
+            <div class="act-form-group">
+                <label class="act-form-label">Sexe</label>
+                <select class="act-form-select" id="actSexe">
+                    <option value="">--</option><option value="M">Masculin</option><option value="F">Féminin</option>
+                </select>
+            </div>
+        </div>
+        <div class="act-form-row">
+            <div class="act-form-group">
+                <label class="act-form-label">Fumeur</label>
+                <select class="act-form-select" id="actFumeur">
+                    <option value="">--</option><option value="non">Non-fumeur</option><option value="oui">Fumeur</option>
+                </select>
+            </div>
+            <div class="act-form-group">
+                <label class="act-form-label">% de parts</label>
+                <input type="number" class="act-form-input" id="actParts" placeholder="Ex: 50" min="0" max="100" step="0.1">
+            </div>
+        </div>
+        <div class="act-form-group">
+            <label class="act-form-label">Type d'actions</label>
+            <input type="text" class="act-form-input" id="actTypeActions" placeholder="Ex: Actions ordinaires, privilégiées...">
+        </div>
+        <div class="act-modal-actions">
+            <button class="act-modal-cancel" onclick="closeActModal()">Annuler</button>
+            <button class="act-modal-save" onclick="saveActionnaire()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- SAUVEGARDER -->
+<div class="act-save-bar">
+    <button class="act-save-btn" onclick="saveActionnaires()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('📊 Module ABF Corpo - Actionnaires');
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    let actionnaires = client.abf_data?.corpo?.actionnaires || [];
+
+    function updateStats() {
+        const total = actionnaires.reduce((sum, a) => sum + (parseFloat(a.parts_pct) || 0), 0);
+        document.getElementById('actTotalPersonnes').textContent = actionnaires.length;
+        document.getElementById('actTotalParts').textContent = total.toFixed(1) + '%';
+        document.getElementById('actPartsRestantes').textContent = (100 - total).toFixed(1) + '%';
+        const restEl = document.getElementById('actPartsRestantes');
+        restEl.style.color = total > 100 ? '#ef9a9a' : total === 100 ? '#81C784' : 'var(--gold)';
+    }
+
+    function render() {
+        const container = document.getElementById('actContainer');
+        if (!container) return;
+        if (actionnaires.length === 0) {
+            container.innerHTML = `<div class="act-empty"><div class="act-empty-icon">📊</div>Aucun actionnaire ajouté.<br>Cliquez sur "Ajouter un actionnaire" pour commencer.</div>`;
+        } else {
+            container.innerHTML = `<div class="act-grid">${actionnaires.map((a, i) => `
+                <div class="act-person">
+                    <div class="act-person-actions">
+                        <button class="act-person-btn act-person-edit" onclick="editAct(${i})">✏️</button>
+                        <button class="act-person-btn act-person-del" onclick="deleteAct(${i})">🗑️</button>
+                    </div>
+                    <div class="act-person-name">${a.prenom || ''} ${a.nom || ''}</div>
+                    <div class="act-person-role">${a.type_actions || 'Actions ordinaires'}</div>
+                    <div class="act-person-parts">${a.parts_pct || 0}%</div>
+                    <div class="act-person-parts-label">des parts</div>
+                    <div class="act-person-details">
+                        ${a.ddn ? `<span class="act-person-detail">Né(e) ${a.ddn}</span>` : ''}
+                        ${a.sexe ? `<span class="act-person-detail">${a.sexe === 'M' ? 'Homme' : 'Femme'}</span>` : ''}
+                        ${a.fumeur ? `<span class="act-person-detail">${a.fumeur === 'oui' ? 'Fumeur' : 'Non-fumeur'}</span>` : ''}
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+        updateStats();
+    }
+    render();
+
+    window.openActModal = function(idx) {
+        document.getElementById('actEditIndex').value = idx !== undefined ? idx : -1;
+        document.getElementById('actModalTitle').textContent = idx !== undefined ? 'Modifier l\'actionnaire' : 'Ajouter un actionnaire';
+        const a = idx !== undefined ? actionnaires[idx] : {};
+        document.getElementById('actPrenom').value = a.prenom || '';
+        document.getElementById('actNom').value = a.nom || '';
+        document.getElementById('actDDN').value = a.ddn || '';
+        document.getElementById('actSexe').value = a.sexe || '';
+        document.getElementById('actFumeur').value = a.fumeur || '';
+        document.getElementById('actParts').value = a.parts_pct || '';
+        document.getElementById('actTypeActions').value = a.type_actions || '';
+        document.getElementById('actModalOverlay').style.display = 'flex';
+    };
+    window.closeActModal = function() { document.getElementById('actModalOverlay').style.display = 'none'; };
+    window.editAct = function(i) { openActModal(i); };
+    window.deleteAct = function(i) { actionnaires.splice(i, 1); render(); };
+
+    window.saveActionnaire = function() {
+        const prenom = document.getElementById('actPrenom').value.trim();
+        const nom = document.getElementById('actNom').value.trim();
+        if (!prenom && !nom) { FINOX.showNotification('Le nom est requis', 'error'); return; }
+        const entry = {
+            prenom, nom,
+            ddn: document.getElementById('actDDN').value || '',
+            sexe: document.getElementById('actSexe').value,
+            fumeur: document.getElementById('actFumeur').value,
+            parts_pct: parseFloat(document.getElementById('actParts').value) || 0,
+            type_actions: document.getElementById('actTypeActions').value.trim()
+        };
+        const idx = parseInt(document.getElementById('actEditIndex').value);
+        if (idx >= 0) { actionnaires[idx] = entry; } else { actionnaires.push(entry); }
+        render(); closeActModal();
+    };
+
+    window.saveActionnaires = async function() {
+        const btn = document.querySelector('.act-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, actionnaires }, section_corpo_actionnaires_completed: actionnaires.length > 0 };
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Actionnaires sauvegardés', 'success');
+        } catch (err) { FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    };
+
+    document.getElementById('actModalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeActModal(); });
+    console.log('✅ Module Actionnaires chargé');
+})();
+</script>

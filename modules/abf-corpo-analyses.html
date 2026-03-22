@@ -1,0 +1,725 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - ANALYSES (Vie + Maladies Graves)
+     Formulaires détaillés par objectif avec calculs automatiques
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.ana-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.ana-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.ana-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* TABS */
+.ana-tabs { display: flex; gap: 0; margin-bottom: 24px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
+.ana-tab { flex: 1; padding: 14px 20px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: transparent; color: var(--text-muted); }
+.ana-tab:hover { background: rgba(255,255,255,0.03); }
+.ana-tab.active-vie { background: rgba(33,150,243,0.12); color: #64B5F6; box-shadow: inset 0 -3px 0 #64B5F6; }
+.ana-tab.active-mg { background: rgba(233,30,99,0.12); color: #F48FB1; box-shadow: inset 0 -3px 0 #F48FB1; }
+.ana-tab-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; margin-left: 6px; font-weight: 700; }
+
+/* DASHBOARD */
+.ana-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 800px) { .ana-dashboard { grid-template-columns: repeat(2, 1fr); } }
+.ana-dash-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; text-align: center; }
+.ana-dash-value { font-size: 22px; font-weight: 700; }
+.ana-dash-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ANALYSE PANEL */
+.ana-panel { display: none; }
+.ana-panel.active { display: block; }
+
+/* PERSON SELECTOR */
+.ana-person-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; }
+.ana-person-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.ana-person-select { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; }
+.ana-person-select option { background: var(--bg-card); color: var(--text-primary); }
+.ana-person-add { padding: 10px 16px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.15); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.ana-person-add:hover { border-color: var(--gold); color: var(--gold); }
+
+/* LIST OF ANALYSES */
+.ana-list-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.ana-list-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; cursor: pointer; transition: background 0.15s; }
+.ana-list-header:hover { background: rgba(255,255,255,0.02); }
+.ana-list-person { font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+.ana-list-total { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+.ana-list-actions { display: flex; gap: 6px; }
+.ana-list-btn { width: 28px; height: 28px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.ana-list-del { background: rgba(244,67,54,0.15); color: #ef9a9a; }
+.ana-list-toggle { font-size: 12px; color: var(--text-muted); transition: transform 0.2s; }
+.ana-list-toggle.open { transform: rotate(180deg); }
+
+/* FORM SECTIONS */
+.ana-form-body { display: none; padding: 0 20px 20px; }
+.ana-form-body.open { display: block; }
+.ana-section-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 12px; border-radius: 8px; }
+.ana-section-bar-vie { background: rgba(33,150,243,0.08); border-left: 3px solid #64B5F6; }
+.ana-section-bar-mg { background: rgba(233,30,99,0.08); border-left: 3px solid #F48FB1; }
+.ana-section-num { font-size: 12px; font-weight: 700; min-width: 20px; }
+.ana-section-text { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.ana-section-total { margin-left: auto; font-size: 13px; font-weight: 700; }
+
+.ana-fields { padding: 0 0 12px 33px; }
+.ana-field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.ana-field-label { font-size: 12px; color: var(--text-muted); flex: 1; min-width: 0; }
+.ana-field-input { width: 160px; padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); font-size: 13px; outline: none; text-align: right; box-sizing: border-box; }
+.ana-field-input:focus { border-color: var(--gold); }
+.ana-field-sign { font-size: 12px; color: var(--text-muted); width: 14px; text-align: center; }
+.ana-field-sub-total { display: flex; justify-content: flex-end; padding: 6px 0; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); gap: 8px; }
+.ana-field-sub-value { min-width: 160px; text-align: right; color: var(--text-primary); }
+.ana-note-small { font-size: 10px; color: var(--text-muted); font-style: italic; margin: -4px 0 10px 0; opacity: 0.7; }
+
+/* CALCUL RECAP */
+.ana-calcul { background: rgba(232,180,77,0.06); border: 1px solid rgba(232,180,77,0.15); border-radius: 10px; padding: 16px 20px; margin-top: 12px; }
+.ana-calcul-title { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.ana-calcul-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+.ana-calcul-label { color: var(--text-muted); }
+.ana-calcul-value { font-weight: 600; color: var(--text-primary); min-width: 120px; text-align: right; }
+.ana-calcul-sep { border-top: 1px solid rgba(232,180,77,0.2); margin: 4px 0; }
+.ana-calcul-final { font-size: 15px; font-weight: 700; padding: 10px 0 4px; }
+.ana-calcul-final .ana-calcul-label { color: var(--gold); }
+
+/* RECOMMANDATION */
+.ana-reco-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 20px; }
+.ana-reco-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.ana-reco-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; resize: vertical; }
+.ana-reco-input:focus { border-color: var(--gold); }
+
+/* EMPTY STATE */
+.ana-empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+.ana-empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+/* SAVE BAR */
+.ana-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.ana-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.ana-save-btn:hover { filter: brightness(1.1); }
+
+/* ADD ANALYSIS BTN */
+.ana-add-big { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; margin-top: 16px; background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.08); border-radius: 12px; color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.ana-add-big:hover { border-color: var(--gold); color: var(--gold); background: rgba(232,180,77,0.04); }
+</style>
+
+<!-- HEADER -->
+
+
+<!-- DASHBOARD -->
+<div class="ana-dashboard">
+    <div class="ana-dash-card"><div class="ana-dash-value" id="anaDashVie" style="color:#64B5F6;">0 $</div><div class="ana-dash-label">Besoin Vie estimé</div></div>
+    <div class="ana-dash-card"><div class="ana-dash-value" id="anaDashMG" style="color:#F48FB1;">0 $</div><div class="ana-dash-label">Besoin MG estimé</div></div>
+    <div class="ana-dash-card"><div class="ana-dash-value" id="anaDashCouv" style="color:#81C784;">0 $</div><div class="ana-dash-label">Couverture en vigueur</div></div>
+    <div class="ana-dash-card"><div class="ana-dash-value" id="anaDashEcart" style="color:#ef9a9a;">0 $</div><div class="ana-dash-label">Ecart à combler</div></div>
+</div>
+
+<!-- TABS VIE / MG -->
+<div class="ana-tabs">
+    <button class="ana-tab active-vie" id="anaTabVie" onclick="switchAnaTab('vie')">🛡️ Assurance Vie <span class="ana-tab-badge" style="background:rgba(33,150,243,0.2);color:#64B5F6;" id="anaTabVieCount">0</span></button>
+    <button class="ana-tab" id="anaTabMG" onclick="switchAnaTab('mg')">💊 Maladies Graves <span class="ana-tab-badge" style="background:rgba(233,30,99,0.2);color:#F48FB1;" id="anaTabMGCount">0</span></button>
+</div>
+
+<!-- PANEL VIE -->
+<div class="ana-panel active" id="anaPanelVie">
+    <div id="anaVieList"></div>
+    <div class="ana-add-big" onclick="addAnalyse('vie')">+ Ajouter une analyse Vie</div>
+</div>
+
+<!-- PANEL MG -->
+<div class="ana-panel" id="anaPanelMG">
+    <div id="anaMGList"></div>
+    <div class="ana-add-big" onclick="addAnalyse('mg')">+ Ajouter une analyse MG</div>
+</div>
+
+<!-- RECOMMANDATION -->
+<div class="ana-reco-card">
+    <div class="ana-reco-title">📝 Recommandation globale</div>
+    <textarea class="ana-reco-input" id="anaRecommandation" rows="4" placeholder="Recommandations pour combler les écarts identifiés, stratégie proposée..."></textarea>
+</div>
+
+<!-- SAUVEGARDER -->
+<div class="ana-save-bar">
+    <button class="ana-save-btn" onclick="saveAnalyses()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('📈 Module ABF Corpo - Analyses V2');
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    let analysesVie = client.abf_data?.corpo?.analyses_vie || [];
+    let analysesMG = client.abf_data?.corpo?.analyses_mg || [];
+
+    const recEl = document.getElementById('anaRecommandation');
+    if (recEl) recEl.value = client.abf_data?.corpo?.analyses_recommandation || '';
+
+    let currentTab = 'vie';
+    let openPanels = {}; // track which analyses are expanded
+
+    function fmt(n) { return (n || 0).toLocaleString('fr-CA') + ' $'; }
+    function pf(id, ctx) {
+        const el = ctx ? ctx.querySelector('#' + id) : document.getElementById(id);
+        return FINOX.parseNumber(el?.value) || 0;
+    }
+
+    // ── Personne list from other modules ──
+    function getPersonnes() {
+        const pc = client.abf_data?.corpo?.personnes_cles || [];
+        const act = client.abf_data?.corpo?.actionnaires || [];
+        const dir = client.abf_data?.corpo?.dirigeants || [];
+        const seen = new Set();
+        const list = [];
+        [...pc, ...act].forEach(p => {
+            const name = [p.prenom, p.nom].filter(Boolean).join(' ');
+            if (name && !seen.has(name)) { seen.add(name); list.push(name); }
+        });
+        dir.forEach(d => { if (d.nom && !seen.has(d.nom)) { seen.add(d.nom); list.push(d.nom); } });
+        return list;
+    }
+
+    // ── SECTIONS CONFIG ──
+    // Vie: sections 1,2,3,4,5
+    // MG:  sections 1,2,3,7,8
+    const SECTIONS_VIE = [
+        {
+            num: 1, title: "Financement de l'achat ou du rachat d'actions / participations",
+            fields: [
+                { key: 'valeur_actions', label: "Valeur des actions aux fins d'achat ou de rachat (voir note 1)", sign: '' },
+                { key: 'plus_value_5ans', label: "Plus-value estimée projetée additionnelle après 5 ans", sign: '+' },
+                { key: 'valeur_actions_priv', label: "Valeur des actions privilégiées", sign: '+' }
+            ],
+            altLabel: "OU si pas lié par convention, prix accepté pour vendre",
+            altField: { key: 'prix_convention', label: "Prix accepté pour vendre vos actions" },
+            totalKey: 'montant_necessaire_1',
+            notes: [
+                "Note 1 : La valeur inscrite dans la convention (s'il y a lieu), ou confirmée par un avis du vérificateur de la société.",
+                "Note 2 : Si vous n'avez pas la valeur ici, c'est possible que lors de l'analyse, plus loin, ce qui sera inscrit prendra effet."
+            ]
+        },
+        {
+            num: 2, title: "Cautionnement par l'actionnaire",
+            fields: [
+                { key: 'montant_engage', label: "Montant engagé", sign: '' }
+            ],
+            totalKey: 'total_2'
+        },
+        {
+            num: 3, title: "Autres engagements : crédit-bail, créancier, clause de non-concurrence, brevet, bris de contrat, bail, etc.",
+            fields: [
+                { key: 'credit_bail', label: "Crédit-bail", sign: '' },
+                { key: 'bail_commercial', label: "Bail commercial", sign: '+' },
+                { key: 'bris_contrat', label: "Bris de contrat", sign: '+' },
+                { key: 'transaction_apparentees', label: "Transaction entre personnes apparentées", sign: '+' },
+                { key: 'autres_engagements', label: "Autres", sign: '+' }
+            ],
+            totalKey: 'total_engagements'
+        },
+        {
+            num: 4, title: "Protection pour la perte économique liée à l'absence de la personne clé",
+            fields: [
+                { key: 'frais_remplacement', label: "Frais additionnels liés au remplacement", sign: '' },
+                { key: 'pertes_revenus_estimees', label: "Pertes de revenus éventuels estimées", sign: '+' }
+            ],
+            totalKey: 'total_4'
+        },
+        {
+            num: 5, title: "Don planifié",
+            fields: [
+                { key: 'don_planifie', label: "Montant du don souhaité par la société à votre décès", sign: '' }
+            ],
+            totalKey: 'total_5'
+        }
+    ];
+
+    const SECTIONS_MG = [
+        {
+            num: 1, title: "Financement de l'achat ou du rachat d'actions / participations",
+            fields: [
+                { key: 'valeur_actions', label: "Valeur des actions aux fins d'achat ou de rachat (voir note 1)", sign: '' },
+                { key: 'plus_value_5ans', label: "Plus-value estimée projetée additionnelle après 5 ans", sign: '+' },
+                { key: 'valeur_actions_priv', label: "Valeur des actions privilégiées", sign: '+' }
+            ],
+            altLabel: "OU si pas lié par convention, prix accepté pour vendre",
+            altField: { key: 'prix_convention', label: "Prix accepté pour vendre vos actions" },
+            totalKey: 'montant_necessaire_1',
+            notes: [
+                "Note 1 : La valeur inscrite dans la convention (s'il y a lieu), ou confirmée par un avis du vérificateur de la société.",
+                "Note 2 : Si vous n'avez pas la valeur ici, c'est possible que lors de l'analyse, plus loin, ce qui sera inscrit prendra effet."
+            ]
+        },
+        {
+            num: 2, title: "Cautionnement par l'actionnaire",
+            fields: [
+                { key: 'montant_engage', label: "Montant engagé", sign: '' }
+            ],
+            totalKey: 'total_2'
+        },
+        {
+            num: 3, title: "Autres engagements : crédit-bail, créancier, clause de non-concurrence, brevet, bris de contrat, bail, etc.",
+            fields: [
+                { key: 'credit_bail', label: "Crédit-bail", sign: '' },
+                { key: 'bail_commercial', label: "Bail commercial", sign: '+' },
+                { key: 'bris_contrat', label: "Bris de contrat", sign: '+' },
+                { key: 'transaction_apparentees', label: "Transaction entre personnes apparentées", sign: '+' },
+                { key: 'autres_engagements', label: "Autres", sign: '+' }
+            ],
+            totalKey: 'total_engagements'
+        },
+        {
+            num: 7, title: "Impacts économiques liés à l'absence de l'actionnaire, de l'associé ou de la personne clé",
+            subsections: [
+                {
+                    subtitle: "Impacts sur le bilan",
+                    fields: [
+                        { key: 'pertes_actifs', label: "Pertes d'actifs (actifs intangibles, part. permanentes réduites)", sign: '' },
+                        { key: 'passifs_supp', label: "Passifs supplémentaires", sign: '+' }
+                    ],
+                    subTotalKey: 'total_impacts_bilan'
+                },
+                {
+                    subtitle: "Impacts sur les résultats",
+                    fields: [
+                        { key: 'pertes_revenus', label: "Pertes de revenus", sign: '' }
+                    ]
+                },
+                {
+                    subtitle: "Dépenses supplémentaires",
+                    fields: [
+                        { key: 'cout_recrutement', label: "Coût de recrutement", sign: '' },
+                        { key: 'remuneration_contrat', label: "Rémunération du contrat employeur", sign: '+' },
+                        { key: 'cout_formation', label: "Coût de formation et perte de revenu", sign: '+' },
+                        { key: 'autres_depenses', label: "Autres", sign: '+' }
+                    ],
+                    subTotalKey: 'total_depenses_supp'
+                }
+            ],
+            totalKey: 'total_impacts_eco'
+        },
+        {
+            num: 8, title: "Continuation du revenu à court terme et soutien relatif aux soins de l'actionnaire, de l'associé ou de la personne clé",
+            fields: [
+                { key: 'compensation_revenu', label: "Compensation pour perte de revenu", sign: '' },
+                { key: 'compensation_soins', label: "Compensation pour soins et/ou traitements", sign: '+' },
+                { key: 'frais_reamenagement', label: "Si retour au travail, frais de réaménagement et d'accès au bureau", sign: '+' }
+            ],
+            totalKey: 'total_8'
+        }
+    ];
+
+    // ── TAB SWITCH ──
+    window.switchAnaTab = function(tab) {
+        currentTab = tab;
+        document.getElementById('anaPanelVie').classList.toggle('active', tab === 'vie');
+        document.getElementById('anaPanelMG').classList.toggle('active', tab === 'mg');
+        const tabVie = document.getElementById('anaTabVie');
+        const tabMG = document.getElementById('anaTabMG');
+        tabVie.className = 'ana-tab' + (tab === 'vie' ? ' active-vie' : '');
+        tabMG.className = 'ana-tab' + (tab === 'mg' ? ' active-mg' : '');
+    };
+
+    // ── RENDER SECTION FIELDS ──
+    function renderSectionFields(section, data, prefix, type) {
+        const colorClass = type === 'vie' ? 'ana-section-bar-vie' : 'ana-section-bar-mg';
+        let html = '';
+
+        if (section.subsections) {
+            // Complex section with sub-groups (section 7)
+            html += `<div class="ana-section-bar ${colorClass}">
+                <span class="ana-section-num">${section.num}</span>
+                <span class="ana-section-text">${section.title}</span>
+                <span class="ana-section-total" id="${prefix}_total_${section.num}">= ${fmt(0)}</span>
+            </div>`;
+            html += `<div class="ana-fields">`;
+            section.subsections.forEach(sub => {
+                html += `<div style="font-size:11px;font-weight:600;color:var(--gold);text-decoration:underline;margin:10px 0 6px;">${sub.subtitle}</div>`;
+                sub.fields.forEach(f => {
+                    html += `<div class="ana-field-row">
+                        ${f.sign ? `<span class="ana-field-sign">${f.sign}</span>` : '<span class="ana-field-sign"></span>'}
+                        <span class="ana-field-label">${f.label}</span>
+                        <input type="text" inputmode="decimal" class="ana-field-input ana-calc money-input" id="${prefix}_${f.key}" value="${data[f.key] || ''}" placeholder="0" data-group="${prefix}">
+                    </div>`;
+                });
+                if (sub.subTotalKey) {
+                    html += `<div class="ana-field-sub-total">
+                        <span>Total ${sub.subtitle.toLowerCase()} :</span>
+                        <span class="ana-field-sub-value" id="${prefix}_${sub.subTotalKey}">= ${fmt(0)}</span>
+                    </div>`;
+                }
+            });
+            html += `</div>`;
+        } else {
+            // Simple section
+            html += `<div class="ana-section-bar ${colorClass}">
+                <span class="ana-section-num">${section.num}</span>
+                <span class="ana-section-text">${section.title}</span>
+                <span class="ana-section-total" id="${prefix}_total_${section.num}">= ${fmt(0)}</span>
+            </div>`;
+            html += `<div class="ana-fields">`;
+            section.fields.forEach(f => {
+                html += `<div class="ana-field-row">
+                    ${f.sign ? `<span class="ana-field-sign">${f.sign}</span>` : '<span class="ana-field-sign"></span>'}
+                    <span class="ana-field-label">${f.label}</span>
+                    <input type="text" inputmode="decimal" class="ana-field-input ana-calc money-input" id="${prefix}_${f.key}" value="${data[f.key] || ''}" placeholder="0" data-group="${prefix}">
+                </div>`;
+            });
+            if (section.altField) {
+                html += `<div style="font-size:11px;color:var(--text-muted);margin:8px 0 6px;font-style:italic;">${section.altLabel}</div>`;
+                const af = section.altField;
+                html += `<div class="ana-field-row">
+                    <span class="ana-field-sign"></span>
+                    <span class="ana-field-label">${af.label}</span>
+                    <input type="text" inputmode="decimal" class="ana-field-input ana-calc money-input" id="${prefix}_${af.key}" value="${data[af.key] || ''}" placeholder="0" data-group="${prefix}">
+                </div>`;
+            }
+            html += `</div>`;
+            if (section.notes) {
+                section.notes.forEach(n => {
+                    html += `<div class="ana-note-small" style="padding-left:33px;">${n}</div>`;
+                });
+            }
+        }
+        return html;
+    }
+
+    // ── RENDER CALCUL RECAP ──
+    function renderCalculRecap(prefix, type) {
+        const label = type === 'vie' ? "d'assurance vie" : "d'assurance maladies graves";
+        return `<div class="ana-calcul">
+            <div class="ana-calcul-title">Calcul du besoin ${label}</div>
+            <div class="ana-calcul-row">
+                <span class="ana-calcul-label">Besoin total ${label} estimé</span>
+                <span class="ana-calcul-value" id="${prefix}_besoin_total">= 0 $</span>
+            </div>
+            <div class="ana-calcul-sep"></div>
+            <div class="ana-calcul-row">
+                <span class="ana-calcul-label">Moins : Liquidités disponibles</span>
+                <input type="text" inputmode="decimal" class="ana-field-input ana-calc money-input" id="${prefix}_liquidites" value="" placeholder="0" data-group="${prefix}" style="width:140px;">
+            </div>
+            <div class="ana-calcul-row">
+                <span class="ana-calcul-label">Assurance ${type === 'vie' ? 'vie' : 'MG'} en vigueur dans un but d'affaires</span>
+                <span class="ana-calcul-value" id="${prefix}_assurance_vigueur">-0 $</span>
+            </div>
+            <div class="ana-calcul-sep"></div>
+            <div class="ana-calcul-row ana-calcul-final">
+                <span class="ana-calcul-label">Montant supplémentaire ${label} estimé</span>
+                <span class="ana-calcul-value" id="${prefix}_montant_supp" style="color:var(--gold);">= 0 $</span>
+            </div>
+        </div>`;
+    }
+
+    // ── RENDER ONE ANALYSIS ──
+    function renderAnalysis(a, idx, type) {
+        const prefix = `ana_${type}_${idx}`;
+        const isOpen = openPanels[prefix] !== false; // default open for new
+        const sections = type === 'vie' ? SECTIONS_VIE : SECTIONS_MG;
+        const personnes = getPersonnes();
+
+        let html = `<div class="ana-list-item" id="${prefix}_item">
+            <div class="ana-list-header" onclick="toggleAnaPanel('${prefix}')">
+                <div class="ana-list-person">
+                    <span>${a.personne || 'Nouvelle analyse'}</span>
+                </div>
+                <div class="ana-list-total">
+                    <span id="${prefix}_header_total" style="color:${type === 'vie' ? '#64B5F6' : '#F48FB1'};">0 $</span>
+                    <div class="ana-list-actions">
+                        <button class="ana-list-btn ana-list-del" onclick="event.stopPropagation(); deleteAnalyse('${type}', ${idx})">🗑️</button>
+                    </div>
+                    <span class="ana-list-toggle ${isOpen ? 'open' : ''}" id="${prefix}_arrow">▼</span>
+                </div>
+            </div>
+            <div class="ana-form-body ${isOpen ? 'open' : ''}" id="${prefix}_body">`;
+
+        // Person selector
+        html += `<div class="ana-person-bar">
+            <span class="ana-person-label">Personne assurée :</span>
+            <select class="ana-person-select ana-calc" id="${prefix}_personne" data-group="${prefix}" onchange="updatePersonneName('${type}', ${idx}, this.value)">
+                <option value="">-- Sélectionner --</option>
+                ${personnes.map(p => `<option value="${p}" ${a.personne === p ? 'selected' : ''}>${p}</option>`).join('')}
+                <option value="__custom" ${a.personne && !personnes.includes(a.personne) ? '' : ''}>Autre...</option>
+            </select>
+        </div>`;
+
+        // Render each section
+        sections.forEach(s => {
+            html += renderSectionFields(s, a, prefix, type);
+        });
+
+        // Calcul recap
+        html += renderCalculRecap(prefix, type);
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    // ── RENDER ALL ──
+    function renderAll() {
+        const vieContainer = document.getElementById('anaVieList');
+        const mgContainer = document.getElementById('anaMGList');
+
+        if (vieContainer) {
+            if (analysesVie.length === 0) {
+                vieContainer.innerHTML = `<div class="ana-empty"><div class="ana-empty-icon">🛡️</div>Aucune analyse Vie.<br>Cliquez sur le bouton ci-dessous pour commencer.</div>`;
+            } else {
+                vieContainer.innerHTML = analysesVie.map((a, i) => renderAnalysis(a, i, 'vie')).join('');
+            }
+        }
+        if (mgContainer) {
+            if (analysesMG.length === 0) {
+                mgContainer.innerHTML = `<div class="ana-empty"><div class="ana-empty-icon">💊</div>Aucune analyse MG.<br>Cliquez sur le bouton ci-dessous pour commencer.</div>`;
+            } else {
+                mgContainer.innerHTML = analysesMG.map((a, i) => renderAnalysis(a, i, 'mg')).join('');
+            }
+        }
+
+        // Badge counts
+        document.getElementById('anaTabVieCount').textContent = analysesVie.length;
+        document.getElementById('anaTabMGCount').textContent = analysesMG.length;
+
+        // Attach input listeners
+        document.querySelectorAll('.ana-calc').forEach(el => {
+            el.removeEventListener('input', recalcAll);
+            el.addEventListener('input', recalcAll);
+        });
+
+        // Setup money input formatting
+        FINOX.setupAllMoneyInputs();
+
+        // Compute assurance en vigueur from assurances module
+        computeAssuranceVigueur();
+        recalcAll();
+    }
+
+    // ── Get assurance en vigueur amounts ──
+    function computeAssuranceVigueur() {
+        const assurances = client.abf_data?.corpo?.assurances_vigueur || [];
+        // Sum capital for policies marked "inclus" grouped by type
+        let totalVie = 0, totalMG = 0;
+        assurances.forEach(a => {
+            if (a.inclus === false) return;
+            const cap = FINOX.parseNumber(a.capital) || 0;
+            const t = (a.type || '').toLowerCase();
+            if (t === 'vie') totalVie += cap;
+            else if (t === 'mg' || t === 'maladies graves') totalMG += cap;
+        });
+        // Set on all analyses
+        analysesVie.forEach((_, i) => {
+            const el = document.getElementById(`ana_vie_${i}_assurance_vigueur`);
+            if (el) el.textContent = '-' + fmt(totalVie);
+            const a = analysesVie[i];
+            a._assurance_vigueur = totalVie;
+        });
+        analysesMG.forEach((_, i) => {
+            const el = document.getElementById(`ana_mg_${i}_assurance_vigueur`);
+            if (el) el.textContent = '-' + fmt(totalMG);
+            const a = analysesMG[i];
+            a._assurance_vigueur = totalMG;
+        });
+    }
+
+    // ── RECALCULATE ──
+    function recalcAll() {
+        let grandTotalVie = 0, grandTotalMG = 0, grandSuppVie = 0, grandSuppMG = 0;
+
+        function recalcOne(analyses, type) {
+            let grandTotal = 0, grandSupp = 0;
+            analyses.forEach((a, i) => {
+                const prefix = `ana_${type}_${i}`;
+                const sections = type === 'vie' ? SECTIONS_VIE : SECTIONS_MG;
+                let besoinTotal = 0;
+
+                sections.forEach(s => {
+                    let sectionTotal = 0;
+                    if (s.subsections) {
+                        s.subsections.forEach(sub => {
+                            let subTotal = 0;
+                            sub.fields.forEach(f => {
+                                const v = pf(`${prefix}_${f.key}`);
+                                a[f.key] = v || undefined;
+                                subTotal += v;
+                            });
+                            if (sub.subTotalKey) {
+                                const stEl = document.getElementById(`${prefix}_${sub.subTotalKey}`);
+                                if (stEl) stEl.textContent = '= ' + fmt(subTotal);
+                            }
+                            sectionTotal += subTotal;
+                        });
+                    } else {
+                        s.fields.forEach(f => {
+                            const v = pf(`${prefix}_${f.key}`);
+                            a[f.key] = v || undefined;
+                            sectionTotal += v;
+                        });
+                        if (s.altField) {
+                            const altV = pf(`${prefix}_${s.altField.key}`);
+                            a[s.altField.key] = altV || undefined;
+                            if (altV > sectionTotal) sectionTotal = altV;
+                        }
+                    }
+
+                    const totalEl = document.getElementById(`${prefix}_total_${s.num}`);
+                    if (totalEl) totalEl.textContent = '= ' + fmt(sectionTotal);
+                    besoinTotal += sectionTotal;
+                });
+
+                // Besoin total
+                const btEl = document.getElementById(`${prefix}_besoin_total`);
+                if (btEl) btEl.textContent = '= ' + fmt(besoinTotal);
+
+                // Liquidités
+                const liq = pf(`${prefix}_liquidites`);
+                a.liquidites = liq || undefined;
+
+                // Assurance en vigueur
+                const assVig = a._assurance_vigueur || 0;
+
+                // Montant supplémentaire
+                const supp = Math.max(0, besoinTotal - liq - assVig);
+                const suppEl = document.getElementById(`${prefix}_montant_supp`);
+                if (suppEl) suppEl.textContent = '= ' + fmt(supp);
+
+                // Header total
+                const headerEl = document.getElementById(`${prefix}_header_total`);
+                if (headerEl) headerEl.textContent = fmt(supp);
+
+                grandTotal += besoinTotal;
+                grandSupp += supp;
+            });
+            return { grandTotal, grandSupp };
+        }
+
+        const vie = recalcOne(analysesVie, 'vie');
+        const mg = recalcOne(analysesMG, 'mg');
+
+        grandTotalVie = vie.grandTotal;
+        grandTotalMG = mg.grandTotal;
+        grandSuppVie = vie.grandSupp;
+        grandSuppMG = mg.grandSupp;
+
+        // Dashboard
+        document.getElementById('anaDashVie').textContent = fmt(grandSuppVie);
+        document.getElementById('anaDashMG').textContent = fmt(grandSuppMG);
+
+        // Couverture = total assurances en vigueur
+        const assurances = client.abf_data?.corpo?.assurances_vigueur || [];
+        let totalCouv = 0;
+        assurances.forEach(a => {
+            if (a.inclus !== false) totalCouv += (FINOX.parseNumber(a.capital) || 0);
+        });
+        document.getElementById('anaDashCouv').textContent = fmt(totalCouv);
+
+        const ecart = grandSuppVie + grandSuppMG;
+        const ecartEl = document.getElementById('anaDashEcart');
+        ecartEl.textContent = fmt(ecart);
+        ecartEl.style.color = ecart <= 0 ? '#81C784' : '#ef9a9a';
+    }
+
+    // ── TOGGLE PANEL ──
+    window.toggleAnaPanel = function(prefix) {
+        const body = document.getElementById(prefix + '_body');
+        const arrow = document.getElementById(prefix + '_arrow');
+        if (!body) return;
+        const isOpen = body.classList.contains('open');
+        body.classList.toggle('open');
+        if (arrow) arrow.classList.toggle('open');
+        openPanels[prefix] = !isOpen;
+    };
+
+    // ── ADD ANALYSE ──
+    window.addAnalyse = function(type) {
+        const list = type === 'vie' ? analysesVie : analysesMG;
+        list.push({ personne: '' });
+        const idx = list.length - 1;
+        openPanels[`ana_${type}_${idx}`] = true;
+        renderAll();
+    };
+
+    // ── DELETE ANALYSE ──
+    window.deleteAnalyse = function(type, idx) {
+        if (type === 'vie') analysesVie.splice(idx, 1);
+        else analysesMG.splice(idx, 1);
+        openPanels = {};
+        renderAll();
+    };
+
+    // ── UPDATE PERSONNE NAME ──
+    window.updatePersonneName = function(type, idx, value) {
+        if (value === '__custom') {
+            value = prompt('Nom de la personne :') || '';
+        }
+        const list = type === 'vie' ? analysesVie : analysesMG;
+        if (list[idx]) {
+            list[idx].personne = value;
+            // Update header
+            const prefix = `ana_${type}_${idx}`;
+            const headerEl = document.querySelector(`#${prefix}_item .ana-list-person span`);
+            if (headerEl) headerEl.textContent = value || 'Nouvelle analyse';
+        }
+    };
+
+    // ── COLLECT ALL DATA from DOM ──
+    function collectAllData() {
+        function collectOne(analyses, type) {
+            const sections = type === 'vie' ? SECTIONS_VIE : SECTIONS_MG;
+            analyses.forEach((a, i) => {
+                const prefix = `ana_${type}_${i}`;
+                // Personne
+                const pSel = document.getElementById(`${prefix}_personne`);
+                if (pSel) a.personne = pSel.value === '__custom' ? a.personne : pSel.value;
+                // All fields
+                sections.forEach(s => {
+                    if (s.subsections) {
+                        s.subsections.forEach(sub => {
+                            sub.fields.forEach(f => { a[f.key] = pf(`${prefix}_${f.key}`) || undefined; });
+                        });
+                    } else {
+                        s.fields.forEach(f => { a[f.key] = pf(`${prefix}_${f.key}`) || undefined; });
+                        if (s.altField) a[s.altField.key] = pf(`${prefix}_${s.altField.key}`) || undefined;
+                    }
+                });
+                a.liquidites = pf(`${prefix}_liquidites`) || undefined;
+                // Remove internal keys
+                delete a._assurance_vigueur;
+            });
+        }
+        collectOne(analysesVie, 'vie');
+        collectOne(analysesMG, 'mg');
+    }
+
+    // ── SAVE ──
+    window.saveAnalyses = async function() {
+        const btn = document.querySelector('.ana-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            collectAllData();
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            // Clean internal keys
+            const cleanVie = analysesVie.map(a => { const c = {...a}; delete c._assurance_vigueur; return c; });
+            const cleanMG = analysesMG.map(a => { const c = {...a}; delete c._assurance_vigueur; return c; });
+
+            const updatedAbf = {
+                ...currentAbf,
+                corpo: {
+                    ...currentCorpo,
+                    analyses_vie: cleanVie,
+                    analyses_mg: cleanMG,
+                    analyses_recommandation: document.getElementById('anaRecommandation').value.trim()
+                },
+                section_corpo_analyses_completed: (cleanVie.length + cleanMG.length) > 0
+            };
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Analyses sauvegardées', 'success');
+        } catch (err) {
+            FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Sauvegarder';
+        }
+    };
+
+    // ── INIT ──
+    renderAll();
+    console.log('✅ Module Analyses V2 chargé');
+})();
+</script>

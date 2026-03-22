@@ -1,0 +1,1400 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-EMPLOI
+     Emploi & Revenus v3 — Emplois multiples, sources dynamiques,
+     fréquence annuel/mensuel, calcul fiscal Québec
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ====== FORM GRID ====== */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    transition: all 0.3s;
+}
+
+.form-group select {
+    min-height: 48px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23E8B44D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(232, 180, 77, 0.15);
+    outline: none;
+}
+
+.form-group input[readonly] {
+    background: var(--finox-dark, #1a1a1a);
+    color: var(--gold);
+}
+
+/* ====== SUPPRIMER SPINNERS INPUT NUMBER ====== */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* ====== SECTION EMPLOI (masquable) ====== */
+.emploi-section {
+    transition: all 0.3s ease;
+}
+
+.emploi-section.hidden {
+    display: none;
+}
+
+/* ====== SECTION SEPARATOR ====== */
+.section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+/* ====== EMPLOI ROWS (dynamiques) ====== */
+.emploi-rows {
+    margin-top: 8px;
+}
+
+.emploi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 140px 90px auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    animation: slideIn 0.2s ease;
+}
+
+.emploi-row:hover {
+    border-color: rgba(232, 180, 77, 0.3);
+}
+
+.emploi-row input[type="text"],
+.emploi-row input[type="number"] {
+    padding: 10px 12px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.emploi-row input[type="number"] {
+    text-align: right;
+}
+
+.emploi-row input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(232, 180, 77, 0.12);
+    outline: none;
+}
+
+.emploi-row select {
+    padding: 10px 30px 10px 10px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23E8B44D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    cursor: pointer;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== SOURCES DE REVENUS ====== */
+.revenue-sources {
+    margin-top: 8px;
+}
+
+.revenue-source-row {
+    display: grid;
+    grid-template-columns: 1fr 140px 90px auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    animation: slideIn 0.2s ease;
+}
+
+.revenue-source-row:hover {
+    border-color: rgba(232, 180, 77, 0.3);
+}
+
+.revenue-source-row select {
+    padding: 10px 36px 10px 12px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23E8B44D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.revenue-source-row select.freq-select {
+    padding: 10px 30px 10px 10px;
+    font-size: 12px;
+    background-position: right 8px center;
+}
+
+.revenue-source-row input[type="number"],
+.revenue-source-row input[type="text"],
+.revenue-source-row input.money-input {
+    padding: 10px 12px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    text-align: right;
+    width: 100%;
+}
+
+.revenue-source-row input[type="number"]:focus,
+.revenue-source-row input[type="text"]:focus,
+.revenue-source-row input.money-input:focus,
+.revenue-source-row select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(232, 180, 77, 0.12);
+    outline: none;
+}
+
+/* Toggle imposable */
+.imposable-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.imposable-toggle .toggle-track {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: #10b981;
+    border-radius: 10px;
+    transition: all 0.25s;
+    flex-shrink: 0;
+}
+
+.imposable-toggle .toggle-track.off {
+    background: var(--border-color);
+}
+
+.imposable-toggle .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.25s;
+}
+
+.imposable-toggle .toggle-track.off::after {
+    left: 18px;
+}
+
+.imposable-toggle .toggle-label-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #10b981;
+    min-width: 55px;
+}
+
+.imposable-toggle .toggle-track.off + .toggle-label-text {
+    color: var(--text-muted);
+}
+
+/* Bouton supprimer */
+.btn-remove-row {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.btn-remove-row:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* Bouton ajouter */
+.btn-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.btn-add-row:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(232, 180, 77, 0.05);
+}
+
+.btn-add-row svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ====== SOMMAIRE (simplifié) ====== */
+.revenue-summary {
+    background: var(--finox-dark, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 24px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.summary-row .label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.summary-row .value {
+    font-family: 'Inter', sans-serif;
+}
+
+.summary-row.net-annuel .label {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.summary-row.net-annuel .value {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.summary-row.net-mensuel .label {
+    font-size: 13px;
+}
+
+.summary-row.net-mensuel .value {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* ====== DÉTAIL IMPÔTS (déroulant enrichi) ====== */
+.tax-details {
+    background: var(--finox-dark, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.tax-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tax-details-header svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s;
+}
+
+.tax-details.expanded .tax-details-header svg {
+    transform: rotate(180deg);
+}
+
+.tax-details-content {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.tax-details.expanded .tax-details-content {
+    display: block;
+}
+
+.tax-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 13px;
+}
+
+.tax-row.separator {
+    border-top: 1px solid var(--border-color);
+    margin-top: 6px;
+    padding-top: 10px;
+}
+
+.tax-row.total {
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-weight: 600;
+}
+
+.tax-row .label {
+    color: var(--text-muted);
+}
+
+.tax-row .value {
+    color: var(--text-primary);
+}
+
+.tax-row .value.negative {
+    color: #ef4444;
+}
+
+.tax-row .value.positive {
+    color: #10b981;
+}
+
+.taux-effectif {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(232, 180, 77, 0.1);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.taux-effectif .label {
+    color: var(--text-secondary);
+}
+
+.taux-effectif .value {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* ====== PERSON TABS ====== */
+.person-tabs-container {
+    margin-bottom: 0;
+}
+
+.person-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0;
+}
+
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+
+.person-tab .tab-icon {
+    font-size: 16px;
+}
+
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.person-tab.conjoint-tab {
+    display: none;
+}
+
+.person-tab.conjoint-tab.visible {
+    display: flex;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .person-tab { padding: 12px 16px; font-size: 13px; }
+    .emploi-row { grid-template-columns: 1fr; gap: 8px; }
+    .revenue-source-row { grid-template-columns: 1fr; gap: 8px; }
+}
+</style>
+
+
+
+<!-- Person Tabs for Emploi & Revenus -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="emploiTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchEmploiTab('client')">
+            <span class="tab-icon">💼</span>
+            <span id="emploiTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchEmploiTab('conjoint')">
+            <span class="tab-icon">💼</span>
+            <span id="emploiTabConjointName">Conjoint</span>
+        </div>
+    </div>
+
+    <div class="tab-content-wrapper">
+        <!-- ═══════════ CLIENT ═══════════ -->
+        <div class="tab-content active" id="emploiClientContent">
+            <!-- Type d'emploi + Âge retraite -->
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Type d'emploi</label>
+                    <select id="typeEmploiClient" onchange="onTypeEmploiChange('Client')">
+                        <option value="">— Sélectionner —</option>
+                        <option value="salarie">Salarié</option>
+                        <option value="autonome">Travailleur autonome</option>
+                        <option value="proprietaire">Propriétaire d'entreprise</option>
+                        <option value="retraite">Retraité</option>
+                        <option value="semi_retraite">Semi-retraité</option>
+                        <option value="sans_emploi">Sans emploi</option>
+                        <option value="conge">Congé (maternité/parental/maladie)</option>
+                        <option value="etudiant">Étudiant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Âge prévu de retraite</label>
+                    <input type="number" id="ageRetraiteClient" min="45" max="80" step="1" placeholder="Ex: 60" style="text-align:center;">
+                </div>
+            </div>
+
+            <!-- Section Emplois multiples (masquable) -->
+            <div class="emploi-section" id="emploiSectionClient">
+                <div class="section-divider">💼 Emploi</div>
+                <div class="emploi-rows" id="emploiRowsClient"></div>
+                <button type="button" class="btn-add-row" onclick="addEmploi('Client')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Ajouter un emploi
+                </button>
+            </div>
+
+            <!-- Autres sources de revenus -->
+            <div class="section-divider">💰 Autres sources de revenus</div>
+            <div class="revenue-sources" id="revenueSourcesClient"></div>
+            <button type="button" class="btn-add-row" onclick="addRevenueSource('Client')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Ajouter une source de revenu
+            </button>
+
+            <!-- Sommaire simplifié -->
+            <div class="revenue-summary" id="summaryClient">
+                <div class="summary-row net-annuel">
+                    <span class="label">Revenu annuel NET</span>
+                    <span class="value" id="summaryNetAnnuelClient">0 $</span>
+                </div>
+                <div class="summary-row net-mensuel">
+                    <span class="label">Revenu mensuel NET</span>
+                    <span class="value" id="summaryNetMensuelClient">0 $</span>
+                </div>
+            </div>
+
+            <!-- Détail du calcul (déroulant enrichi) -->
+            <div class="tax-details" id="taxDetailsClient">
+                <div class="tax-details-header" onclick="toggleTaxDetails('Client')">
+                    <span>📊 Voir le détail du calcul</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <div class="tax-details-content">
+                    <div class="tax-row">
+                        <span class="label">Revenus d'emploi brut</span>
+                        <span class="value" id="taxEmploiBrutClient">0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Autres revenus imposables</span>
+                        <span class="value" id="taxAutresImpClient">0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Revenus non-imposables</span>
+                        <span class="value" id="taxNonImpClient">0 $</span>
+                    </div>
+                    <div class="tax-row separator">
+                        <span class="label">Total brut</span>
+                        <span class="value" id="taxTotalBrutClient">0 $</span>
+                    </div>
+                    <div class="tax-row separator">
+                        <span class="label">Cotisations (RRQ, AE, RQAP)</span>
+                        <span class="value negative" id="taxCotisationsClient">- 0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Impôt fédéral (après abattement QC)</span>
+                        <span class="value negative" id="taxFederalClient">- 0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Impôt provincial Québec</span>
+                        <span class="value negative" id="taxProvincialClient">- 0 $</span>
+                    </div>
+                    <div class="tax-row total">
+                        <span class="label">Revenu NET imposable</span>
+                        <span class="value positive" id="taxNetClient">0 $</span>
+                    </div>
+                    <div class="taux-effectif">
+                        <span class="label">Taux d'imposition effectif:</span>
+                        <span class="value" id="taxRateClient">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ CONJOINT ═══════════ -->
+        <div class="tab-content" id="emploiConjointContent">
+            <!-- Type d'emploi + Âge retraite -->
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Type d'emploi</label>
+                    <select id="typeEmploiConjoint" onchange="onTypeEmploiChange('Conjoint')">
+                        <option value="">— Sélectionner —</option>
+                        <option value="salarie">Salarié</option>
+                        <option value="autonome">Travailleur autonome</option>
+                        <option value="proprietaire">Propriétaire d'entreprise</option>
+                        <option value="retraite">Retraité</option>
+                        <option value="semi_retraite">Semi-retraité</option>
+                        <option value="sans_emploi">Sans emploi</option>
+                        <option value="conge">Congé (maternité/parental/maladie)</option>
+                        <option value="etudiant">Étudiant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Âge prévu de retraite</label>
+                    <input type="number" id="ageRetraiteConjoint" min="45" max="80" step="1" placeholder="Ex: 60" style="text-align:center;">
+                </div>
+            </div>
+
+            <!-- Section Emplois multiples (masquable) -->
+            <div class="emploi-section" id="emploiSectionConjoint">
+                <div class="section-divider">💼 Emploi</div>
+                <div class="emploi-rows" id="emploiRowsConjoint"></div>
+                <button type="button" class="btn-add-row" onclick="addEmploi('Conjoint')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Ajouter un emploi
+                </button>
+            </div>
+
+            <!-- Autres sources de revenus -->
+            <div class="section-divider">💰 Autres sources de revenus</div>
+            <div class="revenue-sources" id="revenueSourcesConjoint"></div>
+            <button type="button" class="btn-add-row" onclick="addRevenueSource('Conjoint')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Ajouter une source de revenu
+            </button>
+
+            <!-- Sommaire simplifié -->
+            <div class="revenue-summary" id="summaryConjoint">
+                <div class="summary-row net-annuel">
+                    <span class="label">Revenu annuel NET</span>
+                    <span class="value" id="summaryNetAnnuelConjoint">0 $</span>
+                </div>
+                <div class="summary-row net-mensuel">
+                    <span class="label">Revenu mensuel NET</span>
+                    <span class="value" id="summaryNetMensuelConjoint">0 $</span>
+                </div>
+            </div>
+
+            <!-- Détail du calcul (déroulant enrichi) -->
+            <div class="tax-details" id="taxDetailsConjoint">
+                <div class="tax-details-header" onclick="toggleTaxDetails('Conjoint')">
+                    <span>📊 Voir le détail du calcul</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <div class="tax-details-content">
+                    <div class="tax-row">
+                        <span class="label">Revenus d'emploi brut</span>
+                        <span class="value" id="taxEmploiBrutConjoint">0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Autres revenus imposables</span>
+                        <span class="value" id="taxAutresImpConjoint">0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Revenus non-imposables</span>
+                        <span class="value" id="taxNonImpConjoint">0 $</span>
+                    </div>
+                    <div class="tax-row separator">
+                        <span class="label">Total brut</span>
+                        <span class="value" id="taxTotalBrutConjoint">0 $</span>
+                    </div>
+                    <div class="tax-row separator">
+                        <span class="label">Cotisations (RRQ, AE, RQAP)</span>
+                        <span class="value negative" id="taxCotisationsConjoint">- 0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Impôt fédéral (après abattement QC)</span>
+                        <span class="value negative" id="taxFederalConjoint">- 0 $</span>
+                    </div>
+                    <div class="tax-row">
+                        <span class="label">Impôt provincial Québec</span>
+                        <span class="value negative" id="taxProvincialConjoint">- 0 $</span>
+                    </div>
+                    <div class="tax-row total">
+                        <span class="label">Revenu NET imposable</span>
+                        <span class="value positive" id="taxNetConjoint">0 $</span>
+                    </div>
+                    <div class="taux-effectif">
+                        <span class="label">Taux d'imposition effectif:</span>
+                        <span class="value" id="taxRateConjoint">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(async function() {
+    console.log('💼 Module ABF Emploi & Revenus - Init v3');
+
+    let clientId = null;
+
+    // ==========================================
+    // 1. CONSTANTES
+    // ==========================================
+
+    const SOURCES_REVENUS = [
+        { id: 'rrq',           label: 'Régime de rentes du Québec (RRQ)',           imposable: true },
+        { id: 'psv',           label: 'Pension de la Sécurité de la vieillesse (PSV)', imposable: true },
+        { id: 'srg',           label: 'Supplément de revenu garanti (SRG)',         imposable: false },
+        { id: 'ace',           label: 'Allocation canadienne pour enfants (ACE)',   imposable: false },
+        { id: 'alloc_qc',     label: 'Allocation famille Québec',                  imposable: false },
+        { id: 'pension',       label: "Fonds de pension de l'employeur",            imposable: true },
+        { id: 'reer_ferr',    label: 'Retraits REER / FERR',                       imposable: true },
+        { id: 'rente',         label: 'Rente viagère',                              imposable: true },
+        { id: 'placements',   label: 'Revenus de placements (intérêts/dividendes)', imposable: true },
+        { id: 'locatif',       label: 'Revenus locatifs',                           imposable: true },
+        { id: 'gains_capital', label: 'Gains en capital',                           imposable: true },
+        { id: 'pension_alim', label: 'Pension alimentaire reçue',                  imposable: true },
+        { id: 'entreprise',   label: "Revenus d'entreprise",                        imposable: true },
+        { id: 'dividendes',   label: "Dividendes d'entreprise",                     imposable: true },
+        { id: 'invalidite',   label: "Prestations d'invalidité",                    imposable: true },
+        { id: 'ae',            label: 'Assurance-emploi (AE)',                      imposable: true },
+        { id: 'cnesst_saaq',  label: 'CNESST / SAAQ',                              imposable: false },
+        { id: 'heritage',     label: 'Héritage / Donation',                         imposable: false },
+        { id: 'autre',         label: 'Autre revenu',                               imposable: true },
+    ];
+
+    const TYPES_SANS_EMPLOI = ['retraite', 'sans_emploi', 'etudiant'];
+
+    let counters = { emploiClient: 0, emploiConjoint: 0, srcClient: 0, srcConjoint: 0 };
+
+    // ==========================================
+    // 2. CALCULATEUR D'IMPÔT QUÉBEC 2024
+    // ==========================================
+
+    function calculateQuebecNetIncome(revenuBrut) {
+        if (!revenuBrut || revenuBrut <= 0) {
+            return { brut: 0, cotisations: 0, impotFederal: 0, impotProvincial: 0, net: 0, tauxEffectif: 0 };
+        }
+
+        const rrqMaxGains = 68500, rrqExemption = 3500, rrqRate = 0.0640, rrqMaxContrib = 4160;
+        const rrqGains = Math.min(revenuBrut, rrqMaxGains) - rrqExemption;
+        const rrq = Math.min(Math.max(rrqGains * rrqRate, 0), rrqMaxContrib);
+
+        const rrq2MaxGains = 73200, rrq2Rate = 0.04;
+        const rrq2 = Math.max(0, Math.min(revenuBrut, rrq2MaxGains) - rrqMaxGains) * rrq2Rate;
+
+        const aeMaxGains = 63200, aeRateQC = 0.01227, aeMaxContrib = 775;
+        const ae = Math.min(Math.min(revenuBrut, aeMaxGains) * aeRateQC, aeMaxContrib);
+
+        const rqapMaxGains = 94000, rqapRate = 0.00494, rqapMaxContrib = 464;
+        const rqap = Math.min(Math.min(revenuBrut, rqapMaxGains) * rqapRate, rqapMaxContrib);
+
+        const totalCotisations = rrq + rrq2 + ae + rqap;
+
+        const federalBrackets = [
+            { limit: 55867, rate: 0.15 }, { limit: 111733, rate: 0.205 },
+            { limit: 173205, rate: 0.26 }, { limit: 246752, rate: 0.29 },
+            { limit: Infinity, rate: 0.33 }
+        ];
+        const federalPersonalCredit = 15705 * 0.15;
+        const federalTaxableIncome = Math.max(0, revenuBrut - rrq - rrq2 - rqap);
+
+        let federalTax = 0, prevLimit = 0;
+        for (const b of federalBrackets) {
+            if (federalTaxableIncome > prevLimit) {
+                federalTax += (Math.min(federalTaxableIncome, b.limit) - prevLimit) * b.rate;
+                prevLimit = b.limit;
+            } else break;
+        }
+        federalTax = Math.max(0, federalTax - federalPersonalCredit);
+        const federalTaxFinal = Math.max(0, federalTax - federalTax * 0.165);
+
+        const quebecBrackets = [
+            { limit: 51780, rate: 0.14 }, { limit: 103545, rate: 0.19 },
+            { limit: 126000, rate: 0.24 }, { limit: Infinity, rate: 0.2575 }
+        ];
+        const quebecPersonalCredit = 18056 * 0.14;
+        const quebecTaxableIncome = Math.max(0, revenuBrut - rrq - rrq2 - rqap);
+
+        let quebecTax = 0;
+        prevLimit = 0;
+        for (const b of quebecBrackets) {
+            if (quebecTaxableIncome > prevLimit) {
+                quebecTax += (Math.min(quebecTaxableIncome, b.limit) - prevLimit) * b.rate;
+                prevLimit = b.limit;
+            } else break;
+        }
+        quebecTax = Math.max(0, quebecTax - quebecPersonalCredit);
+
+        const totalDeductions = totalCotisations + federalTaxFinal + quebecTax;
+        const netIncome = Math.max(0, revenuBrut - totalDeductions);
+        const tauxEffectif = revenuBrut > 0 ? ((totalDeductions / revenuBrut) * 100) : 0;
+
+        return {
+            brut: Math.round(revenuBrut), cotisations: Math.round(totalCotisations),
+            impotFederal: Math.round(federalTaxFinal), impotProvincial: Math.round(quebecTax),
+            net: Math.round(netIncome), tauxEffectif: tauxEffectif.toFixed(1)
+        };
+    }
+
+    // ==========================================
+    // 3. HELPERS
+    // ==========================================
+
+    function formatMoney(amount) {
+        return new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' $';
+    }
+
+    function buildFreqSelect(selected = 'annuel') {
+        const annSel = selected === 'annuel' ? ' selected' : '';
+        const menSel = selected === 'mensuel' ? ' selected' : '';
+        return `<select class="freq-select" onchange="calculateRevenu(this.closest('.tab-content').id === 'emploiClientContent' ? 'Client' : 'Conjoint')"><option value="annuel"${annSel}>Annuel</option><option value="mensuel"${menSel}>Mensuel</option></select>`;
+    }
+
+    // ==========================================
+    // 4. FONCTIONS D'INTERFACE
+    // ==========================================
+
+    window.switchEmploiTab = function(tabId) {
+        document.getElementById('emploiTabs').querySelectorAll('.person-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabId);
+        });
+        document.getElementById('emploiClientContent').classList.toggle('active', tabId === 'client');
+        document.getElementById('emploiConjointContent').classList.toggle('active', tabId === 'conjoint');
+    };
+
+    window.toggleTaxDetails = function(person) {
+        document.getElementById('taxDetails' + person).classList.toggle('expanded');
+    };
+
+    window.onTypeEmploiChange = function(person) {
+        const typeEmploi = document.getElementById('typeEmploi' + person).value;
+        const section = document.getElementById('emploiSection' + person);
+
+        if (TYPES_SANS_EMPLOI.includes(typeEmploi)) {
+            section.classList.add('hidden');
+        } else {
+            section.classList.remove('hidden');
+        }
+
+        calculateRevenu(person);
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    // ==========================================
+    // 5. EMPLOIS MULTIPLES
+    // ==========================================
+
+    window.addEmploi = function(person, preData = null) {
+        const container = document.getElementById('emploiRows' + person);
+        const counterKey = 'emploi' + person;
+        const idx = counters[counterKey]++;
+        const rowId = `emp_${person}_${idx}`;
+
+        const row = document.createElement('div');
+        row.className = 'emploi-row';
+        row.id = rowId;
+
+        const titre = preData?.titre || '';
+        const employeur = preData?.employeur || '';
+        const revenu = preData?.revenu || '';
+        const freq = preData?.frequence || 'annuel';
+
+        row.innerHTML = `
+            <input type="text" placeholder="Titre d'emploi" value="${titre}" oninput="FINOX_NAV.markAsUnsaved()">
+            <input type="text" placeholder="Employeur" value="${employeur}" oninput="FINOX_NAV.markAsUnsaved()">
+            <input type="text" inputmode="decimal" class="money-input" placeholder="Revenu ($)" value="${revenu}" oninput="calculateRevenu('${person}')">
+            ${buildFreqSelect(freq)}
+            <button type="button" class="btn-remove-row" onclick="removeEmploi('${person}', '${rowId}')" title="Supprimer">×</button>
+        `;
+
+        container.appendChild(row);
+        FINOX.setupAllMoneyInputs(row);
+        calculateRevenu(person);
+    };
+
+    window.removeEmploi = function(person, rowId) {
+        const container = document.getElementById('emploiRows' + person);
+        const row = document.getElementById(rowId);
+        if (row && container.querySelectorAll('.emploi-row').length > 1) {
+            row.style.animation = 'slideIn 0.15s ease reverse';
+            setTimeout(() => {
+                row.remove();
+                calculateRevenu(person);
+                FINOX_NAV.markAsUnsaved();
+            }, 150);
+        }
+    };
+
+    function getEmploisData(person) {
+        const container = document.getElementById('emploiRows' + person);
+        const rows = container.querySelectorAll('.emploi-row');
+        const emplois = [];
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const freqSelect = row.querySelector('.freq-select');
+            const titre = inputs[0].value;
+            const employeur = inputs[1].value;
+            const revenu = FINOX.parseNumber(inputs[2].value) || 0;
+            const frequence = freqSelect.value;
+            const revenuAnnuel = frequence === 'mensuel' ? revenu * 12 : revenu;
+
+            emplois.push({ titre, employeur, revenu, frequence, revenuAnnuel });
+        });
+
+        return emplois;
+    }
+
+    // ==========================================
+    // 6. SOURCES DE REVENUS
+    // ==========================================
+
+    window.addRevenueSource = function(person, preselect = null, premontant = null, preimposable = null, prefrequence = 'annuel') {
+        const container = document.getElementById('revenueSources' + person);
+        const counterKey = 'src' + person;
+        const idx = counters[counterKey]++;
+        const rowId = `src_${person}_${idx}`;
+
+        const row = document.createElement('div');
+        row.className = 'revenue-source-row';
+        row.id = rowId;
+
+        let options = '<option value="">— Choisir —</option>';
+        SOURCES_REVENUS.forEach(src => {
+            const selected = (preselect === src.id) ? ' selected' : '';
+            options += `<option value="${src.id}"${selected}>${src.label}</option>`;
+        });
+
+        let imposable = true;
+        if (preimposable !== null) {
+            imposable = preimposable;
+        } else if (preselect) {
+            const found = SOURCES_REVENUS.find(s => s.id === preselect);
+            if (found) imposable = found.imposable;
+        }
+
+        const trackClass = imposable ? '' : ' off';
+        const labelText = imposable ? 'Imposable' : 'Non-imp.';
+
+        row.innerHTML = `
+            <select onchange="onSourceTypeChange('${person}', '${rowId}', this)">${options}</select>
+            <input type="text" inputmode="decimal" class="money-input" placeholder="Montant ($)" value="${premontant || ''}" oninput="calculateRevenu('${person}')">
+            ${buildFreqSelect(prefrequence)}
+            <div class="imposable-toggle" onclick="toggleImposable('${person}', '${rowId}')">
+                <div class="toggle-track${trackClass}" data-imposable="${imposable}"></div>
+                <span class="toggle-label-text">${labelText}</span>
+            </div>
+            <button type="button" class="btn-remove-row" onclick="removeRevenueSource('${person}', '${rowId}')" title="Supprimer">×</button>
+        `;
+
+        container.appendChild(row);
+        FINOX.setupAllMoneyInputs(row);
+        calculateRevenu(person);
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.onSourceTypeChange = function(person, rowId, selectEl) {
+        const sourceId = selectEl.value;
+        const found = SOURCES_REVENUS.find(s => s.id === sourceId);
+        if (found) {
+            const row = document.getElementById(rowId);
+            const track = row.querySelector('.toggle-track');
+            const label = row.querySelector('.toggle-label-text');
+            if (found.imposable) {
+                track.classList.remove('off');
+                track.dataset.imposable = 'true';
+                label.textContent = 'Imposable';
+            } else {
+                track.classList.add('off');
+                track.dataset.imposable = 'false';
+                label.textContent = 'Non-imp.';
+            }
+        }
+        calculateRevenu(person);
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.toggleImposable = function(person, rowId) {
+        const row = document.getElementById(rowId);
+        const track = row.querySelector('.toggle-track');
+        const label = row.querySelector('.toggle-label-text');
+        const isImp = track.dataset.imposable === 'true';
+        if (isImp) {
+            track.classList.add('off');
+            track.dataset.imposable = 'false';
+            label.textContent = 'Non-imp.';
+        } else {
+            track.classList.remove('off');
+            track.dataset.imposable = 'true';
+            label.textContent = 'Imposable';
+        }
+        calculateRevenu(person);
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.removeRevenueSource = function(person, rowId) {
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.style.animation = 'slideIn 0.15s ease reverse';
+            setTimeout(() => {
+                row.remove();
+                calculateRevenu(person);
+                FINOX_NAV.markAsUnsaved();
+            }, 150);
+        }
+    };
+
+    function getRevenueSourcesData(person) {
+        const container = document.getElementById('revenueSources' + person);
+        const rows = container.querySelectorAll('.revenue-source-row');
+        const sources = [];
+
+        rows.forEach(row => {
+            const selects = row.querySelectorAll('select');
+            const typeSelect = selects[0];
+            const freqSelect = row.querySelector('.freq-select');
+            const montantInput = row.querySelector('input.money-input');
+            const track = row.querySelector('.toggle-track');
+
+            const type = typeSelect.value;
+            const montant = FINOX.parseNumber(montantInput.value) || 0;
+            const frequence = freqSelect.value;
+            const imposable = track.dataset.imposable === 'true';
+            const montantAnnuel = frequence === 'mensuel' ? montant * 12 : montant;
+
+            if (type || montant > 0) {
+                sources.push({ type, montant, frequence, imposable, montantAnnuel });
+            }
+        });
+
+        return sources;
+    }
+
+    // ==========================================
+    // 7. CALCUL PRINCIPAL
+    // ==========================================
+
+    window.calculateRevenu = function(person) {
+        const typeEmploi = document.getElementById('typeEmploi' + person).value;
+
+        // Revenus d'emploi
+        let revenuEmploiTotal = 0;
+        if (!TYPES_SANS_EMPLOI.includes(typeEmploi)) {
+            const emplois = getEmploisData(person);
+            emplois.forEach(e => { revenuEmploiTotal += e.revenuAnnuel; });
+        }
+
+        // Sources de revenus
+        const sources = getRevenueSourcesData(person);
+        let autresImposables = 0;
+        let nonImposables = 0;
+        sources.forEach(src => {
+            if (src.imposable) {
+                autresImposables += src.montantAnnuel;
+            } else {
+                nonImposables += src.montantAnnuel;
+            }
+        });
+
+        const totalBrutImposable = revenuEmploiTotal + autresImposables;
+        const totalBrutGlobal = totalBrutImposable + nonImposables;
+
+        // Calcul fiscal
+        const taxData = calculateQuebecNetIncome(totalBrutImposable);
+        const deductions = totalBrutImposable - taxData.net;
+        const revenuNetAnnuel = taxData.net + nonImposables;
+        const revenuNetMensuel = Math.round(revenuNetAnnuel / 12);
+
+        // Sommaire (simplifié — NET seulement)
+        document.getElementById('summaryNetAnnuel' + person).textContent = formatMoney(revenuNetAnnuel);
+        document.getElementById('summaryNetMensuel' + person).textContent = formatMoney(revenuNetMensuel);
+
+        // Détail du calcul (dans le déroulant)
+        document.getElementById('taxEmploiBrut' + person).textContent = formatMoney(revenuEmploiTotal);
+        document.getElementById('taxAutresImp' + person).textContent = formatMoney(autresImposables);
+        document.getElementById('taxNonImp' + person).textContent = formatMoney(nonImposables);
+        document.getElementById('taxTotalBrut' + person).textContent = formatMoney(totalBrutGlobal);
+        document.getElementById('taxCotisations' + person).textContent = '- ' + formatMoney(taxData.cotisations);
+        document.getElementById('taxFederal' + person).textContent = '- ' + formatMoney(taxData.impotFederal);
+        document.getElementById('taxProvincial' + person).textContent = '- ' + formatMoney(taxData.impotProvincial);
+        document.getElementById('taxNet' + person).textContent = formatMoney(taxData.net);
+        document.getElementById('taxRate' + person).textContent = taxData.tauxEffectif + '%';
+    };
+
+    // Backward-compatible aliases
+    window.calculateRevenuClient = function() { window.calculateRevenu('Client'); };
+    window.calculateRevenuConjoint = function() { window.calculateRevenu('Conjoint'); };
+
+    // ==========================================
+    // 8. SAVE AND NEXT
+    // ==========================================
+
+    window.saveAndNext = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Emploi & Revenus sauvegardé', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-actifs');
+        } else {
+            FINOX.showNotification('Erreur de sauvegarde: ' + result.error, 'error');
+        }
+    };
+
+    // ==========================================
+    // 9. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client trouvé'); return; }
+
+    clientId = client.id;
+    console.log('📋 Client chargé:', client.first_name, client.last_name);
+
+    if (client.has_conjoint) {
+        document.querySelector('#emploiTabs .conjoint-tab').classList.add('visible');
+    }
+
+    document.getElementById('emploiTabClientName').textContent = client.first_name || 'Client';
+    document.getElementById('emploiTabConjointName').textContent = client.conjoint_first_name || 'Conjoint';
+
+    const abfData = client.abf_data || {};
+
+    // --- CLIENT ---
+    const edClient = abfData.emploi_client || {};
+
+    if (edClient.type_emploi) {
+        document.getElementById('typeEmploiClient').value = edClient.type_emploi;
+    }
+    // Âge retraite (colonne directe sur clients)
+    if (client.age_retraite) {
+        document.getElementById('ageRetraiteClient').value = client.age_retraite;
+    }
+
+    // Charger emplois multiples
+    if (edClient.emplois && edClient.emplois.length > 0) {
+        edClient.emplois.forEach(e => window.addEmploi('Client', e));
+    } else {
+        // Backward compat — charger depuis colonnes directes
+        window.addEmploi('Client', {
+            titre: client.titre_emploi || '',
+            employeur: client.employeur || '',
+            revenu: client.revenu_emploi || '',
+            frequence: 'annuel'
+        });
+    }
+
+    // Charger sources de revenus
+    if (edClient.autres_revenus && edClient.autres_revenus.length > 0) {
+        edClient.autres_revenus.forEach(src => {
+            window.addRevenueSource('Client', src.type, src.montant, src.imposable, src.frequence || 'annuel');
+        });
+    }
+
+    window.onTypeEmploiChange('Client');
+
+    // --- CONJOINT ---
+    const edConjoint = abfData.emploi_conjoint || {};
+
+    if (edConjoint.type_emploi) {
+        document.getElementById('typeEmploiConjoint').value = edConjoint.type_emploi;
+    }
+    // Âge retraite conjoint (stocké dans abf_data car pas de colonne dédiée)
+    if (edConjoint.age_retraite) {
+        document.getElementById('ageRetraiteConjoint').value = edConjoint.age_retraite;
+    }
+
+    if (edConjoint.emplois && edConjoint.emplois.length > 0) {
+        edConjoint.emplois.forEach(e => window.addEmploi('Conjoint', e));
+    } else {
+        window.addEmploi('Conjoint', {
+            titre: client.titre_emploi_conjoint || '',
+            employeur: client.employeur_conjoint || '',
+            revenu: client.revenu_emploi_conjoint || '',
+            frequence: 'annuel'
+        });
+    }
+
+    if (edConjoint.autres_revenus && edConjoint.autres_revenus.length > 0) {
+        edConjoint.autres_revenus.forEach(src => {
+            window.addRevenueSource('Conjoint', src.type, src.montant, src.imposable, src.frequence || 'annuel');
+        });
+    }
+
+    window.onTypeEmploiChange('Conjoint');
+
+    // ==========================================
+    // 10. CALCULS INITIAUX
+    // ==========================================
+    window.calculateRevenu('Client');
+    window.calculateRevenu('Conjoint');
+
+    FINOX.setupAllMoneyInputs();
+
+    // ==========================================
+    // 11. FONCTION DE SAUVEGARDE
+    // ==========================================
+    window.saveModuleData = async function() {
+        console.log('💾 saveModuleData Emploi & Revenus v3');
+
+        const currentClient = FINOX.getClientData();
+        const currentAbfData = currentClient?.abf_data || {};
+
+        const typeEC = document.getElementById('typeEmploiClient').value;
+        const typeEConj = document.getElementById('typeEmploiConjoint').value;
+
+        const emploisClient = TYPES_SANS_EMPLOI.includes(typeEC) ? [] : getEmploisData('Client');
+        const emploisConjoint = TYPES_SANS_EMPLOI.includes(typeEConj) ? [] : getEmploisData('Conjoint');
+
+        const sourcesClient = getRevenueSourcesData('Client');
+        const sourcesConjoint = getRevenueSourcesData('Conjoint');
+
+        // Sommes annualisées
+        const revEmploiClient = emploisClient.reduce((s, e) => s + e.revenuAnnuel, 0);
+        const revEmploiConjoint = emploisConjoint.reduce((s, e) => s + e.revenuAnnuel, 0);
+        const totalAutreClient = sourcesClient.reduce((s, r) => s + r.montantAnnuel, 0);
+        const totalAutreConjoint = sourcesConjoint.reduce((s, r) => s + r.montantAnnuel, 0);
+
+        // Nets
+        const impC = sourcesClient.filter(s => s.imposable).reduce((sum, s) => sum + s.montantAnnuel, 0);
+        const nonImpC = sourcesClient.filter(s => !s.imposable).reduce((sum, s) => sum + s.montantAnnuel, 0);
+        const taxC = calculateQuebecNetIncome(revEmploiClient + impC);
+        const netC = taxC.net + nonImpC;
+
+        const impConj = sourcesConjoint.filter(s => s.imposable).reduce((sum, s) => sum + s.montantAnnuel, 0);
+        const nonImpConj = sourcesConjoint.filter(s => !s.imposable).reduce((sum, s) => sum + s.montantAnnuel, 0);
+        const taxConj = calculateQuebecNetIncome(revEmploiConjoint + impConj);
+        const netConj = taxConj.net + nonImpConj;
+
+        // Préparer emplois pour sauvegarde (sans revenuAnnuel calculé)
+        const saveEmplois = (list) => list.map(e => ({ titre: e.titre, employeur: e.employeur, revenu: e.revenu, frequence: e.frequence }));
+        const saveSources = (list) => list.map(s => ({ type: s.type, montant: s.montant, frequence: s.frequence, imposable: s.imposable }));
+
+        // Âge retraite
+        const ageRetraiteClient = parseInt(document.getElementById('ageRetraiteClient').value) || null;
+        const ageRetraiteConjoint = parseInt(document.getElementById('ageRetraiteConjoint').value) || null;
+
+        const clientUpdate = {
+            // Backward compat
+            titre_emploi: emploisClient[0]?.titre || '',
+            employeur: emploisClient[0]?.employeur || '',
+            revenu_emploi: revEmploiClient,
+            revenu_autre: totalAutreClient,
+            titre_emploi_conjoint: emploisConjoint[0]?.titre || '',
+            employeur_conjoint: emploisConjoint[0]?.employeur || '',
+            revenu_emploi_conjoint: revEmploiConjoint,
+            revenu_autre_conjoint: totalAutreConjoint,
+            // Âge retraite (colonne directe)
+            age_retraite: ageRetraiteClient,
+
+            abf_data: {
+                ...currentAbfData,
+                emploi_client: {
+                    type_emploi: typeEC,
+                    emplois: saveEmplois(emploisClient),
+                    autres_revenus: saveSources(sourcesClient),
+                    revenu_brut_total: revEmploiClient + totalAutreClient,
+                    revenu_net: netC,
+                    revenu_mensuel_net: Math.round(netC / 12),
+                    age_retraite: ageRetraiteClient
+                },
+                emploi_conjoint: {
+                    type_emploi: typeEConj,
+                    emplois: saveEmplois(emploisConjoint),
+                    autres_revenus: saveSources(sourcesConjoint),
+                    revenu_brut_total: revEmploiConjoint + totalAutreConjoint,
+                    revenu_net: netConj,
+                    revenu_mensuel_net: Math.round(netConj / 12),
+                    age_retraite: ageRetraiteConjoint
+                }
+            }
+        };
+
+        try {
+            const { error } = await FINOX.supabase.from('clients').update(clientUpdate).eq('id', clientId);
+            if (error) throw error;
+            FINOX.updateClientDataCache(clientUpdate);
+            FINOX.invalidateCache();
+            await FINOX.loadClientData();
+            console.log('✅ Emploi & Revenus v3 sauvegardé — Net Client:', netC, 'Net Conjoint:', netConj);
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ==========================================
+    // 12. DÉTECTER LES CHANGEMENTS
+    // ==========================================
+    const inputs = document.querySelectorAll('#module-content input, #module-content select');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => FINOX_NAV.markAsUnsaved());
+        input.addEventListener('change', () => FINOX_NAV.markAsUnsaved());
+    });
+
+    console.log('✅ Module ABF Emploi & Revenus v3 chargé');
+})();
+</script>

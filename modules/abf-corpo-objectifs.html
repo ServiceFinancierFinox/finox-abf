@@ -1,0 +1,163 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - OBJECTIFS ET BESOINS
+     Checklist des objectifs d'assurance corporative (Vie + MG)
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.obj-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.obj-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.obj-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.obj-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+.obj-card-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.obj-table { width: 100%; border-collapse: collapse; }
+.obj-table th { text-align: center; font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 2px solid rgba(232,180,77,0.3); }
+.obj-table th:first-child { text-align: left; }
+.obj-table td { padding: 14px 16px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+.obj-table td:not(:first-child) { text-align: center; width: 80px; }
+.obj-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.obj-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: rgba(232,180,77,0.15); border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--gold); margin-right: 10px; flex-shrink: 0; }
+
+.obj-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.15); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; font-size: 12px; color: transparent; }
+.obj-check:hover { border-color: rgba(255,255,255,0.3); }
+.obj-check.checked { background: rgba(76,175,80,0.2); border-color: rgba(76,175,80,0.5); color: #81C784; }
+.obj-check.na { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); color: var(--text-muted); font-size: 9px; cursor: default; }
+
+.obj-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; margin-bottom: 20px; }
+@media (max-width: 700px) { .obj-summary { grid-template-columns: 1fr; } }
+.obj-stat { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: center; }
+.obj-stat-value { font-size: 24px; font-weight: 700; }
+.obj-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
+
+.obj-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.obj-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.obj-save-btn:hover { filter: brightness(1.1); }
+</style>
+
+<!-- HEADER -->
+
+
+<!-- SOMMAIRE -->
+<div class="obj-summary">
+    <div class="obj-stat"><div class="obj-stat-value" id="objTotalVie" style="color:#64B5F6;">0</div><div class="obj-stat-label">Objectifs Vie</div></div>
+    <div class="obj-stat"><div class="obj-stat-value" id="objTotalMG" style="color:#F48FB1;">0</div><div class="obj-stat-label">Objectifs MG</div></div>
+    <div class="obj-stat"><div class="obj-stat-value" id="objTotalAll" style="color:var(--gold);">0 / 16</div><div class="obj-stat-label">Total cochés</div></div>
+</div>
+
+<!-- TABLEAU -->
+<div class="obj-card">
+    <table class="obj-table">
+        <thead>
+            <tr>
+                <th>Objectif / Besoin</th>
+                <th style="color:#64B5F6;">Vie</th>
+                <th style="color:#F48FB1;">MG</th>
+            </tr>
+        </thead>
+        <tbody id="objTableBody"></tbody>
+    </table>
+</div>
+
+<!-- NOTES -->
+<div class="obj-card" style="margin-top:20px;">
+    <div class="obj-card-title">📝 Notes supplémentaires</div>
+    <textarea class="obj-form-input" id="objNotes" rows="3" placeholder="Précisions sur les objectifs identifiés..." style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:13px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+</div>
+
+<!-- SAUVEGARDER -->
+<div class="obj-save-bar">
+    <button class="obj-save-btn" onclick="saveObjectifs()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('✅ Module ABF Corpo - Objectifs et besoins');
+
+    const OBJECTIFS = [
+        { id: 1, text: "Financement de l'achat ou du rachat d'actions / participations", hasMG: true },
+        { id: 2, text: "Cautionnement par l'actionnaire", hasMG: true },
+        { id: 3, text: "Autres engagements : crédit-bail, créancier, clause de non-concurrence, brevet, bris de contrat, bail, etc.", hasMG: true },
+        { id: 4, text: "Protection pour la perte économique liée à l'absence de la personne clé", hasMG: false },
+        { id: 5, text: "Don planifié", hasMG: false },
+        { id: 6, text: "Investissement supplémentaire", hasMG: false },
+        { id: 7, text: "Impacts économiques liés à l'absence de l'actionnaire, de l'associé ou de la personne clé", hasMG: true },
+        { id: 8, text: "Continuation du revenu à court terme et soutien financier relatif aux soins de l'actionnaire, de l'associé ou de la personne clé", hasMG: true }
+    ];
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    const objData = client.abf_data?.corpo?.objectifs || {};
+
+    function updateStats() {
+        let vie = 0, mg = 0;
+        OBJECTIFS.forEach(o => {
+            if (objData[o.id + '_vie']) vie++;
+            if (o.hasMG && objData[o.id + '_mg']) mg++;
+        });
+        document.getElementById('objTotalVie').textContent = vie;
+        document.getElementById('objTotalMG').textContent = mg;
+        document.getElementById('objTotalAll').textContent = (vie + mg) + ' / ' + (OBJECTIFS.length + OBJECTIFS.filter(o => o.hasMG).length);
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('objTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = OBJECTIFS.map(o => {
+            const vieChecked = objData[o.id + '_vie'] ? 'checked' : '';
+            const mgChecked = o.hasMG && objData[o.id + '_mg'] ? 'checked' : '';
+            return `<tr>
+                <td><span class="obj-num">${o.id}</span>${o.text}</td>
+                <td><span class="obj-check ${vieChecked}" data-key="${o.id}_vie" onclick="toggleObj(this)">✓</span></td>
+                <td>${o.hasMG
+                    ? `<span class="obj-check ${mgChecked}" data-key="${o.id}_mg" onclick="toggleObj(this)">✓</span>`
+                    : `<span class="obj-check na">N/A</span>`
+                }</td>
+            </tr>`;
+        }).join('');
+        updateStats();
+    }
+    renderTable();
+
+    // Notes
+    const notesEl = document.getElementById('objNotes');
+    if (notesEl) notesEl.value = objData.notes || '';
+
+    window.toggleObj = function(el) {
+        const key = el.dataset.key;
+        el.classList.toggle('checked');
+        objData[key] = el.classList.contains('checked');
+        updateStats();
+    };
+
+    window.saveObjectifs = async function() {
+        const btn = document.querySelector('.obj-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            // Collect all checks
+            document.querySelectorAll('.obj-check[data-key]').forEach(el => {
+                objData[el.dataset.key] = el.classList.contains('checked');
+            });
+            objData.notes = document.getElementById('objNotes').value.trim();
+
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const hasAny = Object.keys(objData).some(k => k !== 'notes' && objData[k] === true);
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, objectifs: objData }, section_corpo_objectifs_completed: hasAny };
+
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Objectifs et besoins sauvegardés', 'success');
+        } catch (err) { FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    };
+
+    console.log('✅ Module Objectifs et besoins chargé');
+})();
+</script>

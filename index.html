@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINOX - Connexion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://vtcnnqzxreuxupsbjufg.supabase.co" crossorigin>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" as="script">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="shared/themes.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --gold: #C9A227;
+            --gold-dark: #A68A1F;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --border-color: #2a2a2a;
+            --danger: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(ellipse at top, rgba(201, 162, 39, 0.08) 0%, transparent 50%), var(--bg-primary);
+        }
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .login-logo { text-align: center; margin-bottom: 40px; }
+        .login-logo h1 { font-size: 42px; font-weight: 800; color: var(--gold); letter-spacing: 6px; margin-bottom: 8px; }
+        .login-logo p { color: var(--text-secondary); font-size: 14px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
+        .login-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; display: none; }
+        .login-error.show { display: block; }
+        .oauth-buttons { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+        .btn-oauth {
+            display: flex; align-items: center; justify-content: center; gap: 14px;
+            width: 100%; padding: 16px 24px;
+            border: 2px solid var(--border-color); border-radius: 14px;
+            font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.25s ease;
+            background: #fff; color: #333;
+        }
+        .btn-oauth:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        .btn-google:hover { border-color: #4285F4; box-shadow: 0 10px 30px rgba(66, 133, 244, 0.25); }
+        .btn-microsoft:hover { border-color: #00A4EF; box-shadow: 0 10px 30px rgba(0, 164, 239, 0.25); }
+        .login-info {
+            text-align: center; padding: 20px 24px;
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.08), rgba(201, 162, 39, 0.03));
+            border: 1px solid rgba(201, 162, 39, 0.2); border-radius: 14px;
+        }
+        .login-info p { color: var(--text-secondary); font-size: 13px; margin: 0; line-height: 1.5; }
+        .login-info-icon { font-size: 20px; margin-bottom: 8px; }
+        .login-info-small { margin-top: 10px !important; font-size: 11px !important; color: var(--text-muted) !important; }
+        .loading-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 1000; }
+        .loading-overlay.hidden { display: none; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text-secondary); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Vérification...</div>
+</div>
+
+<div class="login-box" id="loginBox" style="display: none;">
+    <div class="login-logo">
+        <h1>FINOX</h1>
+        <p>Insurance OS</p>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="oauth-buttons">
+        <button type="button" class="btn-oauth btn-google" onclick="signInWithGoogle()">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continuer avec Google
+        </button>
+        <button type="button" class="btn-oauth btn-microsoft" onclick="signInWithMicrosoft()">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+                <path fill="#F25022" d="M1 1h10v10H1z"/>
+                <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                <path fill="#FFB900" d="M13 13h10v10H13z"/>
+            </svg>
+            Continuer avec Microsoft
+        </button>
+    </div>
+    <div class="login-info">
+        <div class="login-info-icon">🔐</div>
+        <p>Connexion sécurisée via votre compte professionnel</p>
+        <p class="login-info-small">Première connexion = compte créé automatiquement</p>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://vtcnnqzxreuxupsbjufg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0Y25ucXp4cmV1eHVwc2JqdWZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NDU0NzUsImV4cCI6MjA4NDUyMTQ3NX0.3-rRe2N37ecgjlqtybNMi4WkRGOHoCgpx-P1pD1kxhI';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+console.log('🚀 Index.html chargé');
+
+// ═══════════════════════════════════════════════════════════════
+// CAPTURER LE PROVIDER TOKEN
+// ═══════════════════════════════════════════════════════════════
+function checkAndStoreProviderToken() {
+    const hash = window.location.hash;
+    if (hash && hash.includes('provider_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const providerToken = params.get('provider_token');
+        const providerRefreshToken = params.get('provider_refresh_token');
+        if (providerToken) {
+            localStorage.setItem('finox_provider_token', providerToken);
+            localStorage.setItem('finox_provider', providerToken.startsWith('ya29.') ? 'google' : 'microsoft');
+            console.log('✅ Provider token stocké');
+        }
+        if (providerRefreshToken) {
+            localStorage.setItem('finox_provider_refresh_token', providerRefreshToken);
+            console.log('✅ Provider REFRESH token stocké!');
+        }
+    }
+}
+checkAndStoreProviderToken();
+
+// ═══════════════════════════════════════════════════════════════
+// VÉRIFIER LA SESSION
+// ═══════════════════════════════════════════════════════════════
+async function checkSession() {
+    console.log('🔍 checkSession...');
+    const { data: { session } } = await sb.auth.getSession();
+    console.log('📦 Session:', session?.user?.email || 'null');
+    
+    if (session) {
+        goToApp(session);
+    } else {
+        showLoginBox();
+    }
+}
+
+function goToApp(session) {
+    console.log('✅ Connecté:', session.user.email);
+    localStorage.setItem('finox_user_email', session.user.email);
+
+    if (session.provider_token) {
+        localStorage.setItem('finox_provider_token', session.provider_token);
+        localStorage.setItem('finox_provider', session.provider_token.startsWith('ya29.') ? 'google' : 'microsoft');
+    }
+
+    // Capturer le refresh_token si disponible
+    if (session.provider_refresh_token) {
+        localStorage.setItem('finox_provider_refresh_token', session.provider_refresh_token);
+        console.log('✅ Provider REFRESH token stocké!');
+    }
+
+    const redirectTo = localStorage.getItem('finox_redirect_after_login') || 'app.html';
+    localStorage.removeItem('finox_redirect_after_login');
+    console.log('🚀 Redirection vers:', redirectTo);
+    window.location.href = redirectTo;
+}
+
+function showLoginBox() {
+    console.log('📋 Affichage login');
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('loginBox').style.display = 'block';
+}
+
+function showError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.classList.add('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OAUTH - CORRIGÉ: prompt: 'select_account' au lieu de 'consent'
+// ═══════════════════════════════════════════════════════════════
+async function signInWithGoogle() {
+    const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/index.html',
+            scopes: 'openid email profile https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent'  // Force le consentement pour obtenir refresh_token
+            }
+        }
+    });
+    if (error) showError(error.message);
+}
+
+async function signInWithMicrosoft() {
+    const { error } = await sb.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+            redirectTo: window.location.origin + '/index.html',
+            scopes: 'openid email profile offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Calendars.ReadWrite'
+        }
+    });
+    if (error) showError(error.message);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTH STATE CHANGE
+// ═══════════════════════════════════════════════════════════════
+let sessionHandled = false;
+
+sb.auth.onAuthStateChange(async (event, session) => {
+    console.log('🔐 Auth event:', event, '| user:', session?.user?.email || 'null');
+    
+    // Éviter les doubles redirections
+    if (sessionHandled) return;
+    
+    if (session) {
+        sessionHandled = true;
+        goToApp(session);
+    } else if (event === 'SIGNED_OUT') {
+        showLoginBox();
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT - Vérifier la session rapidement (fallback si onAuthStateChange ne fire pas)
+// ═══════════════════════════════════════════════════════════════
+setTimeout(() => {
+    if (!sessionHandled) {
+        checkSession();
+    }
+}, 150);
+</script>
+</body>
+</html>

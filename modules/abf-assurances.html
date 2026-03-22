@@ -1,0 +1,1298 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-ASSURANCES
+     Assurances en vigueur - Version Modale 2 étapes
+     Compatible avec table abf_assurances existante
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Enlever les flèches des inputs number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Summary Dashboard */
+.assurance-summary-dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.assurance-summary-card {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assurance-summary-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.15), rgba(232, 180, 77, 0.05));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.assurance-summary-content { flex: 1; }
+.assurance-summary-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.assurance-summary-value { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+
+/* Person Selector */
+.assurance-person-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.assurance-person-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.assurance-person-chips { display: flex; gap: 6px; }
+
+.assurance-person-chip {
+    padding: 8px 16px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.assurance-person-chip:hover { border-color: rgba(232, 180, 77, 0.5); }
+.assurance-person-chip.active { background: rgba(232, 180, 77, 0.15); border-color: var(--gold); color: var(--gold); }
+.assurance-person-chip.conjoint-chip { display: none; }
+.assurance-person-chip.conjoint-chip.visible { display: flex; }
+
+/* Add Button — Uniform style */
+.assurance-add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--gold); color:#000; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.assurance-add-btn:hover { background:#d4a82a; transform:translateY(-1px); }
+
+/* Ghost Section - Assurances Finox */
+.ghost-section {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    border: 1px dashed rgba(16, 185, 129, 0.4);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.ghost-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ghost-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ghost-section-badge {
+    background: rgba(16, 185, 129, 0.2);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.ghost-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.ghost-card {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px dashed rgba(16, 185, 129, 0.4);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ghost-card:hover {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.ghost-card-icon { font-size: 24px; }
+.ghost-card-info { flex: 1; }
+.ghost-card-type { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.ghost-card-details { font-size: 11px; color: var(--text-muted); }
+.ghost-card-btn {
+    background: #10b981;
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Card Wrapper */
+.card { background: var(--bg-card, #1a1a1a); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 16px; }
+
+/* Cards Grid */
+.assurance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.assurance-card {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.assurance-card:hover {
+    border-color: rgba(232, 180, 77, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.assurance-card.collective { border-left: 4px solid #64B5F6; }
+.assurance-card.individuelle { border-left: 4px solid var(--gold); }
+.assurance-card.excluded { opacity: 0.5; }
+
+.assurance-card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.assurance-card:hover .assurance-card-actions { opacity: 1; }
+
+.assurance-card-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.assurance-card-action.edit { background: rgba(232, 180, 77, 0.2); }
+.assurance-card-action.delete { background: rgba(239, 68, 68, 0.2); }
+.assurance-card-action:hover { transform: scale(1.1); }
+
+.assurance-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.assurance-card-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.2), rgba(232, 180, 77, 0.05));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.assurance-card.collective .assurance-card-icon {
+    background: linear-gradient(135deg, rgba(100, 181, 246, 0.2), rgba(100, 181, 246, 0.05));
+}
+
+.assurance-card-info { flex: 1; min-width: 0; }
+.assurance-card-type { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.assurance-card-company { font-size: 12px; color: var(--gold); }
+.assurance-card.collective .assurance-card-company { color: #64B5F6; }
+.assurance-card-owner { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.assurance-card-body { display: flex; flex-direction: column; gap: 8px; }
+
+.assurance-card-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.assurance-card-stat-label { font-size: 11px; color: var(--text-muted); }
+.assurance-card-stat-value { font-size: 14px; font-weight: 600; color: var(--gold); }
+.assurance-card.collective .assurance-card-stat-value { color: #64B5F6; }
+
+.assurance-card-excluded-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Empty State */
+.assurance-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.assurance-empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+.assurance-empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary); }
+.assurance-empty-text { font-size: 14px; }
+
+/* MODAL STYLES */
+.assurance-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.assurance-modal-overlay.active { opacity: 1; visibility: visible; }
+
+/* Step 1 - Type Selection — Uniform style */
+.modal-step1 { background:var(--bg-card,#1e1e1e); border:1px solid var(--border-color); border-radius:16px; width:95%; max-width:480px; max-height:85vh; overflow:hidden; display:none; animation:atp-in 0.2s ease; }
+@keyframes atp-in { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.step1-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-color); position:relative; }
+.step1-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; position:absolute; top:16px; right:16px; }
+.step1-close:hover { background:rgba(255,255,255,0.1); }
+.step1-title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.step1-subtitle { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.step1-body { padding:16px 20px 20px; overflow-y:auto; max-height:calc(85vh - 80px); }
+.type-category { margin-bottom:14px; }
+.type-category:last-child { margin-bottom:0; }
+.type-category-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.type-category-icon { font-size:16px; }
+.type-category-name { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; }
+.type-category-name.collective { color:#64B5F6; }
+.type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; }
+.type-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 6px; background:rgba(255,255,255,0.03); border:1.5px solid var(--border-color); border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.type-btn:hover { border-color:var(--gold); background:rgba(232,180,77,0.1); transform:translateY(-2px); }
+.type-btn.collective:hover { border-color:#64B5F6; background:rgba(100,181,246,0.1); }
+.type-btn-icon { font-size:24px; line-height:1; }
+.type-btn-name { font-size:10px; font-weight:500; color:var(--text-secondary); line-height:1.2; }
+
+/* Step 2 - Details Form */
+.modal-step2 {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: none;
+}
+
+.step2-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.step2-back {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.step2-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.2), rgba(232, 180, 77, 0.05));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.step2-title-group { flex: 1; }
+.step2-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.step2-subtitle { font-size: 12px; color: var(--text-muted); }
+
+.step2-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.step2-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 180px);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 12px;
+    height: 46px;
+    box-sizing: border-box;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.form-row .form-group { margin-bottom: 0; }
+.form-row .form-group .form-select,
+.form-row .form-group .form-input { width: 100%; }
+
+.form-input:focus, .form-select:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+/* Amount Box */
+.amount-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary, #121212);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 4px 16px;
+    transition: border-color 0.2s;
+}
+
+.amount-wrapper:focus-within { border-color: var(--gold); }
+.amount-icon { font-size: 24px; margin-right: 12px; }
+
+.amount-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.amount-input:focus { outline: none; }
+.amount-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+/* Checkbox exclure */
+.form-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.form-checkbox-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #ef4444;
+}
+
+.form-checkbox-row label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.step2-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.2);
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.modal-btn.cancel { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+.modal-btn.save { background: var(--gold); color: #000; }
+.modal-btn.delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; flex: 0; padding: 12px 16px; }
+.modal-btn:hover { transform: translateY(-2px); }
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+
+.save-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: #10b981; }
+.save-status-dot.unsaved { background: #f59e0b; animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+@media (max-width: 768px) {
+    .assurance-summary-dashboard { grid-template-columns: repeat(2, 1fr); }
+    .type-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+
+
+
+<!-- Person Selector -->
+<div class="assurance-person-selector">
+    <span class="assurance-person-label">Assurances pour :</span>
+    <div class="assurance-person-chips">
+        <div class="assurance-person-chip active" data-person="all" onclick="selectAssuranceOwner('all')">
+            <span>📋</span>
+            <span>Tous</span>
+        </div>
+        <div class="assurance-person-chip" data-person="client" onclick="selectAssuranceOwner('client')">
+            <span>👤</span>
+            <span id="assuranceClientName">Client</span>
+        </div>
+        <div class="assurance-person-chip conjoint-chip" data-person="conjoint" onclick="selectAssuranceOwner('conjoint')">
+            <span>👥</span>
+            <span id="assuranceConjointName">Conjoint</span>
+        </div>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="assurance-summary-dashboard">
+    <div class="assurance-summary-card">
+        <div class="assurance-summary-icon">📊</div>
+        <div class="assurance-summary-content">
+            <div class="assurance-summary-label">Assurances Actives</div>
+            <div class="assurance-summary-value" id="totalAssurances">0</div>
+        </div>
+    </div>
+    <div class="assurance-summary-card">
+        <div class="assurance-summary-icon">🛡️</div>
+        <div class="assurance-summary-content">
+            <div class="assurance-summary-label">Capital Vie</div>
+            <div class="assurance-summary-value" id="totalVie">0 $</div>
+        </div>
+    </div>
+    <div class="assurance-summary-card">
+        <div class="assurance-summary-icon">🏥</div>
+        <div class="assurance-summary-content">
+            <div class="assurance-summary-label">Invalidité /mois</div>
+            <div class="assurance-summary-value" id="totalInvalidite">0 $</div>
+        </div>
+    </div>
+    <div class="assurance-summary-card">
+        <div class="assurance-summary-icon">💊</div>
+        <div class="assurance-summary-content">
+            <div class="assurance-summary-label">Maladie Grave</div>
+            <div class="assurance-summary-value" id="totalMG">0 $</div>
+        </div>
+    </div>
+</div>
+
+<!-- Ghost Section - Assurances Finox -->
+<div class="ghost-section" id="ghostSection">
+    <div class="ghost-section-header">
+        <div class="ghost-section-title">
+            🏆 Assurances Finox
+            <span class="ghost-section-badge" id="ghostCount">0 disponibles</span>
+        </div>
+    </div>
+    <div class="ghost-cards-container" id="ghostCardsContainer"></div>
+</div>
+
+<!-- Assurances Card -->
+<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 class="card-title" style="margin:0">Vos Assurances en Vigueur</h3>
+        <button class="assurance-add-btn" onclick="openStep1()">➕ Ajouter</button>
+    </div>
+    <div class="assurance-grid" id="assuranceGrid"></div>
+    <div class="assurance-empty" id="assuranceEmptyState">
+        <div class="assurance-empty-icon">🛡️</div>
+        <div class="assurance-empty-title">Aucune assurance</div>
+        <div class="assurance-empty-text">Cliquez sur ➕ Ajouter pour commencer.</div>
+    </div>
+</div>
+<!-- MODAL -->
+<div class="assurance-modal-overlay" id="assuranceModalOverlay" onclick="closeModalOutside(event)">
+    <!-- STEP 1: Type Selection -->
+    <div class="modal-step1" id="modalStep1" onclick="event.stopPropagation()">
+        <div class="step1-header">
+            <button class="step1-close" onclick="closeModal()">✕</button>
+            <div class="step1-title">🛡️ Nouvelle assurance</div>
+            <div class="step1-subtitle">Quel type d'assurance souhaitez-vous ajouter?</div>
+        </div>
+        <div class="step1-body">
+            <div class="type-category">
+                <div class="type-category-header">
+                    <span class="type-category-icon">👤</span>
+                    <span class="type-category-name">Assurances Individuelles</span>
+                </div>
+                <div class="type-grid" id="gridIndividuelle"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header">
+                    <span class="type-category-icon">🏢</span>
+                    <span class="type-category-name collective">Assurances Collectives</span>
+                </div>
+                <div class="type-grid" id="gridCollective"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- STEP 2: Details -->
+    <div class="modal-step2" id="modalStep2" onclick="event.stopPropagation()">
+        <div class="step2-header">
+            <button class="step2-back" id="step2BackBtn" onclick="goBackToStep1()">←</button>
+            <div class="step2-icon" id="step2Icon">🛡️</div>
+            <div class="step2-title-group">
+                <div class="step2-title" id="step2Title">Assurance</div>
+                <div class="step2-subtitle" id="step2Subtitle">Configurez les détails</div>
+            </div>
+            <button class="step2-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="step2-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">👤 Assuré</label>
+                    <select class="form-select" id="modalOwner">
+                        <option value="">Sélectionner...</option>
+                        <option value="client" id="optionClient">Client</option>
+                        <option value="conjoint" id="optionConjoint" style="display:none;">Conjoint</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🏢 Compagnie</label>
+                    <select class="form-select" id="modalCompany" onchange="if(this.value==='Autre'){document.getElementById('modalCompanyAutre').style.display='block'}else{document.getElementById('modalCompanyAutre').style.display='none'}">
+                        <option value="">Sélectionner...</option>
+                        <option value="Assomption Vie">Assomption Vie</option>
+                        <option value="Beneva">Beneva</option>
+                        <option value="BMO">BMO</option>
+                        <option value="Canada Vie">Canada Vie</option>
+                        <option value="Chevaliers de Colomb">Chevaliers de Colomb</option>
+                        <option value="Combined">Combined</option>
+                        <option value="CPP">CPP</option>
+                        <option value="Desjardins">Desjardins</option>
+                        <option value="Emma">Emma</option>
+                        <option value="Empire Vie">Empire Vie</option>
+                        <option value="Équitable">Équitable</option>
+                        <option value="Foresters">Foresters</option>
+                        <option value="Humania">Humania</option>
+                        <option value="iA Groupe Financier">iA Groupe Financier</option>
+                        <option value="Ivari">Ivari</option>
+                        <option value="Manuvie">Manuvie</option>
+                        <option value="Primerica">Primerica</option>
+                        <option value="RBC">RBC</option>
+                        <option value="Securian">Securian</option>
+                        <option value="Sun Life">Sun Life</option>
+                        <option value="UV Assurance">UV Assurance</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                    <input type="text" class="form-input" id="modalCompanyAutre" placeholder="Nom de la compagnie..." style="display:none;margin-top:6px;">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" id="amountLabel">💰 Montant</label>
+                <div class="amount-wrapper">
+                    <span class="amount-icon">💵</span>
+                    <input type="text" class="amount-input money-input" id="modalAmount" placeholder="100 000">
+                </div>
+            </div>
+            
+            <div class="form-checkbox-row">
+                <input type="checkbox" id="modalExclure">
+                <label for="modalExclure">Exclure du calcul des besoins</label>
+            </div>
+        </div>
+        <div class="step2-footer">
+            <button class="modal-btn delete" id="deleteBtn" onclick="deleteAssurance()" style="display:none;">🗑️</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Annuler</button>
+            <button class="modal-btn save" onclick="saveAssurance()">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('🛡️ Module ABF Assurances - Init (Modale + SQL)');
+    let isSaving = false;
+    let assurances = [];
+    let ghostAssurances = [];
+    let ownerFilter = 'all';
+    let editIndex = null;
+    let clientName = 'Client';
+    let conjointName = 'Conjoint';
+    let hasConjoint = false;
+    
+    // Types compatibles avec l'ancien format SQL
+    const types = {
+        'Assurance Vie Permanente': { icon:'♾️', name:'Vie Permanente', cat:'individuelle', amountLabel:'Capital décès' },
+        'Assurance Vie Temporaire': { icon:'⏱️', name:'Vie Temporaire', cat:'individuelle', amountLabel:'Capital décès' },
+        'Assurance Vie Participative': { icon:'🌿', name:'Vie Participative', cat:'individuelle', amountLabel:'Capital décès' },
+        'Assurance Invalidité': { icon:'🏥', name:'Invalidité', cat:'individuelle', amountLabel:'Prestation mensuelle' },
+        'Assurance Maladie Grave': { icon:'💊', name:'Maladie Grave', cat:'individuelle', amountLabel:'Capital' },
+        'Assurance Vie Collective': { icon:'🏢', name:'Vie Collective', cat:'collective', amountLabel:'Capital décès' },
+        'Assurance Invalidité Collective': { icon:'🏢', name:'Invalidité Collective', cat:'collective', amountLabel:'Prestation mensuelle' },
+        'Assurance Maladie Grave Collective': { icon:'🏢', name:'Maladie Grave Collective', cat:'collective', amountLabel:'Capital' }
+    };
+    
+    const parse = s => FINOX.parseNumber(s);
+    const fmt = n => Math.round(n||0).toLocaleString('fr-CA')+' $';
+    
+    function initGrids() {
+        const indivGrid = document.getElementById('gridIndividuelle');
+        const collGrid = document.getElementById('gridCollective');
+        
+        indivGrid.innerHTML = Object.entries(types)
+            .filter(([_,t])=>t.cat==='individuelle')
+            .map(([k,t])=>`<div class="type-btn" onclick="selectType('${k}')"><div class="type-btn-icon">${t.icon}</div><div class="type-btn-name">${t.name}</div></div>`)
+            .join('');
+        
+        collGrid.innerHTML = Object.entries(types)
+            .filter(([_,t])=>t.cat==='collective')
+            .map(([k,t])=>`<div class="type-btn collective" onclick="selectType('${k}')"><div class="type-btn-icon">${t.icon}</div><div class="type-btn-name">${t.name}</div></div>`)
+            .join('');
+    }
+    
+    window.openStep1 = function() {
+        editIndex = null;
+        document.getElementById('modalStep1').style.display = 'block';
+        document.getElementById('modalStep2').style.display = 'none';
+        document.getElementById('assuranceModalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.selectType = function(typeKey) {
+        const info = types[typeKey];
+        
+        document.getElementById('step2Icon').textContent = info.icon;
+        document.getElementById('step2Title').textContent = info.name;
+        document.getElementById('step2Subtitle').textContent = info.cat === 'collective' ? '🏢 Assurance collective' : '👤 Assurance individuelle';
+        document.getElementById('amountLabel').textContent = '💰 ' + info.amountLabel;
+        
+        document.getElementById('modalOwner').value = '';
+        document.getElementById('modalCompany').value = '';
+        document.getElementById('modalAmount').value = '';
+        document.getElementById('modalExclure').checked = false;
+        document.getElementById('modalOwner').dataset.typeKey = typeKey;
+
+        // Auto-sélectionner le client si pas de conjoint
+        if (!hasConjoint && !isCorpo) {
+            document.getElementById('modalOwner').value = 'client';
+            document.getElementById('modalOwner').closest('.form-group').style.display = 'none';
+        } else {
+            document.getElementById('modalOwner').closest('.form-group').style.display = '';
+        }
+
+        document.getElementById('deleteBtn').style.display = 'none';
+        document.getElementById('step2BackBtn').style.display = 'block';
+        
+        document.getElementById('modalStep1').style.display = 'none';
+        document.getElementById('modalStep2').style.display = 'block';
+    };
+    
+    window.goBackToStep1 = function() {
+        document.getElementById('modalStep1').style.display = 'block';
+        document.getElementById('modalStep2').style.display = 'none';
+    };
+    
+    window.openEdit = function(index) {
+        const a = assurances[index];
+        if(!a) return;
+        
+        editIndex = index;
+        const info = types[a.type]||{icon:'🛡️',name:a.type||'Assurance',amountLabel:'Montant'};
+        
+        document.getElementById('step2Icon').textContent = a.icon || info.icon;
+        document.getElementById('step2Title').textContent = info.name;
+        document.getElementById('step2Subtitle').textContent = 'Modifier l\'assurance';
+        document.getElementById('amountLabel').textContent = '💰 ' + info.amountLabel;
+        
+        // Convertir assure vers owner format
+        let ownerValue = '';
+        if(isCorpo) {
+            // In corpo mode, the value is the name directly
+            ownerValue = a.assure || '';
+        } else {
+            const assureLower = (a.assure||'').toLowerCase();
+            if(assureLower === clientName.toLowerCase() || assureLower === 'client') ownerValue = 'client';
+            else if(assureLower === conjointName.toLowerCase() || assureLower === 'conjoint') ownerValue = 'conjoint';
+        }
+        
+        document.getElementById('modalOwner').value = ownerValue;
+        // Auto-sélectionner et masquer si pas de conjoint
+        if (!hasConjoint && !isCorpo) {
+            document.getElementById('modalOwner').value = 'client';
+            document.getElementById('modalOwner').closest('.form-group').style.display = 'none';
+        } else {
+            document.getElementById('modalOwner').closest('.form-group').style.display = '';
+        }
+        document.getElementById('modalOwner').dataset.typeKey = a.type;
+        document.getElementById('modalCompany').value = a.compagnie||'';
+        document.getElementById('modalAmount').value = a.montant_couverture ? fmt(a.montant_couverture) : '';
+        document.getElementById('modalExclure').checked = a.exclure_calcul || false;
+        
+        document.getElementById('deleteBtn').style.display = 'block';
+        document.getElementById('step2BackBtn').style.display = 'none';
+        
+        document.getElementById('modalStep1').style.display = 'none';
+        document.getElementById('modalStep2').style.display = 'block';
+        document.getElementById('assuranceModalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.closeModal = function() {
+        document.getElementById('assuranceModalOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+        editIndex = null;
+    };
+    
+    window.closeModalOutside = function(e) { if(e.target.id==='assuranceModalOverlay') closeModal(); };
+    
+    window.saveAssurance = function() {
+        const ownerSelect = document.getElementById('modalOwner');
+        const owner = ownerSelect.value;
+        const typeKey = ownerSelect.dataset.typeKey;
+        const companySelect = document.getElementById('modalCompany').value;
+        const company = companySelect === 'Autre' ? (document.getElementById('modalCompanyAutre').value.trim() || 'Autre') : companySelect;
+        const amount = parse(document.getElementById('modalAmount').value);
+        const exclure = document.getElementById('modalExclure').checked;
+        
+        if(!owner) { FINOX.showNotification('Sélectionnez un assuré','error'); return; }
+        
+        // Convertir owner vers nom réel pour compatibilité SQL
+        let assureName = owner;
+        if(!isCorpo) {
+            assureName = owner === 'client' ? clientName : owner === 'conjoint' ? conjointName : owner;
+        }
+        const info = types[typeKey] || { icon: '🛡️' };
+        
+        const assuranceData = {
+            type: typeKey,
+            icon: info.icon,
+            compagnie: company,
+            assure: assureName,
+            montant_couverture: amount,
+            exclure_calcul: exclure,
+            source_vendue_id: null
+        };
+        
+        if(editIndex !== null) {
+            // Préserver l'ID si existant
+            assuranceData.id = assurances[editIndex].id;
+            assuranceData.source_vendue_id = assurances[editIndex].source_vendue_id;
+            assurances[editIndex] = assuranceData;
+        } else {
+            assurances.push(assuranceData);
+        }
+        
+        render();
+        closeModal();
+        FINOX_NAV.markAsUnsaved();
+        FINOX.showNotification('Assurance enregistrée','success');
+    };
+    
+    window.deleteAssurance = async function() {
+        if(editIndex === null) return;
+        if(await FINOX.confirm('Supprimer cette assurance?')) {
+            assurances.splice(editIndex, 1);
+            render();
+            closeModal();
+            FINOX_NAV.markAsUnsaved();
+            FINOX.showNotification('Assurance supprimée','success');
+        }
+    };
+    
+    window.deleteDirect = async function(index) {
+        if(await FINOX.confirm('Supprimer cette assurance?')) {
+            assurances.splice(index, 1);
+            render();
+            FINOX_NAV.markAsUnsaved();
+        }
+    };
+    
+    window.importGhostAssurance = function(index) {
+        const ghost = ghostAssurances[index];
+        if(!ghost) return;
+        
+        assurances.push({
+            type: ghost.type,
+            icon: ghost.icon,
+            compagnie: ghost.compagnie,
+            assure: ghost.assure,
+            montant_couverture: ghost.montant_couverture,
+            exclure_calcul: false,
+            source_vendue_id: ghost.source_vendue_id
+        });
+        
+        ghostAssurances.splice(index, 1);
+        render();
+        renderGhostSection();
+        FINOX_NAV.markAsUnsaved();
+        FINOX.showNotification('Assurance Finox importée','success');
+    };
+    
+    window.selectAssuranceOwner = function(p) {
+        ownerFilter = p;
+        document.querySelectorAll('.assurance-person-chip').forEach(c=>c.classList.toggle('active',c.dataset.person===p));
+        render();
+    };
+
+    function matchesOwnerFilter(a) {
+        if(ownerFilter === 'all') return true;
+        const assureLower = (a.assure||'').toLowerCase();
+        if(ownerFilter === 'client') return assureLower === clientName.toLowerCase() || assureLower === 'client';
+        if(ownerFilter === 'conjoint') return assureLower === conjointName.toLowerCase() || assureLower === 'conjoint';
+        // Corpo mode: match by exact name
+        return assureLower === ownerFilter.toLowerCase();
+    }
+    
+    function render() {
+        const g = document.getElementById('assuranceGrid');
+        const e = document.getElementById('assuranceEmptyState');
+        
+        let filtered = assurances.filter(matchesOwnerFilter);
+        
+        if(filtered.length===0) { 
+            g.innerHTML=''; 
+            e.style.display='block'; 
+        } else { 
+            e.style.display='none'; 
+            g.innerHTML = filtered.map((a, idx) => {
+                // Trouver l'index réel dans le tableau complet
+                const realIndex = assurances.indexOf(a);
+                return card(a, realIndex);
+            }).join(''); 
+        }
+        
+        summary();
+    }
+    
+    function card(a, index) {
+        const info = types[a.type]||{icon:'🛡️',name:a.type||'Assurance'};
+        const isCollective = a.type?.includes('Collective');
+        const isInvalidite = a.type?.includes('Invalidité');
+        
+        return `<div class="assurance-card ${isCollective?'collective':'individuelle'} ${a.exclure_calcul?'excluded':''}" onclick="openEdit(${index})">
+            ${a.exclure_calcul ? '<div class="assurance-card-excluded-badge">Exclu</div>' : ''}
+            <div class="assurance-card-actions">
+                <button class="assurance-card-action edit" onclick="event.stopPropagation();openEdit(${index})">✏️</button>
+                <button class="assurance-card-action delete" onclick="event.stopPropagation();deleteDirect(${index})">🗑️</button>
+            </div>
+            <div class="assurance-card-header">
+                <div class="assurance-card-icon">${a.icon || info.icon}</div>
+                <div class="assurance-card-info">
+                    <div class="assurance-card-type">${info.name}</div>
+                    <div class="assurance-card-company">${a.compagnie||'—'}</div>
+                    <div class="assurance-card-owner">👤 ${a.assure||'—'}</div>
+                </div>
+            </div>
+            <div class="assurance-card-body">
+                <div class="assurance-card-stat">
+                    <span class="assurance-card-stat-label">${isInvalidite?'Prestation/mois':'Capital'}</span>
+                    <span class="assurance-card-stat-value">${fmt(a.montant_couverture)}</span>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    function renderGhostSection() {
+        const section = document.getElementById('ghostSection');
+        const container = document.getElementById('ghostCardsContainer');
+        const countEl = document.getElementById('ghostCount');
+        
+        if(ghostAssurances.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+        
+        section.style.display = 'block';
+        countEl.textContent = ghostAssurances.length + ' disponible' + (ghostAssurances.length > 1 ? 's' : '');
+        
+        container.innerHTML = ghostAssurances.map((g, idx) => `
+            <div class="ghost-card">
+                <div class="ghost-card-icon">${g.icon}</div>
+                <div class="ghost-card-info">
+                    <div class="ghost-card-type">${types[g.type]?.name || g.type}</div>
+                    <div class="ghost-card-details">${g.compagnie} • ${fmt(g.montant_couverture)}</div>
+                </div>
+                <button class="ghost-card-btn" onclick="importGhostAssurance(${idx})">Importer</button>
+            </div>
+        `).join('');
+    }
+    
+    function summary() {
+        let filtered = assurances.filter(matchesOwnerFilter);
+        
+        // Exclure celles marquées "exclure du calcul"
+        const forCalc = filtered.filter(a => !a.exclure_calcul);
+        
+        let totalVie=0, totalInv=0, totalMG=0;
+        forCalc.forEach(a=>{
+            if(a.type?.includes('Invalidité')) totalInv += a.montant_couverture||0;
+            else if(a.type?.includes('Maladie')) totalMG += a.montant_couverture||0;
+            else totalVie += a.montant_couverture||0;
+        });
+        
+        document.getElementById('totalAssurances').textContent = filtered.length;
+        document.getElementById('totalVie').textContent = fmt(totalVie);
+        document.getElementById('totalInvalidite').textContent = fmt(totalInv);
+        document.getElementById('totalMG').textContent = fmt(totalMG);
+    }
+    
+    window.saveAndNext = async function() {
+        const r = await window.saveModuleData();
+        if(r.success) { FINOX.showNotification('Assurances sauvegardées','success'); FINOX_NAV.markAsSaved(); if(typeof FINOX_NAV?.updateABFCheckmarks==='function') FINOX_NAV.updateABFCheckmarks(); FINOX_NAV.loadModule('abf-besoins-vie'); }
+        else FINOX.showNotification('Erreur: '+r.error,'error');
+    };
+    
+    // === INIT ===
+    const client = await FINOX.loadClientData(true);
+    if(!client) { console.error('❌ Aucun client'); return; }
+
+    const isCorpo = client.type_contact === 'corpo';
+    let corpoPersons = []; // [{name, source}] for corpo mode
+
+    if(isCorpo) {
+        // === CORPO MODE ===
+        const corpoName = client.company_name || client.first_name || 'Corporation';
+        clientName = corpoName;
+
+        // Collect personnes clés + actionnaires from abf_data.corpo
+        const corpoData = client.abf_data?.corpo || {};
+        const personnesCles = corpoData.personnes_cles || [];
+        const actionnaires = corpoData.actionnaires || [];
+
+        personnesCles.forEach(p => {
+            const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
+            if(nom) corpoPersons.push({ name: nom, source: 'cle', label: nom + (p.fonction ? ' (' + p.fonction + ')' : '') });
+        });
+        actionnaires.forEach(a => {
+            const nom = [a.prenom, a.nom].filter(Boolean).join(' ');
+            if(nom && !corpoPersons.some(cp => cp.name === nom)) {
+                corpoPersons.push({ name: nom, source: 'actionnaire', label: nom + (a.parts_pct ? ' (' + a.parts_pct + '%)' : '') });
+            }
+        });
+
+        // Fetch relations
+        try {
+            const { data: rels } = await FINOX.supabase
+                .from('client_relationships')
+                .select('related_client_id, relationship_type, clients!client_relationships_related_client_id_fkey(first_name, last_name)')
+                .eq('client_id', FINOX.CLIENT_ID);
+            if(rels) {
+                rels.forEach(r => {
+                    const rc = r.clients;
+                    if(rc) {
+                        const nom = [rc.first_name, rc.last_name].filter(Boolean).join(' ');
+                        if(nom && !corpoPersons.some(cp => cp.name === nom)) {
+                            corpoPersons.push({ name: nom, source: 'relation', label: nom + (r.relationship_type ? ' (' + r.relationship_type + ')' : '') });
+                        }
+                    }
+                });
+            }
+        } catch(e) { console.warn('⚠️ Erreur chargement relations:', e); }
+
+        // Rebuild #modalOwner select with corpo persons
+        const ownerSelect = document.getElementById('modalOwner');
+        ownerSelect.innerHTML = '<option value="">Sélectionner...</option>';
+        // Option: Corporation itself as preneur
+        ownerSelect.innerHTML += '<option value="' + corpoName + '">' + corpoName + ' (Corporation)</option>';
+        // Optgroup: Personnes clés / Actionnaires
+        const pcPersons = corpoPersons.filter(p => p.source === 'cle' || p.source === 'actionnaire');
+        if(pcPersons.length > 0) {
+            let og = '<optgroup label="Personnes clés / Actionnaires">';
+            pcPersons.forEach(p => { og += '<option value="' + p.name + '">' + p.label + '</option>'; });
+            og += '</optgroup>';
+            ownerSelect.innerHTML += og;
+        }
+        // Optgroup: Relations
+        const relPersons = corpoPersons.filter(p => p.source === 'relation');
+        if(relPersons.length > 0) {
+            let og = '<optgroup label="Relations">';
+            relPersons.forEach(p => { og += '<option value="' + p.name + '">' + p.label + '</option>'; });
+            og += '</optgroup>';
+            ownerSelect.innerHTML += og;
+        }
+
+        // Update person filter chips for corpo
+        const chipsContainer = document.querySelector('.assurance-person-chips');
+        chipsContainer.innerHTML = '<div class="assurance-person-chip active" data-person="all" onclick="selectAssuranceOwner(\'all\')"><span>📋</span><span>Tous</span></div>';
+        chipsContainer.innerHTML += '<div class="assurance-person-chip" data-person="' + corpoName + '" onclick="selectAssuranceOwner(\'' + corpoName.replace(/'/g, "\\'") + '\')"><span>🏛️</span><span>' + corpoName + '</span></div>';
+        corpoPersons.forEach(p => {
+            chipsContainer.innerHTML += '<div class="assurance-person-chip" data-person="' + p.name + '" onclick="selectAssuranceOwner(\'' + p.name.replace(/'/g, "\\'") + '\')"><span>👤</span><span>' + p.name + '</span></div>';
+        });
+
+        // Update client name display
+        document.getElementById('assuranceClientName').textContent = corpoName;
+
+    } else {
+        // === PERSONAL MODE ===
+        clientName = client.first_name||'Client';
+        conjointName = client.conjoint_first_name||'Conjoint';
+        hasConjoint = client.has_conjoint;
+
+        document.getElementById('assuranceClientName').textContent = clientName;
+        document.getElementById('assuranceConjointName').textContent = conjointName;
+        document.getElementById('optionClient').textContent = clientName;
+        document.getElementById('optionConjoint').textContent = conjointName;
+
+        if(hasConjoint) {
+            document.querySelectorAll('.conjoint-chip').forEach(c=>c.classList.add('visible'));
+            document.getElementById('optionConjoint').style.display = '';
+        } else {
+            // Pas de conjoint: masquer le sélecteur de personne (filtre inutile)
+            document.querySelector('.assurance-person-selector').style.display = 'none';
+        }
+    }
+    
+    // === CHARGER DEPUIS TABLE abf_assurances ===
+    try {
+        const { data: assurancesDB, error } = await FINOX.supabase
+            .from('abf_assurances')
+            .select('*')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('ordre', { ascending: true });
+        
+        if(error) throw error;
+        
+        if(assurancesDB && assurancesDB.length > 0) {
+            assurances = assurancesDB;
+            console.log('📋 Assurances chargées:', assurances.length);
+        }
+    } catch(err) {
+        console.error('❌ Erreur chargement assurances:', err);
+    }
+    
+    // === CHARGER ASSURANCES VENDUES FINOX ===
+    try {
+        const { data: venduesDB, error: venduesError } = await FINOX.supabase
+            .from('assurances_vendues')
+            .select('*')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .eq('statut', 'en_vigueur')
+            .order('created_at', { ascending: false });
+        
+        if(!venduesError && venduesDB && venduesDB.length > 0) {
+            console.log('🏆 Assurances Finox en vigueur:', venduesDB.length);
+            
+            const typeMapping = {
+                'vie_permanente': { type: 'Assurance Vie Permanente', icon: '♾️' },
+                'vie_temporaire': { type: 'Assurance Vie Temporaire', icon: '⏱️' },
+                'vie_universelle': { type: 'Assurance Vie Permanente', icon: '♾️' },
+                'vie_entiere': { type: 'Assurance Vie Permanente', icon: '♾️' },
+                'vie_participative': { type: 'Assurance Vie Participative', icon: '🌿' },
+                'invalidite_courte': { type: 'Assurance Invalidité', icon: '🏥' },
+                'invalidite_longue': { type: 'Assurance Invalidité', icon: '🏥' },
+                'maladie_grave': { type: 'Assurance Maladie Grave', icon: '💊' },
+                'collective': { type: 'Assurance Vie Collective', icon: '🏢' }
+            };
+            
+            // Filtrer celles pas encore importées
+            ghostAssurances = venduesDB.filter(v => {
+                return !assurances.some(a => a.source_vendue_id === v.id);
+            }).map(v => {
+                const mapped = typeMapping[v.type_produit] || { type: 'Assurance Vie Temporaire', icon: '🛡️' };
+                return {
+                    type: mapped.type,
+                    icon: mapped.icon,
+                    compagnie: v.assureur,
+                    assure: v.assure || clientName,
+                    montant_couverture: v.montant_couverture || 0,
+                    source_vendue_id: v.id
+                };
+            });
+        }
+    } catch(err) {
+        console.warn('⚠️ Erreur chargement assurances vendues:', err);
+    }
+    
+    initGrids();
+    render();
+    renderGhostSection();
+    FINOX.setupAllMoneyInputs();
+    
+    // === SAUVEGARDE VERS TABLE abf_assurances (Smart Save) ===
+    window.saveModuleData = async function() {
+        if(isSaving) return {success:true};
+        isSaving = true;
+
+        console.log('💾 Sauvegarde assurances...', assurances.length, 'éléments');
+
+        try {
+            // 1. Charger les IDs existants en DB
+            const { data: existingDB, error: fetchError } = await FINOX.supabase
+                .from('abf_assurances')
+                .select('id')
+                .eq('client_id', FINOX.CLIENT_ID);
+
+            if(fetchError) throw fetchError;
+
+            const existingIds = new Set((existingDB || []).map(r => r.id));
+            const currentIds = new Set();
+
+            // 2. Mettre à jour ou insérer chaque assurance
+            for(let i = 0; i < assurances.length; i++) {
+                const a = assurances[i];
+                const row = {
+                    client_id: FINOX.CLIENT_ID,
+                    type: a.type,
+                    icon: a.icon,
+                    compagnie: a.compagnie,
+                    assure: a.assure,
+                    montant_couverture: a.montant_couverture,
+                    exclure_calcul: a.exclure_calcul || false,
+                    source_vendue_id: a.source_vendue_id || null,
+                    ordre: i
+                };
+
+                if(a.id && existingIds.has(a.id)) {
+                    // Update existing row
+                    const { error } = await FINOX.supabase
+                        .from('abf_assurances')
+                        .update(row)
+                        .eq('id', a.id);
+                    if(error) throw error;
+                    currentIds.add(a.id);
+                } else {
+                    // Insert new row and capture its DB id
+                    const { data: inserted, error } = await FINOX.supabase
+                        .from('abf_assurances')
+                        .insert(row)
+                        .select('id')
+                        .single();
+                    if(error) throw error;
+                    if(inserted) {
+                        a.id = inserted.id;
+                        currentIds.add(inserted.id);
+                    }
+                }
+            }
+
+            // 3. Supprimer celles qui ne sont plus dans la liste
+            const toDelete = [...existingIds].filter(id => !currentIds.has(id));
+            if(toDelete.length > 0) {
+                const { error: delError } = await FINOX.supabase
+                    .from('abf_assurances')
+                    .delete()
+                    .in('id', toDelete);
+                if(delError) throw delError;
+            }
+
+            // 4. Mettre à jour abf_data
+            const currentAbfData = client.abf_data || {};
+            const abfUpdate = { ...currentAbfData };
+
+            const { error: clientError } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+
+            if(clientError) throw clientError;
+
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            console.log('✅ Assurances sauvegardées:', assurances.length);
+
+            isSaving = false;
+            return {success:true};
+        } catch(e) {
+            console.error('❌ Erreur sauvegarde:', e);
+            isSaving = false;
+            return {success:false, error:e.message};
+        }
+    };
+    
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&document.getElementById('assuranceModalOverlay').classList.contains('active')) closeModal(); });
+    
+    console.log('✅ Module ABF Assurances (Modale + SQL) chargé');
+})();
+</script>

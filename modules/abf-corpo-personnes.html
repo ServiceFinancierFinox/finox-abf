@@ -1,0 +1,233 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - PERSONNES CLÉS
+     Gestion des personnes clés de l'entreprise
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.pc-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.pc-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.pc-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.pc-add-btn { padding: 10px 20px; background: rgba(156,39,176,0.2); border: 1px solid rgba(156,39,176,0.3); border-radius: 10px; color: #CE93D8; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.pc-add-btn:hover { background: rgba(156,39,176,0.3); }
+
+.pc-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+.pc-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+.pc-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+.pc-table { width: 100%; border-collapse: collapse; }
+.pc-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 1px solid var(--border-color); }
+.pc-table td { padding: 12px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.pc-table tr:hover td { background: rgba(255,255,255,0.02); }
+.pc-actions { display: flex; gap: 8px; }
+.pc-action-btn { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: none; transition: all 0.15s; }
+.pc-action-edit { background: rgba(33,150,243,0.15); color: #64B5F6; }
+.pc-action-edit:hover { background: rgba(33,150,243,0.25); }
+.pc-action-delete { background: rgba(244,67,54,0.15); color: #ef9a9a; }
+.pc-action-delete:hover { background: rgba(244,67,54,0.25); }
+
+.pc-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.pc-badge-m { background: rgba(33,150,243,0.15); color: #64B5F6; }
+.pc-badge-f { background: rgba(233,30,99,0.15); color: #F48FB1; }
+.pc-badge-oui { background: rgba(244,67,54,0.15); color: #ef9a9a; }
+.pc-badge-non { background: rgba(76,175,80,0.15); color: #81C784; }
+
+/* MODAL */
+.pc-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.pc-modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; width: 500px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+.pc-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; }
+.pc-form-group { margin-bottom: 14px; }
+.pc-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.pc-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; }
+.pc-form-input:focus { border-color: var(--gold); }
+.pc-form-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; box-sizing: border-box; }
+.pc-form-select option { background: var(--bg-card); color: var(--text-primary); }
+.pc-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pc-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.pc-modal-cancel { padding: 10px 20px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.pc-modal-save { padding: 10px 20px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.pc-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.pc-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.pc-save-btn:hover { filter: brightness(1.1); }
+</style>
+
+<!-- HEADER -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+    <button class="pc-add-btn" onclick="openPersonneModal()">+ Ajouter une personne</button>
+</div>
+
+<!-- TABLEAU -->
+<div class="pc-card">
+    <div id="pcTableContainer"></div>
+</div>
+
+<!-- MODAL -->
+<div id="pcModalOverlay" class="pc-modal-overlay" style="display:none;">
+    <div class="pc-modal">
+        <div class="pc-modal-title" id="pcModalTitle">Ajouter une personne clé</div>
+        <input type="hidden" id="pcEditIndex" value="-1">
+        <div class="pc-form-row">
+            <div class="pc-form-group">
+                <label class="pc-form-label">Prénom</label>
+                <input type="text" class="pc-form-input" id="pcPrenom" placeholder="Prénom">
+            </div>
+            <div class="pc-form-group">
+                <label class="pc-form-label">Nom</label>
+                <input type="text" class="pc-form-input" id="pcNom" placeholder="Nom">
+            </div>
+        </div>
+        <div class="pc-form-row">
+            <div class="pc-form-group">
+                <label class="pc-form-label">Date de naissance</label>
+                <input type="date" class="pc-form-input" id="pcDDN">
+            </div>
+            <div class="pc-form-group">
+                <label class="pc-form-label">Sexe</label>
+                <select class="pc-form-select" id="pcSexe">
+                    <option value="">--</option>
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                </select>
+            </div>
+        </div>
+        <div class="pc-form-row">
+            <div class="pc-form-group">
+                <label class="pc-form-label">Fumeur</label>
+                <select class="pc-form-select" id="pcFumeur">
+                    <option value="">--</option>
+                    <option value="non">Non-fumeur</option>
+                    <option value="oui">Fumeur</option>
+                </select>
+            </div>
+            <div class="pc-form-group">
+                <label class="pc-form-label">Salaire annuel</label>
+                <input type="text" class="pc-form-input" id="pcSalaire" placeholder="Ex: 85 000 $">
+            </div>
+        </div>
+        <div class="pc-form-group">
+            <label class="pc-form-label">Fonction / Rôle</label>
+            <input type="text" class="pc-form-input" id="pcFonction" placeholder="Ex: Président, VP Finance, Directeur...">
+        </div>
+        <div class="pc-modal-actions">
+            <button class="pc-modal-cancel" onclick="closePersonneModal()">Annuler</button>
+            <button class="pc-modal-save" onclick="savePersonne()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- BOUTON SAUVEGARDER -->
+<div class="pc-save-bar">
+    <button class="pc-save-btn" onclick="savePersonnesCles()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('👔 Module ABF Corpo - Personnes clés');
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    let personnes = client.abf_data?.corpo?.personnes_cles || [];
+
+    function renderTable() {
+        const container = document.getElementById('pcTableContainer');
+        if (!container) return;
+        if (personnes.length === 0) {
+            container.innerHTML = `<div class="pc-empty"><div class="pc-empty-icon">👤</div>Aucune personne clé ajoutée.<br>Cliquez sur "Ajouter une personne" pour commencer.</div>`;
+            return;
+        }
+        container.innerHTML = `
+            <table class="pc-table">
+                <thead><tr>
+                    <th>Nom</th><th>Date de naissance</th><th>Sexe</th><th>Fumeur</th><th>Salaire</th><th>Fonction</th><th></th>
+                </tr></thead>
+                <tbody>${personnes.map((p, i) => `
+                    <tr>
+                        <td style="font-weight:600;">${p.prenom || ''} ${p.nom || ''}</td>
+                        <td>${p.ddn || '-'}</td>
+                        <td><span class="pc-badge ${p.sexe === 'M' ? 'pc-badge-m' : 'pc-badge-f'}">${p.sexe || '-'}</span></td>
+                        <td><span class="pc-badge ${p.fumeur === 'oui' ? 'pc-badge-oui' : 'pc-badge-non'}">${p.fumeur === 'oui' ? 'Oui' : p.fumeur === 'non' ? 'Non' : '-'}</span></td>
+                        <td>${p.salaire || '-'}</td>
+                        <td>${p.fonction || '-'}</td>
+                        <td><div class="pc-actions">
+                            <button class="pc-action-btn pc-action-edit" onclick="editPersonne(${i})">Modifier</button>
+                            <button class="pc-action-btn pc-action-delete" onclick="deletePersonne(${i})">Supprimer</button>
+                        </div></td>
+                    </tr>
+                `).join('')}</tbody>
+            </table>`;
+    }
+    renderTable();
+
+    window.openPersonneModal = function(idx) {
+        document.getElementById('pcEditIndex').value = idx !== undefined ? idx : -1;
+        document.getElementById('pcModalTitle').textContent = idx !== undefined ? 'Modifier la personne clé' : 'Ajouter une personne clé';
+        const p = idx !== undefined ? personnes[idx] : {};
+        document.getElementById('pcPrenom').value = p.prenom || '';
+        document.getElementById('pcNom').value = p.nom || '';
+        document.getElementById('pcDDN').value = p.ddn || '';
+        document.getElementById('pcSexe').value = p.sexe || '';
+        document.getElementById('pcFumeur').value = p.fumeur || '';
+        document.getElementById('pcSalaire').value = p.salaire || '';
+        document.getElementById('pcFonction').value = p.fonction || '';
+        document.getElementById('pcModalOverlay').style.display = 'flex';
+    };
+
+    window.closePersonneModal = function() {
+        document.getElementById('pcModalOverlay').style.display = 'none';
+    };
+
+    window.savePersonne = function() {
+        const prenom = document.getElementById('pcPrenom').value.trim();
+        const nom = document.getElementById('pcNom').value.trim();
+        if (!prenom && !nom) { FINOX.showNotification('Le nom est requis', 'error'); return; }
+
+        const entry = {
+            prenom, nom,
+            ddn: document.getElementById('pcDDN').value || '',
+            sexe: document.getElementById('pcSexe').value,
+            fumeur: document.getElementById('pcFumeur').value,
+            salaire: document.getElementById('pcSalaire').value.trim(),
+            fonction: document.getElementById('pcFonction').value.trim()
+        };
+
+        const idx = parseInt(document.getElementById('pcEditIndex').value);
+        if (idx >= 0) { personnes[idx] = entry; } else { personnes.push(entry); }
+        renderTable();
+        closePersonneModal();
+    };
+
+    window.editPersonne = function(idx) { openPersonneModal(idx); };
+    window.deletePersonne = function(idx) {
+        personnes.splice(idx, 1);
+        renderTable();
+    };
+
+    window.savePersonnesCles = async function() {
+        const btn = document.querySelector('.pc-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, personnes_cles: personnes }, section_corpo_personnes_completed: personnes.length > 0 };
+
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Personnes clés sauvegardées', 'success');
+        } catch (err) {
+            FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    };
+
+    // Close modal on overlay click
+    document.getElementById('pcModalOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closePersonneModal();
+    });
+
+    console.log('✅ Module Personnes clés chargé');
+})();
+</script>

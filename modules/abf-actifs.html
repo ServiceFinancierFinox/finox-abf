@@ -1,0 +1,3206 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-ACTIFS
+     Portrait Financier — Actifs, Passifs, Projections & Pensions
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Net Worth Dashboard */
+.net-worth-dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.net-worth-card {
+    background: linear-gradient(135deg, var(--finox-light-gray, #1e1e1e), var(--finox-gray, #2b2b2b));
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid rgba(232, 180, 77, 0.2);
+    text-align: center;
+}
+
+.net-worth-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.net-worth-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #d4a03d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.net-worth-value.positive {
+    background: linear-gradient(135deg, #4CAF50, #34d399);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.net-worth-value.negative {
+    background: linear-gradient(135deg, #FF5252, #f87171);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.net-worth-sub { font-size:10px; color:var(--text-muted); margin-top:4px; letter-spacing:0; text-transform:none; }
+.projections-dashboard { margin-top:-10px; }
+.projections-dashboard .net-worth-value { font-size:22px; }
+
+/* Card */
+.card {
+    background: var(--bg-card, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 16px;
+}
+
+/* ─── Type Picker Modal ─── */
+.atp-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1001; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.atp-overlay.show { display:flex; }
+.atp-modal { background:var(--bg-card,#1e1e1e); border:1px solid var(--border-color); border-radius:16px; width:95%; max-width:520px; max-height:85vh; overflow-y:auto; animation:atp-in 0.2s ease; }
+@keyframes atp-in { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.atp-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-color); }
+.atp-header h3 { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.atp-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; }
+.atp-close:hover { background:rgba(255,255,255,0.1); }
+.atp-body { padding:16px 20px 20px; }
+.atp-group-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; margin:14px 0 8px; padding:0; }
+.atp-group-label:first-child { margin-top:0; }
+.atp-group-label.gold { color:var(--gold); }
+.atp-group-label.red { color:#FF5252; }
+.atp-group-label.blue { color:#3b82f6; }
+.atp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; margin-bottom:6px; }
+.atp-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 6px; background:rgba(255,255,255,0.03); border:1.5px solid var(--border-color); border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.atp-btn:hover { border-color:var(--gold); background:rgba(232,180,77,0.1); transform:translateY(-2px); }
+.atp-btn .atp-icon { font-size:24px; line-height:1; }
+.atp-btn .atp-name { font-size:10px; color:var(--text-secondary); font-weight:500; line-height:1.2; }
+.atp-btn.passif-btn { border-color:rgba(255,82,82,0.25); }
+.atp-btn.passif-btn:hover { border-color:#FF5252; background:rgba(255,82,82,0.1); }
+
+/* ─── Step 2: Projet Picker ─── */
+.atp-step2 { display:none; }
+.atp-step2.show { display:block; }
+.atp-step1.hidden { display:none; }
+.atp-step2-header { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+.atp-step2-back { background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; }
+.atp-step2-back:hover { background:rgba(255,255,255,0.1); color:var(--text-primary); }
+.atp-step2-title { font-size:14px; font-weight:600; color:var(--text-primary); }
+.atp-step2-subtitle { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.atp-btn-skip { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px; margin-top:10px; background:rgba(255,255,255,0.03); border:1px dashed var(--border-color); border-radius:10px; color:var(--text-muted); font-size:12px; cursor:pointer; transition:0.2s; }
+.atp-btn-skip:hover { border-color:var(--text-secondary); color:var(--text-secondary); }
+
+/* ─── Projection on cards ─── */
+.asset-card-projet-badge { display:inline-block; background:rgba(201,162,39,0.15); color:var(--gold); font-size:9px; font-weight:600; padding:1px 5px; border-radius:4px; margin-left:6px; vertical-align:middle; }
+.asset-card-projection { margin-top:8px; padding-top:8px; border-top:1px solid var(--border-color); }
+.asset-card-proj-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.asset-card-proj-arrow { font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+.asset-card-proj-arrow .proj-from { color:var(--text-secondary); font-weight:500; }
+.asset-card-proj-arrow .proj-to { color:#4ade80; font-weight:700; }
+.asset-card-proj-details { font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+.asset-card-proj-bar { height:4px; background:var(--finox-gray); border-radius:2px; margin-top:4px; overflow:hidden; }
+.asset-card-proj-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-light)); border-radius:2px; transition:width 0.3s; }
+
+/* ─── Modal: Objectif section ─── */
+.modal-objectif-section { border-top:1px solid rgba(201,162,39,0.2); margin-top:12px; padding-top:12px; }
+.modal-objectif-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:8px 0; }
+.modal-objectif-toggle-label { font-size:13px; font-weight:600; color:var(--gold); display:flex; align-items:center; gap:6px; }
+.modal-objectif-fields { display:none; margin-top:12px; }
+.modal-objectif-fields.show { display:block; }
+.modal-proj-preview { background:linear-gradient(135deg,rgba(201,162,39,0.08),rgba(201,162,39,0.02)); border:1px solid rgba(201,162,39,0.2); border-radius:10px; padding:12px; margin-top:12px; }
+.modal-proj-preview-row { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:12px; }
+.modal-proj-preview-row .label { color:var(--text-muted); }
+.modal-proj-preview-row .value { color:var(--text-primary); font-weight:600; }
+.modal-proj-preview-row.total { border-top:1px solid rgba(201,162,39,0.2); margin-top:4px; padding-top:6px; }
+.modal-proj-preview-row.total .value { color:#4ade80; font-size:14px; }
+.modal-retraite-prompt { background:rgba(201,162,39,0.08); border:1px solid rgba(201,162,39,0.2); border-radius:8px; padding:10px; margin-top:8px; display:flex; align-items:center; gap:10px; }
+.modal-retraite-prompt label { font-size:12px; color:var(--text-secondary); white-space:nowrap; }
+.modal-retraite-prompt input { width:70px; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary); font-size:14px; text-align:center; }
+.modal-retraite-prompt input:focus { border-color:var(--gold); outline:none; }
+
+/* ─── Objectif Mode Tabs ─── */
+.objectif-mode-tabs { display:flex; gap:4px; margin-bottom:14px; background:rgba(0,0,0,0.2); border-radius:8px; padding:3px; }
+.objectif-mode-tab { flex:1; padding:7px 12px; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--text-muted); }
+.objectif-mode-tab:hover { color:var(--text-primary); background:rgba(255,255,255,0.05); }
+.objectif-mode-tab.active { background:rgba(201,162,39,0.2); color:var(--gold); box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+
+/* ─── RRPD Section ─── */
+.modal-rrpd-section { border-top:1px solid rgba(59,130,246,0.2); margin-top:12px; padding-top:12px; }
+.rrpd-slider-wrap { display:flex; align-items:center; gap:12px; }
+.rrpd-slider { flex:1; -webkit-appearance:none; height:6px; background:linear-gradient(90deg,rgba(59,130,246,0.3),rgba(59,130,246,0.6)); border-radius:3px; outline:none; }
+.rrpd-slider::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#2563eb); cursor:pointer; box-shadow:0 2px 6px rgba(59,130,246,0.4); }
+.rrpd-slider-value { font-size:18px; font-weight:700; color:#3b82f6; min-width:60px; text-align:right; }
+.rrpd-slider-range { display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top:2px; }
+.rrpd-info-note { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:8px; }
+.rrpd-info-note .info-icon { font-size:16px; }
+.rrpd-pont-section { margin-top:14px; padding-top:14px; border-top:1px dashed rgba(59,130,246,0.15); }
+.rrpd-pont-toggle { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.rrpd-pont-toggle-label { font-size:13px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+.rrpd-pont-toggle-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.rrpd-pont-fields { display:none; margin-top:10px; }
+.rrpd-pont-fields.show { display:block; }
+.rrpd-toggle { position:relative; width:44px; height:24px; }
+.rrpd-toggle input { opacity:0; width:0; height:0; }
+.rrpd-toggle .slider { position:absolute; inset:0; background:var(--border-color); border-radius:12px; cursor:pointer; transition:0.3s; }
+.rrpd-toggle .slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.3s; }
+.rrpd-toggle input:checked + .slider { background:#3b82f6; }
+.rrpd-toggle input:checked + .slider:before { transform:translateX(20px); }
+.atp-btn .atp-sub { font-size:8px; color:var(--text-muted); line-height:1; margin-top:1px; }
+
+/* Header add button */
+.actifs-add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--gold); color:#000; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.actifs-add-btn:hover { background:#d4a82a; transform:translateY(-1px); }
+
+@media (max-width: 900px) {
+    .net-worth-dashboard { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .net-worth-dashboard { grid-template-columns: 1fr; }
+    .atp-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Impot card */
+.net-worth-card.impot-card { border-color: rgba(255, 152, 0, 0.3); }
+.net-worth-value.impot {
+    background: linear-gradient(135deg, #FF9800, #FFB74D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Taux Marginal Bar */
+.taux-marginal-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 152, 0, 0.05);
+    border: 1px solid rgba(255, 152, 0, 0.15);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.taux-marginal-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.taux-marginal-input {
+    width: 70px;
+    padding: 7px 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid rgba(255, 152, 0, 0.3);
+    border-radius: 8px;
+    color: #FF9800;
+}
+.taux-marginal-input:focus {
+    border-color: #FF9800;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+/* Impot section in modal */
+.asset-modal-impot-section {
+    background: rgba(255, 152, 0, 0.05);
+    border: 1px solid rgba(255, 152, 0, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+}
+.impot-calc-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 4px 0;
+    color: var(--text-muted);
+}
+.impot-calc-row .val {
+    font-weight: 600;
+    color: #FF9800;
+}
+.impot-badge {
+    display: inline-block;
+    background: rgba(255, 152, 0, 0.15);
+    color: #FF9800;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* ====== ASSET CARDS - COMPACT VERSION ====== */
+.asset-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.asset-card-compact {
+    background: var(--finox-gray, #2b2b2b);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.asset-card-compact:hover {
+    border-color: var(--gold);
+    box-shadow: 0 4px 20px rgba(232, 180, 77, 0.15);
+    transform: translateY(-2px);
+}
+
+.asset-card-compact.validated {
+    border-left: 3px solid #4CAF50;
+}
+
+.asset-card-compact.passif-only {
+    border-left: 3px solid #FF5252;
+}
+
+.asset-card-compact.passif-only:hover {
+    border-color: #FF5252;
+}
+
+.asset-card-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.asset-card-compact-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--gold), #D4A03D);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.asset-card-compact.passif-only .asset-card-compact-icon {
+    background: linear-gradient(135deg, #FF5252, #E04545);
+}
+
+.asset-card-compact-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.asset-card-compact-type {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asset-card-compact-institution {
+    font-size: 11px;
+    color: var(--gold);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asset-card-compact.passif-only .asset-card-compact-institution {
+    color: #FF5252;
+}
+
+.asset-card-compact-owner {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.asset-card-compact-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.asset-card-compact-value {
+    font-size: 11px;
+}
+
+.asset-card-compact-value .label {
+    color: var(--text-muted);
+}
+
+.asset-card-compact-value .amount {
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.asset-card-compact-value .amount.positive { color: #4CAF50; }
+.asset-card-compact-value .amount.negative { color: #FF5252; }
+
+.asset-card-compact-net {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.asset-card-compact-net.positive { color: #4CAF50; }
+.asset-card-compact-net.negative { color: #FF5252; }
+
+.asset-card-compact-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    background: rgba(255, 82, 82, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: #FF5252;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s;
+}
+
+.asset-card-compact:hover .asset-card-compact-delete {
+    opacity: 1;
+}
+
+.asset-card-compact-delete:hover {
+    background: #FF5252;
+    color: white;
+}
+
+/* ====== ASSET MODAL ====== */
+.asset-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.asset-modal-overlay.show {
+    display: flex;
+}
+
+.asset-modal {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+}
+
+.asset-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--finox-gray, #2b2b2b);
+    z-index: 10;
+}
+
+.asset-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.asset-modal-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--gold), #D4A03D);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.asset-modal.passif-mode .asset-modal-icon {
+    background: linear-gradient(135deg, #FF5252, #E04545);
+}
+
+.asset-modal-title-text h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.asset-modal-title-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+.asset-modal-close {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.asset-modal-close:hover {
+    background: rgba(255, 82, 82, 0.1);
+    border-color: #FF5252;
+    color: #FF5252;
+}
+
+.asset-modal-body {
+    padding: 28px;
+}
+
+.asset-modal-section {
+    margin-bottom: 24px;
+}
+
+.asset-modal-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.asset-modal-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.asset-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.asset-modal-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.asset-modal-field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.asset-modal-field input,
+.asset-modal-field select {
+    padding: 14px 16px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.asset-modal-field input:focus,
+.asset-modal-field select:focus {
+    border-color: var(--gold);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 180, 77, 0.15);
+}
+
+.asset-modal-field input[type="number"] {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.asset-modal-field.actif-field input {
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.asset-modal-field.actif-field input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+.asset-modal-field.passif-field input {
+    border-color: rgba(255, 82, 82, 0.3);
+}
+
+.asset-modal-field.passif-field input:focus {
+    border-color: #FF5252;
+    box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.15);
+}
+
+.asset-modal-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--finox-dark, #1a1a1a);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.asset-modal-checkbox input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--gold);
+    cursor: pointer;
+}
+
+.asset-modal-checkbox span {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Summary in modal */
+.asset-modal-summary {
+    background: var(--finox-dark, #1a1a1a);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.asset-modal-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 13px;
+}
+
+.asset-modal-summary-row .label {
+    color: var(--text-muted);
+}
+
+.asset-modal-summary-row .value {
+    font-weight: 600;
+}
+
+.asset-modal-summary-row .value.positive { color: #4CAF50; }
+.asset-modal-summary-row .value.negative { color: #FF5252; }
+
+.asset-modal-summary-row.total {
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+    padding-top: 16px;
+    font-size: 16px;
+}
+
+.asset-modal-summary-row.total .label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.asset-modal-summary-row.total .value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* Modal Footer */
+.asset-modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 28px;
+    border-top: 1px solid var(--border-color);
+    background: var(--finox-dark, #1a1a1a);
+    border-radius: 0 0 18px 18px;
+}
+
+.asset-modal-btn {
+    flex: 1;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.asset-modal-btn.cancel {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.asset-modal-btn.cancel:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.asset-modal-btn.save {
+    background: linear-gradient(135deg, var(--gold), #d4a03d);
+    border: none;
+    color: #000;
+}
+
+.asset-modal-btn.save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(232, 180, 77, 0.3);
+}
+
+/* Delete Modal */
+.delete-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-modal-overlay.show {
+    display: flex;
+}
+
+.delete-modal {
+    background: var(--bg-card, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.delete-modal-icon { font-size: 48px; margin-bottom: 16px; }
+.delete-modal-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+.delete-modal-text { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+
+.delete-modal-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.delete-modal-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.delete-modal-btn.cancel {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.delete-modal-btn.confirm {
+    background: #FF5252;
+    border: none;
+    color: white;
+}
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.nav-btn-next {
+    background: var(--gold);
+    border: none;
+    color: #000;
+}
+
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.nav-btn-save:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+    transition: all 0.3s;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.empty-message {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 14px;
+}
+
+/* ─── À Faire Section ─── */
+.afaire-section { margin-top: 24px; }
+.afaire-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.afaire-title { font-size:16px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:8px; }
+.afaire-count { font-size:12px; font-weight:600; padding:2px 10px; border-radius:12px; background:rgba(245,158,11,0.15); color:#f59e0b; }
+.afaire-add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.afaire-add-btn:hover { background:rgba(245,158,11,0.25); transform:translateY(-1px); }
+
+.afaire-card {
+    background: var(--bg-card); border: 1px solid rgba(245,158,11,0.3); border-left: 4px solid #f59e0b;
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 16px; transition: all 0.2s; cursor: pointer;
+}
+.afaire-card:hover { border-color: #f59e0b; box-shadow: 0 4px 16px rgba(245,158,11,0.15); transform: translateY(-2px); }
+.afaire-card-icon { font-size: 28px; flex-shrink: 0; }
+.afaire-card-info { flex: 1; min-width: 0; }
+.afaire-card-type { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.afaire-card-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.afaire-card-owner { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.afaire-card-date { font-size: 12px; color: #f59e0b; font-weight: 600; white-space: nowrap; }
+.afaire-card-actions { display:flex; gap:6px; }
+.afaire-card-btn { padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; }
+.afaire-card-btn-delete { background:rgba(239,68,68,0.1); color:#ef4444; }
+.afaire-card-btn-delete:hover { background:rgba(239,68,68,0.2); }
+.afaire-empty { text-align:center; padding:24px; color:var(--text-muted); border:1px dashed rgba(245,158,11,0.3); border-radius:14px; font-size:13px; }
+
+/* Transfer opportunity button on asset cards */
+.asset-card-transfer-btn {
+    display:inline-flex; align-items:center; gap:4px; margin-top:6px;
+    padding:4px 10px; border-radius:6px; font-size:10px; font-weight:600;
+    background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.2);
+    cursor:pointer; transition:all 0.2s;
+}
+.asset-card-transfer-btn:hover { background:rgba(59,130,246,0.2); transform:translateY(-1px); }
+
+/* À Faire Picker Modal */
+.afaire-picker-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1001; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.afaire-picker-overlay.show { display:flex; }
+.afaire-picker-modal { background:var(--bg-card,#1e1e1e); border:1px solid rgba(245,158,11,0.3); border-radius:16px; width:95%; max-width:520px; max-height:85vh; overflow-y:auto; }
+.afaire-picker-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-color); }
+.afaire-picker-header h3 { font-size:16px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:8px; }
+.afaire-picker-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; }
+.afaire-picker-close:hover { background:rgba(255,255,255,0.1); }
+.afaire-picker-body { padding:16px 20px 20px; }
+.afaire-picker-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; margin:14px 0 8px; color:#f59e0b; }
+.afaire-picker-label:first-child { margin-top:0; }
+.afaire-picker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; margin-bottom:6px; }
+.afaire-picker-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 6px; background:rgba(245,158,11,0.05); border:1.5px solid rgba(245,158,11,0.2); border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.afaire-picker-btn:hover { border-color:#f59e0b; background:rgba(245,158,11,0.15); transform:translateY(-2px); }
+.afaire-picker-btn .afp-icon { font-size:24px; line-height:1; }
+.afaire-picker-btn .afp-name { font-size:10px; color:var(--text-secondary); font-weight:500; line-height:1.2; }
+
+/* À Faire Config Modal */
+.afaire-config-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1002; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.afaire-config-overlay.show { display:flex; }
+.afaire-config-modal { background:var(--bg-card,#1e1e1e); border:1px solid rgba(245,158,11,0.3); border-radius:16px; width:95%; max-width:520px; padding:24px; }
+.afaire-config-title { font-size:16px; font-weight:700; color:#f59e0b; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.afaire-config-field { margin-bottom:14px; }
+.afaire-config-field label { display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.3px; }
+.afaire-config-field input, .afaire-config-field select, .afaire-config-field textarea {
+    width:100%; padding:10px 12px; border-radius:8px; background:var(--bg-primary,#121212);
+    border:1px solid var(--border-color); color:var(--text-primary); font-size:13px; box-sizing:border-box;
+}
+.afaire-config-field input:focus, .afaire-config-field select:focus, .afaire-config-field textarea:focus { border-color:#f59e0b; outline:none; }
+.afaire-config-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.afaire-config-btn { padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; }
+.afaire-config-btn-save { background:#f59e0b; color:#000; }
+.afaire-config-btn-save:hover { filter:brightness(1.1); }
+.afaire-config-btn-cancel { background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid var(--border-color); }
+</style>
+
+
+
+<!-- Portrait Financier Dashboard -->
+<div class="net-worth-dashboard">
+    <div class="net-worth-card">
+        <div class="net-worth-label" id="netWorthClientLabel">💰 Valeur Nette</div>
+        <div class="net-worth-value" id="netWorthClient">0 $</div>
+    </div>
+    <div class="net-worth-card">
+        <div class="net-worth-label" id="netWorthConjointLabel">💰 Valeur Nette Conjoint</div>
+        <div class="net-worth-value" id="netWorthConjoint">0 $</div>
+    </div>
+    <div class="net-worth-card">
+        <div class="net-worth-label">💰 Valeur Nette Familiale</div>
+        <div class="net-worth-value" id="netWorthFamille">0 $</div>
+    </div>
+    <div class="net-worth-card impot-card">
+        <div class="net-worth-label">🧾 Impôt au Décès</div>
+        <div class="net-worth-value impot" id="netImpotsTotal">0 $</div>
+    </div>
+</div>
+
+
+<!-- Taux Marginal Bar -->
+<div class="taux-marginal-bar" id="tauxMarginalBar">
+    <span style="font-size:14px;">📊</span>
+    <div class="taux-marginal-group">
+        <label id="tauxLabelClient">Taux marginal :</label>
+        <input type="number" class="taux-marginal-input" id="tauxMarginalClient" value="53" min="0" max="100" step="0.01" oninput="onTauxChange()">
+        <span>%</span>
+    </div>
+    <div class="taux-marginal-group" id="tauxConjointGroup" style="display:none;">
+        <label id="tauxLabelConjoint">Taux conjoint :</label>
+        <input type="number" class="taux-marginal-input" id="tauxMarginalConjoint" value="53" min="0" max="100" step="0.01" oninput="onTauxChange()">
+        <span>%</span>
+    </div>
+</div>
+
+<!-- Type Picker Modal -->
+<div class="atp-overlay" id="atpOverlay" onclick="if(event.target===this)closeTypePicker()">
+    <div class="atp-modal" onclick="event.stopPropagation()">
+        <div class="atp-header">
+            <h3>💼 Nouvel Actif / Passif</h3>
+            <button class="atp-close" onclick="closeTypePicker()">✕</button>
+        </div>
+        <div class="atp-body">
+            <!-- ═══ STEP 1: Type selection ═══ -->
+            <div class="atp-step1" id="atpStep1">
+                <p class="atp-group-label gold">🏠 Biens (Actif + Passif)</p>
+                <div class="atp-grid">
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Résidence Principale','🏡','both')"><span class="atp-icon">🏡</span><span class="atp-name">Résidence</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Résidence Secondaire','🏘️','both')"><span class="atp-icon">🏘️</span><span class="atp-name">Résid. Second.</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Véhicule','🚗','both')"><span class="atp-icon">🚗</span><span class="atp-name">Véhicule</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Immobilier Locatif','🏢','both')"><span class="atp-icon">🏢</span><span class="atp-name">Immo. Locatif</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Entreprise','🏛️','both')"><span class="atp-icon">🏛️</span><span class="atp-name">Entreprise</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Autre Bien','📦','both')"><span class="atp-icon">📦</span><span class="atp-name">Autre Bien</span></div>
+                </div>
+
+                <p class="atp-group-label red">💳 Dettes & Emprunts</p>
+                <div class="atp-grid">
+                    <div class="atp-btn passif-btn" onclick="closeTypePicker();openAssetModal('Carte de Crédit','💳','passif')"><span class="atp-icon">💳</span><span class="atp-name">Carte de Crédit</span></div>
+                    <div class="atp-btn passif-btn" onclick="closeTypePicker();openAssetModal('Marge de Crédit','🏦','passif')"><span class="atp-icon">🏦</span><span class="atp-name">Marge de Crédit</span></div>
+                    <div class="atp-btn passif-btn" onclick="closeTypePicker();openAssetModal('Prêt Personnel','🤝','passif')"><span class="atp-icon">🤝</span><span class="atp-name">Prêt Personnel</span></div>
+                    <div class="atp-btn passif-btn" onclick="closeTypePicker();openAssetModal('Prêt Étudiant','🎓','passif')"><span class="atp-icon">🎓</span><span class="atp-name">Prêt Étudiant</span></div>
+                    <div class="atp-btn passif-btn" onclick="closeTypePicker();openAssetModal('Autre Dette','📋','passif')"><span class="atp-icon">📋</span><span class="atp-name">Autre Dette</span></div>
+                </div>
+
+                <p class="atp-group-label gold">💰 Comptes & Placements</p>
+                <div class="atp-grid">
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('Compte Chèque','💳','actif')"><span class="atp-icon">💳</span><span class="atp-name">Compte Chèque</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('Compte Épargne','🐷','actif')"><span class="atp-icon">🐷</span><span class="atp-name">Compte Épargne</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('CELI','🌱','actif')"><span class="atp-icon">🌱</span><span class="atp-name">CELI</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('CELI APP','🏠','actif')"><span class="atp-icon">🏠</span><span class="atp-name">CELI APP</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('REER','📈','actif')"><span class="atp-icon">📈</span><span class="atp-name">REER</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('REEE','🎓','actif')"><span class="atp-icon">🎓</span><span class="atp-name">REEE</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('REEI','♿','actif')"><span class="atp-icon">♿</span><span class="atp-name">REEI</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('CRI','🔒','actif')"><span class="atp-icon">🔒</span><span class="atp-name">CRI</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('RRCD','🏛️','actif')"><span class="atp-icon">🏛️</span><span class="atp-name">RRCD</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('RRPD','🏛️','actif')"><span class="atp-icon">🏛️</span><span class="atp-name">RRPD</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('FERR','🎯','actif')"><span class="atp-icon">🎯</span><span class="atp-name">FERR</span></div>
+                    <div class="atp-btn" onclick="closeTypePicker();openAssetModal('FRV','💼','actif')"><span class="atp-icon">💼</span><span class="atp-name">FRV</span></div>
+                    <div class="atp-btn" onclick="showProjetStep('Non Enregistré','📊','actif')"><span class="atp-icon">📊</span><span class="atp-name">Non Enregistré</span></div>
+                </div>
+            </div>
+
+            <!-- ═══ STEP 2: Projet selection ═══ -->
+            <div class="atp-step2" id="atpStep2">
+                <div class="atp-step2-header">
+                    <button class="atp-step2-back" onclick="backToStep1()">←</button>
+                    <div>
+                        <div class="atp-step2-title" id="atpStep2Title">Ce CELI, c'est pour quoi?</div>
+                        <div class="atp-step2-subtitle">Choisir un objectif aide à calculer la projection</div>
+                    </div>
+                </div>
+                <div class="atp-grid" id="atpStep2Grid">
+                    <!-- Filled dynamically -->
+                </div>
+                <div class="atp-btn-skip" onclick="skipProjetStep()">
+                    ⏭️ Passer — Sans objectif
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des actifs/passifs ACTUELS -->
+<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 class="card-title" style="margin:0">💰 Actifs actuels</h3>
+        <button class="actifs-add-btn" onclick="openTypePicker()">➕ Ajouter</button>
+    </div>
+    <div class="asset-cards-container" id="actifsPassifsBody"></div>
+    <p id="noAssetsMessage" class="empty-message">
+        Aucun actif ajouté. Cliquez sur ➕ Ajouter pour commencer.
+    </p>
+</div>
+
+<!-- Section À FAIRE / À PRÉVOIR -->
+<div class="card afaire-section">
+    <div class="afaire-header">
+        <div class="afaire-title">⏳ À faire / À prévoir <span class="afaire-count" id="afaireCount">0</span></div>
+        <button class="afaire-add-btn" onclick="openAfairePicker()">➕ Planifier un compte</button>
+    </div>
+    <div id="afaireBody"></div>
+    <div id="afaireEmpty" class="afaire-empty">
+        Aucun compte planifié. Si le client n'a pas de REEE, CELI, etc., ajoutez-le ici pour le recommander.
+    </div>
+</div>
+
+<!-- À Faire Picker Modal -->
+<div class="afaire-picker-overlay" id="afairePickerOverlay" onclick="if(event.target===this) closeAfairePicker()">
+    <div class="afaire-picker-modal" onclick="event.stopPropagation()">
+        <div class="afaire-picker-header">
+            <h3>⏳ Planifier un nouveau compte</h3>
+            <button class="afaire-picker-close" onclick="closeAfairePicker()">✕</button>
+        </div>
+        <div class="afaire-picker-body">
+            <p class="afaire-picker-label">💰 Comptes & Placements</p>
+            <div class="afaire-picker-grid">
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('CELI','🌱')"><span class="afp-icon">🌱</span><span class="afp-name">CELI</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('CELI APP','🏠')"><span class="afp-icon">🏠</span><span class="afp-name">CELI APP</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('REER','📈')"><span class="afp-icon">📈</span><span class="afp-name">REER</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('REEE','🎓')"><span class="afp-icon">🎓</span><span class="afp-name">REEE</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('REEI','♿')"><span class="afp-icon">♿</span><span class="afp-name">REEI</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('Non Enregistré','📊')"><span class="afp-icon">📊</span><span class="afp-name">Non Enregistré</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('Compte Épargne','🐷')"><span class="afp-icon">🐷</span><span class="afp-name">Cpte Épargne</span></div>
+                <div class="afaire-picker-btn" onclick="openAfaireConfig('RRCD','🏛️')"><span class="afp-icon">🏛️</span><span class="afp-name">RRCD</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- À Faire Config Modal -->
+<div class="afaire-config-overlay" id="afaireConfigOverlay" onclick="if(event.target===this) closeAfaireConfig()">
+    <div class="afaire-config-modal" onclick="event.stopPropagation()">
+        <div class="afaire-config-title" id="afaireConfigTitle">⏳ Planifier un CELI</div>
+        <input type="hidden" id="afaireConfigType" value="">
+        <input type="hidden" id="afaireConfigIcon" value="">
+        <input type="hidden" id="afaireConfigEditId" value="">
+        <div class="afaire-config-field">
+            <label>Propriétaire</label>
+            <select id="afaireConfigOwner">
+                <option value="">Sélectionner...</option>
+            </select>
+        </div>
+        <div class="afaire-config-field">
+            <label>Date cible (quand ouvrir ce compte)</label>
+            <input type="date" id="afaireConfigDate" max="2099-12-31">
+        </div>
+        <div class="afaire-config-field">
+            <label>Notes / Raison</label>
+            <textarea id="afaireConfigNotes" rows="2" placeholder="Ex: Ouvrir un REEE pour l'enfant Marie..."></textarea>
+        </div>
+        <div class="afaire-config-field">
+            <label>Objectif du compte</label>
+            <select id="afaireConfigProjet" onchange="updateAfaireProjection()">
+                <option value="">Sélectionner...</option>
+            </select>
+        </div>
+        <div class="afaire-config-field">
+            <label>Contribution mensuelle prévue ($)</label>
+            <input type="text" id="afaireConfigContrib" class="money-input" placeholder="500" oninput="updateAfaireProjection()">
+        </div>
+        <div class="afaire-config-field">
+            <label>Rendement estimé (%)</label>
+            <input type="number" id="afaireConfigRendement" placeholder="5" step="0.5" min="0" max="15" oninput="updateAfaireProjection()">
+        </div>
+        <div class="afaire-config-field">
+            <label>Horizon (années)</label>
+            <input type="number" id="afaireConfigHorizon" placeholder="20" step="1" min="1" max="50" oninput="updateAfaireProjection()">
+        </div>
+        <!-- Projection Preview -->
+        <div id="afaireProjectionPreview" class="modal-proj-preview" style="display:none;">
+            <div class="modal-proj-preview-row">
+                <span class="label">Contributions totales</span>
+                <span class="value" id="afaireProjContrib">0 $</span>
+            </div>
+            <div class="modal-proj-preview-row">
+                <span class="label">Intérêts composés</span>
+                <span class="value" id="afaireProjInterets">0 $</span>
+            </div>
+            <div class="modal-proj-preview-row total">
+                <span class="label">Valeur projetée</span>
+                <span class="value" id="afaireProjTotal">0 $</span>
+            </div>
+        </div>
+        <div class="afaire-config-actions">
+            <button class="afaire-config-btn afaire-config-btn-cancel" onclick="closeAfaireConfig()">Annuler</button>
+            <button class="afaire-config-btn afaire-config-btn-save" onclick="saveAfaireItem()">✅ Planifier</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALE ACTIF/PASSIF -->
+<div class="asset-modal-overlay" id="assetModalOverlay" onclick="closeAssetModal(event)">
+    <div class="asset-modal" id="assetModal" onclick="event.stopPropagation()">
+        <div class="asset-modal-header">
+            <div class="asset-modal-title">
+                <div class="asset-modal-icon" id="modalIcon">🏡</div>
+                <div class="asset-modal-title-text">
+                    <h3 id="modalTitle">Résidence Principale</h3>
+                    <p id="modalSubtitle">Ajouter un nouvel actif</p>
+                </div>
+            </div>
+            <button class="asset-modal-close" onclick="closeAssetModal()">✕</button>
+        </div>
+        
+        <div class="asset-modal-body">
+            <!-- Institution -->
+            <div class="asset-modal-section">
+                <div class="asset-modal-section-title">🏦 Institution financière</div>
+                <div class="asset-modal-field full-width">
+                    <label>Institution</label>
+                    <select id="modalInstitution" onchange="if(this.value==='Autre'){document.getElementById('modalInstitutionAutre').style.display='block'}else{document.getElementById('modalInstitutionAutre').style.display='none'}">
+                        <option value="">Sélectionner une institution...</option>
+                        <optgroup label="Banques">
+                            <option value="Banque de Montréal (BMO)">BMO</option>
+                            <option value="Banque Nationale du Canada (BNC)">BNC</option>
+                            <option value="Banque Canadienne Impériale de Commerce (CIBC)">CIBC</option>
+                            <option value="Caisse Populaire Desjardins">Desjardins</option>
+                            <option value="Banque Laurentienne du Canada">Laurentienne</option>
+                            <option value="Banque Royale du Canada (RBC)">RBC</option>
+                            <option value="Banque Scotia (BNS)">Scotia</option>
+                            <option value="Tangerine">Tangerine</option>
+                            <option value="Banque Toronto-Dominion (TD)">TD</option>
+                        </optgroup>
+                        <optgroup label="Assureurs">
+                            <option value="Assomption Vie">Assomption Vie</option>
+                            <option value="Beneva">Beneva</option>
+                            <option value="Canada Vie">Canada Vie</option>
+                            <option value="Desjardins Assurances">Desjardins Assurances</option>
+                            <option value="Empire Vie">Empire Vie</option>
+                            <option value="iA Groupe Financier">iA Groupe Financier</option>
+                            <option value="Manuvie">Manuvie</option>
+                            <option value="Sun Life">Sun Life</option>
+                            <option value="UV Assurance">UV Assurance</option>
+                        </optgroup>
+                        <optgroup label="Courtage en ligne">
+                            <option value="Disnat">Disnat</option>
+                            <option value="Questrade">Questrade</option>
+                            <option value="Wealthsimple">Wealthsimple</option>
+                        </optgroup>
+                        <option value="Autre">Autre</option>
+                    </select>
+                    <input type="text" id="modalInstitutionAutre" placeholder="Nom de l'institution..." style="display:none;margin-top:6px;">
+                </div>
+            </div>
+            
+            <!-- Valeurs -->
+            <div class="asset-modal-section" id="modalValuesSection">
+                <div class="asset-modal-section-title">💵 Valeurs</div>
+                <div class="asset-modal-row">
+                    <div class="asset-modal-field actif-field" id="modalActifField">
+                        <label id="modalActifLabel">💰 Valeur de l'actif</label>
+                        <input type="text" id="modalActif" class="money-input" placeholder="0" step="1000" oninput="updateModalSummary()">
+                    </div>
+                    <div class="asset-modal-field passif-field" id="modalPassifField">
+                        <label id="modalPassifLabel">💸 Solde dû (dette)</label>
+                        <input type="text" id="modalPassif" class="money-input" placeholder="0" step="1000" oninput="updateModalSummary()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Paiement mensuel -->
+            <div class="asset-modal-section" id="modalPaiementSection" style="display: none;">
+                <div class="asset-modal-section-title">📅 Paiement</div>
+                <div class="asset-modal-field">
+                    <label>Paiement mensuel</label>
+                    <input type="text" id="modalPaiement" class="money-input" placeholder="0" step="50">
+                </div>
+            </div>
+            
+            <!-- Impot au Deces (actifs qualifiants seulement) -->
+            <div class="asset-modal-section asset-modal-impot-section" id="modalImpotSection" style="display: none;">
+                <div class="asset-modal-section-title">🧾 Impot au deces</div>
+                <div class="asset-modal-field full-width">
+                    <label>Prix de Base Rajuste (PBR)</label>
+                    <input type="text" id="modalPBR" class="money-input" placeholder="0" step="1000" oninput="updateModalSummary()">
+                </div>
+                <div style="margin-top: 12px;">
+                    <div class="impot-calc-row">
+                        <span>JVM (valeur actif)</span>
+                        <span class="val" id="impotJVM">0 $</span>
+                    </div>
+                    <div class="impot-calc-row">
+                        <span>Gain en capital (JVM - PBR)</span>
+                        <span class="val" id="impotGain">0 $</span>
+                    </div>
+                    <div class="impot-calc-row">
+                        <span>Gain imposable (50%)</span>
+                        <span class="val" id="impotGainImposable">0 $</span>
+                    </div>
+                    <div class="impot-calc-row" style="font-size:13px; padding-top:8px; border-top:1px dashed rgba(255,152,0,0.2);">
+                        <span style="font-weight:600; color:var(--text-primary);">Impot estime</span>
+                        <span class="val" id="impotEstime" style="font-size:14px;">0 $</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Propriétaire & Options -->
+            <div class="asset-modal-section">
+                <div class="asset-modal-section-title">👤 Propriétaire & Options</div>
+                <div class="asset-modal-row">
+                    <div class="asset-modal-field">
+                        <label>Propriétaire</label>
+                        <select id="modalOwner" onchange="updateModalSummary()">
+                            <option value="">Sélectionner...</option>
+                        </select>
+                    </div>
+                    <div class="asset-modal-field">
+                        <label>Options</label>
+                        <label class="asset-modal-checkbox">
+                            <input type="checkbox" id="modalGarderDeces">
+                            <span>Garder au décès</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Objectif d'épargne (comptes avec projet seulement) -->
+            <div class="asset-modal-section modal-objectif-section" id="modalObjectifSection" style="display: none;">
+                <div class="asset-modal-section-title">🎯 Objectif d'épargne <span class="asset-card-projet-badge" id="modalProjetBadge"></span></div>
+
+                <!-- Toggle mode: Par contribution / Par objectif -->
+                <div class="objectif-mode-tabs">
+                    <button type="button" class="objectif-mode-tab active" id="tabModeContrib" onclick="switchObjectifMode('contribution')">💰 Par contribution</button>
+                    <button type="button" class="objectif-mode-tab" id="tabModeObjectif" onclick="switchObjectifMode('objectif')">🎯 Par objectif</button>
+                </div>
+
+                <!-- Mode contribution: contribution mensuelle -->
+                <div class="asset-modal-row" id="rowModeContrib">
+                    <div class="asset-modal-field" id="modalContribField">
+                        <label id="modalContribLabel">Contribution mensuelle</label>
+                        <input type="text" id="modalContribution" class="money-input" placeholder="500" step="50" oninput="updateProjection()">
+                    </div>
+                    <div class="asset-modal-field" id="modalEmployeurContribField" style="display:none;">
+                        <label>Contribution employeur (mens.)</label>
+                        <input type="text" id="modalContribEmployeur" class="money-input" placeholder="250" step="50" oninput="updateProjection()">
+                    </div>
+                </div>
+
+                <!-- Mode objectif: montant cible -->
+                <div class="asset-modal-row" id="rowModeObjectif" style="display:none;">
+                    <div class="asset-modal-field">
+                        <label>Objectif à atteindre ($)</label>
+                        <input type="text" id="modalObjectifMontant" class="money-input" placeholder="500 000" step="1000" oninput="updateProjection()">
+                    </div>
+                    <div class="asset-modal-field" id="modalEmployeurContribFieldObj" style="display:none;">
+                        <label>Contribution employeur (mens.)</label>
+                        <input type="text" id="modalContribEmployeurObj" class="money-input" placeholder="250" step="50" oninput="updateProjection()">
+                    </div>
+                </div>
+
+                <!-- Commun: Rendement + Horizon -->
+                <div class="asset-modal-row" style="margin-top:12px;">
+                    <div class="asset-modal-field" id="modalRendementField">
+                        <label>Rendement estimé (%)</label>
+                        <input type="number" id="modalRendement" placeholder="5" step="0.5" min="0" max="15" oninput="updateProjection()">
+                    </div>
+                    <div class="asset-modal-field">
+                        <label>Horizon (années)</label>
+                        <input type="number" id="modalHorizon" placeholder="20" step="1" min="1" max="50" oninput="updateProjection()">
+                    </div>
+                    <div class="asset-modal-field">
+                        <label style="opacity:0">Toggle</label>
+                        <label class="asset-modal-checkbox" style="cursor:pointer;">
+                            <input type="checkbox" id="modalHorizonRetraite" onchange="toggleHorizonRetraite()">
+                            <span>Jusqu'à la retraite</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Prompt age retraite -->
+                <div class="modal-retraite-prompt" id="modalRetraitePrompt" style="display:none;">
+                    <label>🎂 Âge prévu de retraite :</label>
+                    <input type="number" id="modalAgeRetraite" min="45" max="80" step="1" placeholder="60" oninput="onAgeRetraiteSet()">
+                </div>
+
+                <!-- Preview Mode Contribution -->
+                <div class="modal-proj-preview" id="modalProjPreview" style="display:none;">
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Solde actuel</span>
+                        <span class="value" id="projSoldeActuel">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Contributions totales</span>
+                        <span class="value" id="projContribTotal">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Intérêts composés</span>
+                        <span class="value" id="projInterets">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row total">
+                        <span class="label">Valeur projetée</span>
+                        <span class="value" id="projValeurFinale">0 $</span>
+                    </div>
+                </div>
+
+                <!-- Preview Mode Objectif -->
+                <div class="modal-proj-preview" id="modalObjPreview" style="display:none;">
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Solde actuel</span>
+                        <span class="value" id="objSoldeActuel">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Croissance du solde</span>
+                        <span class="value" id="objCroissanceSolde">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Reste à accumuler</span>
+                        <span class="value" id="objResteAccumuler">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row" id="objEmployeurRow" style="display:none;">
+                        <span class="label">− Contribution employeur</span>
+                        <span class="value" id="objEmployeurTotal">0 $</span>
+                    </div>
+                    <div class="modal-proj-preview-row total">
+                        <span class="label">💰 Contribution requise</span>
+                        <span class="value" id="objContribRequise">0 $/mois</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section RRPD (Régime à prestations déterminées) -->
+            <div class="asset-modal-section modal-rrpd-section" id="modalRRPDSection" style="display: none;">
+                <div class="asset-modal-section-title">🏛️ Régime de pension employeur (PD) <span class="asset-card-projet-badge" id="modalRRPDBadge"></span></div>
+
+                <div class="asset-modal-row">
+                    <div class="asset-modal-field" style="flex:2;">
+                        <label>Rente annuelle à la retraite</label>
+                        <input type="number" id="modalRenteAnnuelle" placeholder="32000" step="500" oninput="updateRRPDPreview()">
+                        <small style="color:var(--text-muted);font-size:10px;margin-top:4px;">Montant indiqué sur votre relevé de participation</small>
+                    </div>
+                </div>
+
+                <div class="asset-modal-row" style="margin-top:16px;">
+                    <div class="asset-modal-field" style="flex:1;">
+                        <label>Âge de début de la rente</label>
+                        <div class="rrpd-slider-wrap">
+                            <input type="range" class="rrpd-slider" id="modalAgeDebutRente" min="55" max="70" value="65" step="1" oninput="updateRRPDPreview()">
+                            <div class="rrpd-slider-value" id="rrpdSliderValue">65 ans</div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px;">
+                                <span>55 ans</span><span>70 ans</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info-bulle par type de régime -->
+                <div class="rrpd-info-note" id="rrpdInfoNote" style="display:none;">
+                    <span id="rrpdInfoText"></span>
+                </div>
+
+                <!-- Prestation de raccordement (pont) -->
+                <div class="rrpd-pont-section">
+                    <div class="rrpd-pont-toggle">
+                        <div>
+                            <strong>🌉 Prestation de raccordement</strong>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Montant additionnel jusqu'à 65 ans pour compenser le RRQ</div>
+                        </div>
+                        <label class="rrpd-toggle">
+                            <input type="checkbox" id="modalPontToggle" onchange="toggleRRPDPont()">
+                            <span class="rrpd-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="rrpd-pont-fields" id="rrpdPontFields" style="display:none;">
+                        <div class="asset-modal-row">
+                            <div class="asset-modal-field">
+                                <label>Montant annuel du pont</label>
+                                <input type="text" id="modalPontMontant" class="money-input" placeholder="8 500" oninput="updateRRPDPreview()">
+                            </div>
+                            <div class="asset-modal-field">
+                                <label>Versé jusqu'à (âge)</label>
+                                <input type="number" id="modalPontJusquA" value="65" min="55" max="70" step="1" oninput="updateRRPDPreview()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview RRPD -->
+                <div class="modal-proj-preview" id="rrpdPreview" style="display:none;">
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Pension annuelle</span>
+                        <span class="value" id="rrpdPensionAnnuelle">0 $/an</span>
+                    </div>
+                    <div class="modal-proj-preview-row">
+                        <span class="label">Pension mensuelle</span>
+                        <span class="value" id="rrpdPensionMensuelle">0 $/mois</span>
+                    </div>
+                    <div class="modal-proj-preview-row" id="rrpdPontPreviewRow" style="display:none;">
+                        <span class="label">🌉 Pont (avant 65 ans)</span>
+                        <span class="value" id="rrpdPontPreview">0 $/an</span>
+                    </div>
+                    <div class="modal-proj-preview-row total">
+                        <span class="label">Début de la rente</span>
+                        <span class="value" id="rrpdDebutPreview">65 ans</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résumé -->
+            <div class="asset-modal-summary">
+                <div class="asset-modal-summary-row" id="summaryActifRow">
+                    <span class="label">Valeur actif</span>
+                    <span class="value positive" id="summaryActif">0 $</span>
+                </div>
+                <div class="asset-modal-summary-row" id="summaryPassifRow">
+                    <span class="label">Dette / Passif</span>
+                    <span class="value negative" id="summaryPassif">0 $</span>
+                </div>
+                <div class="asset-modal-summary-row" id="summaryImpotRow" style="display:none;">
+                    <span class="label">🧾 Impot au deces</span>
+                    <span class="value" style="color:#FF9800;" id="summaryImpot">0 $</span>
+                </div>
+                <div class="asset-modal-summary-row total">
+                    <span class="label" id="summaryNetLabel">Valeur nette</span>
+                    <span class="value" id="summaryNet">0 $</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="asset-modal-footer">
+            <button class="asset-modal-btn cancel" onclick="closeAssetModal()">Annuler</button>
+            <button class="asset-modal-btn save" onclick="saveAssetFromModal()">
+                <span id="modalSaveText">Ajouter</span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-modal-overlay" id="deleteModalOverlay" onclick="closeDeleteModal(event)">
+    <div class="delete-modal" onclick="event.stopPropagation()">
+        <div class="delete-modal-icon">⚠️</div>
+        <div class="delete-modal-title">Confirmer la suppression</div>
+        <div class="delete-modal-text">Voulez-vous vraiment supprimer cet actif/passif?<br>Cette action est irréversible.</div>
+        <div class="delete-modal-buttons">
+            <button class="delete-modal-btn cancel" onclick="closeDeleteModal()">Annuler</button>
+            <button class="delete-modal-btn confirm" onclick="confirmDeleteAsset()">Supprimer</button>
+        </div>
+    </div>
+</div>
+<script>
+(async function() {
+    console.log('💰 Module ABF Actifs - Init v2');
+
+    let isSaving = false;
+    let deleteTargetId = null;
+    let hasConjoint = false;
+    let clientPrenom = 'Client';
+    let conjointPrenom = 'Conjoint';
+    let cardCounter = 0; // Compteur unique pour IDs
+
+    // État de la modale
+    let modalState = {
+        isEdit: false,
+        editCardId: null,
+        type: '',
+        icon: '',
+        mode: 'both',
+        projetType: null,
+        objectifMode: 'contribution' // 'contribution' ou 'objectif'
+    };
+
+    // Âge retraite du client (chargé depuis DB)
+    let clientAgeRetraite = null;
+    let clientDateNaissance = null;
+
+    // Types avec paiement mensuel
+    const typesAvecPaiementMensuel = [
+        'Résidence Principale', 'Résidence Secondaire', 'Véhicule', 'Immobilier Locatif',
+        'Carte de Crédit', 'Marge de Crédit', 'Prêt Personnel', 'Prêt Étudiant', 'Autre Dette'
+    ];
+
+    // Passif labels par type
+    const passifLabels = {
+        'Résidence Principale': 'Hypothèque',
+        'Résidence Secondaire': 'Hypothèque',
+        'Véhicule': 'Financement',
+        'Immobilier Locatif': 'Hypothèque',
+        'Entreprise': 'Emprunt',
+        'Autre Bien': 'Dette'
+    };
+
+    // Types qualifiants pour impot au deces (gain en capital)
+    const typesQualifiantsImpot = [
+        'Entreprise', 'Résidence Secondaire', 'Immobilier Locatif'
+    ];
+
+    // Mapping: types de projets filtrés par type de compte
+    const PROJET_TYPES_PAR_COMPTE = {
+        'CELI':             [{id:'retraite',label:'Retraite',icon:'🏖️'},{id:'liberte-financiere',label:'Liberté financière',icon:'🦅'},{id:'fonds-urgence',label:'Fonds urgence',icon:'🛟'},{id:'achat-maison',label:'Achat maison',icon:'🏠'},{id:'projet-personnel',label:'Projet personnel',icon:'✨'},{id:'accumulation-lt',label:'Accumulation LT',icon:'📈'},{id:'autre',label:'Autre',icon:'📋'}],
+        'REER':             [{id:'retraite',label:'Retraite',icon:'🏖️'},{id:'retraite-anticipee',label:'Retraite anticipée',icon:'⏰'},{id:'rap',label:'RAP',icon:'🏠'},{id:'optimisation-fiscale',label:'Optimisation fiscale',icon:'🧾'},{id:'autre',label:'Autre',icon:'📋'}],
+        'REEE':             [{id:'etudes-enfant',label:'Études enfant',icon:'🎓'},{id:'retour-etudes',label:'Retour études',icon:'📚'},{id:'autre',label:'Autre',icon:'📋'}],
+        'CELI APP':         [{id:'achat-maison',label:'Achat maison',icon:'🏠'},{id:'mise-de-fonds',label:'Mise de fonds',icon:'💰'}],
+        // CRI, FRV, FERR: pas de step 2 — comptes de décaissement, calculés dans la stratégie
+        'RRCD':             [{id:'retraite',label:'Retraite',icon:'🏖️'},{id:'autre',label:'Autre',icon:'📋'}],
+        'RRPD':             [{id:'rregop',label:'RREGOP',icon:'🏛️',sub:'Fonction publique QC'},{id:'rrpe',label:'RRPE',icon:'🎓',sub:'Personnel enseignant'},{id:'rrefq',label:'RREFQ',icon:'🍁',sub:'Employés fédéraux'},{id:'rpa-prive',label:'RPA Privé',icon:'🏢',sub:'Secteur privé'},{id:'autre',label:'Autre',icon:'📋',sub:'Personnalisé'}],
+        'REEI':             [{id:'handicap',label:'Épargne invalidité',icon:'♿'},{id:'accumulation-lt',label:'Accumulation LT',icon:'📈'},{id:'autre',label:'Autre',icon:'📋'}],
+        'Non Enregistré':   [{id:'accumulation-lt',label:'Accumulation LT',icon:'📈'},{id:'retraite',label:'Retraite',icon:'🏖️'},{id:'optimisation-fiscale',label:'Optimisation fiscale',icon:'🧾'},{id:'entrepreneuriat',label:'Entrepreneuriat',icon:'🏛️'},{id:'autre',label:'Autre',icon:'📋'}],
+        'Compte Épargne':   [{id:'fonds-urgence',label:'Fonds urgence',icon:'🛟'},{id:'fonds-transition',label:'Fonds transition',icon:'🔄'},{id:'projet-personnel',label:'Projet personnel',icon:'✨'},{id:'autre',label:'Autre',icon:'📋'}]
+    };
+
+    // Rendements par défaut selon le type de projet
+    const DEFAULT_RENDEMENTS = {
+        'retraite': 5, 'retraite-anticipee': 5, 'liberte-financiere': 5,
+        'achat-maison': 4, 'mise-de-fonds': 4, 'rap': 4,
+        'fonds-urgence': 2.5, 'fonds-transition': 2.5,
+        'etudes-enfant': 4, 'retour-etudes': 4,
+        'accumulation-lt': 5.5, 'optimisation-fiscale': 5, 'entrepreneuriat': 6,
+        'projet-personnel': 4, 'decaissement': 4, 'pont-retraite': 4,
+        'handicap': 4, 'autre': 4
+    };
+
+    // Info-bulles par type de régime RRPD
+    const RRPD_REGIME_INFO = {
+        'rregop': 'RREGOP: rente non réduite possible dès 60 ans avec 35 ans de service',
+        'rrpe':   'RRPE: rente non réduite possible dès 61 ans avec 35 ans de service',
+        'rrefq':  'RREFQ: pension non réduite à 60 ans avec 30+ ans de service',
+        'rpa-prive': 'Consultez votre relevé de participation pour les détails du régime',
+        'autre':  'Entrez les données selon votre relevé de participation'
+    };
+
+    // Fonctions de projection financière
+    const fv  = (m, r, y) => r === 0 ? m * y * 12 : m * ((Math.pow(1 + r/100/12, y*12) - 1) / (r/100/12));
+    const fvL = (p, r, y) => p * Math.pow(1 + r/100, y);
+
+    // ==========================================
+    // 0. TYPE PICKER MODAL
+    // ==========================================
+    window.openTypePicker = function() {
+        document.getElementById('atpOverlay').classList.add('show');
+    };
+    window.closeTypePicker = function() {
+        document.getElementById('atpOverlay').classList.remove('show');
+        // Reset step 2
+        document.getElementById('atpStep1').classList.remove('hidden');
+        document.getElementById('atpStep2').classList.remove('show');
+    };
+
+    // ── Step 2: Projet picker ──
+    let pendingCompteType = '';
+    let pendingCompteIcon = '';
+    let pendingCompteMode = '';
+
+    window.showProjetStep = function(type, icon, mode) {
+        pendingCompteType = type;
+        pendingCompteIcon = icon;
+        pendingCompteMode = mode;
+
+        // Populate step 2 grid
+        const projets = PROJET_TYPES_PAR_COMPTE[type] || [];
+        const grid = document.getElementById('atpStep2Grid');
+        grid.innerHTML = projets.map(p => `
+            <div class="atp-btn" onclick="selectProjet('${p.id}')">
+                <span class="atp-icon">${p.icon}</span>
+                <span class="atp-name">${p.label}</span>
+                ${p.sub ? `<span class="atp-sub">${p.sub}</span>` : ''}
+            </div>
+        `).join('');
+
+        // Title adapté
+        if (type === 'RRPD') {
+            document.getElementById('atpStep2Title').textContent = 'Type de régime de pension';
+        } else {
+            document.getElementById('atpStep2Title').textContent = `Ce ${type}, c'est pour quoi?`;
+        }
+
+        // Masquer skip pour RRPD (un type est requis)
+        const skipBtn = document.querySelector('.atp-btn-skip');
+        if (skipBtn) skipBtn.style.display = type === 'RRPD' ? 'none' : 'flex';
+
+        // Slide to step 2
+        document.getElementById('atpStep1').classList.add('hidden');
+        document.getElementById('atpStep2').classList.add('show');
+    };
+
+    window.backToStep1 = function() {
+        document.getElementById('atpStep1').classList.remove('hidden');
+        document.getElementById('atpStep2').classList.remove('show');
+    };
+
+    window.skipProjetStep = function() {
+        closeTypePicker();
+        openAssetModal(pendingCompteType, pendingCompteIcon, pendingCompteMode, null, null);
+    };
+
+    window.selectProjet = function(projetId) {
+        closeTypePicker();
+        openAssetModal(pendingCompteType, pendingCompteIcon, pendingCompteMode, null, projetId);
+    };
+
+    // ==========================================
+    // 1. FONCTIONS MODALE
+    // ==========================================
+
+    window.openAssetModal = function(type, icon, mode, editCardId = null, projetType = null) {
+        modalState.isEdit = !!editCardId;
+        modalState.editCardId = editCardId;
+        modalState.type = type;
+        modalState.icon = icon;
+        modalState.mode = mode;
+        modalState.projetType = projetType;
+
+        const modal = document.getElementById('assetModal');
+        const overlay = document.getElementById('assetModalOverlay');
+
+        // Header
+        document.getElementById('modalIcon').textContent = icon;
+        document.getElementById('modalTitle').textContent = type;
+        document.getElementById('modalSubtitle').textContent = modalState.isEdit ? 'Modifier cet élément' : 'Ajouter un nouvel élément';
+        document.getElementById('modalSaveText').textContent = modalState.isEdit ? 'Enregistrer' : 'Ajouter';
+
+        // Mode passif
+        modal.classList.toggle('passif-mode', mode === 'passif');
+
+        // Afficher/masquer les champs selon le mode
+        const actifField = document.getElementById('modalActifField');
+        const passifField = document.getElementById('modalPassifField');
+        const summaryActifRow = document.getElementById('summaryActifRow');
+        const summaryPassifRow = document.getElementById('summaryPassifRow');
+
+        if (mode === 'actif') {
+            actifField.style.display = 'block';
+            passifField.style.display = 'none';
+            summaryActifRow.style.display = 'flex';
+            summaryPassifRow.style.display = 'none';
+            document.getElementById('modalActifLabel').textContent = '💰 Solde';
+            document.getElementById('summaryNetLabel').textContent = 'Valeur';
+        } else if (mode === 'passif') {
+            actifField.style.display = 'none';
+            passifField.style.display = 'block';
+            summaryActifRow.style.display = 'none';
+            summaryPassifRow.style.display = 'flex';
+            document.getElementById('modalPassifLabel').textContent = '💸 Solde dû';
+            document.getElementById('summaryNetLabel').textContent = 'Dette';
+        } else {
+            actifField.style.display = 'block';
+            passifField.style.display = 'block';
+            summaryActifRow.style.display = 'flex';
+            summaryPassifRow.style.display = 'flex';
+            document.getElementById('modalActifLabel').textContent = '💰 Valeur';
+            document.getElementById('modalPassifLabel').textContent = '💸 ' + (passifLabels[type] || 'Dette');
+            document.getElementById('summaryNetLabel').textContent = 'Valeur nette';
+        }
+
+        // Paiement mensuel
+        const showPaiement = mode !== 'actif' && typesAvecPaiementMensuel.includes(type);
+        document.getElementById('modalPaiementSection').style.display = showPaiement ? 'block' : 'none';
+
+        // Impot au deces (types qualifiants seulement)
+        const isQualifiant = typesQualifiantsImpot.includes(type);
+        document.getElementById('modalImpotSection').style.display = isQualifiant ? 'block' : 'none';
+        document.getElementById('summaryImpotRow').style.display = isQualifiant ? 'flex' : 'none';
+
+        // Options propriétaire
+        let ownerHTML = '<option value="">Sélectionner...</option>';
+        ownerHTML += `<option value="${clientPrenom}">${clientPrenom}</option>`;
+        if (hasConjoint) {
+            ownerHTML += `<option value="${conjointPrenom}">${conjointPrenom}</option>`;
+            ownerHTML += '<option value="Les deux">Les deux</option>';
+        }
+        document.getElementById('modalOwner').innerHTML = ownerHTML;
+
+        // Si édition, pré-remplir depuis le dataset de la carte
+        if (modalState.isEdit && editCardId) {
+            const card = document.getElementById(editCardId);
+            if (card) {
+                document.getElementById('modalInstitution').value = card.dataset.institution || '';
+                document.getElementById('modalActif').value = card.dataset.actif ? FINOX.formatNumber(card.dataset.actif) : '';
+                document.getElementById('modalPassif').value = card.dataset.passif ? FINOX.formatNumber(card.dataset.passif) : '';
+                document.getElementById('modalPaiement').value = card.dataset.paiement ? FINOX.formatNumber(card.dataset.paiement) : '';
+                document.getElementById('modalOwner').value = card.dataset.owner || '';
+                document.getElementById('modalGarderDeces').checked = card.dataset.garderDeces === 'true';
+                document.getElementById('modalPBR').value = card.dataset.pbr ? FINOX.formatNumber(card.dataset.pbr) : '';
+
+                // Projet fields
+                if (card.dataset.projetType) {
+                    modalState.projetType = card.dataset.projetType;
+                }
+                document.getElementById('modalContribution').value = card.dataset.contribution ? FINOX.formatNumber(card.dataset.contribution) : '';
+                document.getElementById('modalRendement').value = card.dataset.rendement || '';
+                document.getElementById('modalHorizon').value = card.dataset.horizon || '';
+                document.getElementById('modalHorizonRetraite').checked = card.dataset.horizonRetraite === 'true';
+            }
+        } else {
+            document.getElementById('modalInstitution').value = '';
+            document.getElementById('modalActif').value = '';
+            document.getElementById('modalPassif').value = '';
+            document.getElementById('modalPaiement').value = '';
+            document.getElementById('modalOwner').value = '';
+            document.getElementById('modalGarderDeces').checked = false;
+            document.getElementById('modalPBR').value = '';
+
+            // Projet fields — pré-remplir rendement par défaut si projet choisi
+            document.getElementById('modalContribution').value = '';
+            document.getElementById('modalRendement').value = projetType ? (DEFAULT_RENDEMENTS[projetType] || 4) : '';
+            document.getElementById('modalHorizon').value = '';
+            document.getElementById('modalHorizonRetraite').checked = false;
+        }
+
+        // Auto-sélectionner le client comme propriétaire s'il n'y a pas de conjoint
+        const ownerField = document.getElementById('modalOwner').closest('.asset-modal-field');
+        if (!hasConjoint) {
+            document.getElementById('modalOwner').value = clientPrenom;
+            ownerField.style.display = 'none';
+        } else {
+            ownerField.style.display = '';
+        }
+
+        // ── Types sans section objectif (décaissement/immobilisé — calculés dans la stratégie) ──
+        const TYPES_SANS_OBJECTIF = ['CRI', 'FRV', 'FERR', 'RRPD'];
+        const objectifSection = document.getElementById('modalObjectifSection');
+        const rrpdSection = document.getElementById('modalRRPDSection');
+        const projetBadge = document.getElementById('modalProjetBadge');
+        const isRRPD = type === 'RRPD';
+        const isRRCD = type === 'RRCD';
+        const isSansObjectif = TYPES_SANS_OBJECTIF.includes(type);
+
+        // Nettoyer projetType résiduel pour types sans objectif (vieilles données)
+        if (isSansObjectif && !isRRPD) {
+            modalState.projetType = null;
+        }
+
+        if (isRRPD) {
+            // RRPD: masquer objectif + champ valeur actif, afficher section RRPD
+            objectifSection.style.display = 'none';
+            rrpdSection.style.display = 'block';
+            actifField.style.display = 'none';
+
+            // Badge régime
+            const rrpdBadge = document.getElementById('modalRRPDBadge');
+            const regimeInfo = (PROJET_TYPES_PAR_COMPTE['RRPD'] || []).find(p => p.id === modalState.projetType);
+            rrpdBadge.textContent = regimeInfo ? regimeInfo.label : '';
+
+            // Info-bulle par régime
+            const infoNote = document.getElementById('rrpdInfoNote');
+            const infoText = document.getElementById('rrpdInfoText');
+            if (modalState.projetType && RRPD_REGIME_INFO[modalState.projetType]) {
+                infoNote.style.display = 'flex';
+                infoText.textContent = RRPD_REGIME_INFO[modalState.projetType];
+            } else {
+                infoNote.style.display = 'none';
+            }
+
+            // Pré-remplir si édition
+            if (modalState.isEdit && modalState.editCardId) {
+                const card = document.getElementById(modalState.editCardId);
+                if (card) {
+                    document.getElementById('modalRenteAnnuelle').value = card.dataset.rrpdRenteAnnuelle || '';
+                    document.getElementById('modalAgeDebutRente').value = card.dataset.rrpdAgeDebut || 65;
+                    document.getElementById('rrpdSliderValue').textContent = (card.dataset.rrpdAgeDebut || 65) + ' ans';
+                    const pontActif = card.dataset.rrpdPontActif === 'true';
+                    document.getElementById('modalPontToggle').checked = pontActif;
+                    document.getElementById('rrpdPontFields').style.display = pontActif ? 'block' : 'none';
+                    document.getElementById('modalPontMontant').value = FINOX.formatNumber(card.dataset.rrpdPontMontant) || '';
+                    document.getElementById('modalPontJusquA').value = card.dataset.rrpdPontJusquA || 65;
+                }
+            } else {
+                document.getElementById('modalRenteAnnuelle').value = '';
+                document.getElementById('modalAgeDebutRente').value = 65;
+                document.getElementById('rrpdSliderValue').textContent = '65 ans';
+                document.getElementById('modalPontToggle').checked = false;
+                document.getElementById('rrpdPontFields').style.display = 'none';
+                document.getElementById('modalPontMontant').value = '';
+                document.getElementById('modalPontJusquA').value = 65;
+            }
+
+            updateRRPDPreview();
+        } else {
+            rrpdSection.style.display = 'none';
+
+            if (modalState.projetType && !isSansObjectif) {
+                objectifSection.style.display = 'block';
+                const projets = PROJET_TYPES_PAR_COMPTE[type] || [];
+                const projetInfo = projets.find(p => p.id === modalState.projetType);
+                projetBadge.textContent = projetInfo ? projetInfo.label : modalState.projetType;
+            } else {
+                objectifSection.style.display = 'none';
+                projetBadge.textContent = '';
+            }
+        }
+
+        // ── RRCD: label contribution + champ employeur ──
+        const contribLabel = document.getElementById('modalContribLabel');
+        if (contribLabel) {
+            contribLabel.textContent = isRRCD ? 'Contribution employé (mensuelle)' : 'Contribution mensuelle';
+        }
+        const employeurField = document.getElementById('modalEmployeurContribField');
+        if (employeurField) {
+            employeurField.style.display = isRRCD ? 'block' : 'none';
+            if (isRRCD && modalState.isEdit && modalState.editCardId) {
+                const card = document.getElementById(modalState.editCardId);
+                if (card) {
+                    document.getElementById('modalContribEmployeur').value = card.dataset.contribEmployeur ? FINOX.formatNumber(card.dataset.contribEmployeur) : '';
+                }
+            } else if (!modalState.isEdit) {
+                document.getElementById('modalContribEmployeur').value = '';
+            }
+        }
+
+        // ── Mode objectif: détecter si on était en mode objectif (objectifEpargne > 0) ──
+        let detectedMode = 'contribution';
+        if (modalState.isEdit && modalState.editCardId) {
+            const card = document.getElementById(modalState.editCardId);
+            const savedObjectif = parseFloat(card?.dataset.objectifEpargne) || 0;
+            if (savedObjectif > 0) {
+                detectedMode = 'objectif';
+                document.getElementById('modalObjectifMontant').value = FINOX.formatNumber(savedObjectif);
+                // Employer field for objectif mode too
+                if (isRRCD) {
+                    document.getElementById('modalContribEmployeurObj').value = card.dataset.contribEmployeur ? FINOX.formatNumber(card.dataset.contribEmployeur) : '';
+                    document.getElementById('modalEmployeurContribFieldObj').style.display = 'block';
+                }
+            }
+        }
+        if (!modalState.isEdit) {
+            document.getElementById('modalObjectifMontant').value = '';
+            document.getElementById('modalContribEmployeurObj').value = '';
+        }
+        modalState.objectifMode = detectedMode;
+        // Reset tabs UI
+        document.getElementById('tabModeContrib').classList.toggle('active', detectedMode === 'contribution');
+        document.getElementById('tabModeObjectif').classList.toggle('active', detectedMode === 'objectif');
+        document.getElementById('rowModeContrib').style.display = detectedMode === 'contribution' ? 'flex' : 'none';
+        document.getElementById('rowModeObjectif').style.display = detectedMode === 'objectif' ? 'flex' : 'none';
+        document.getElementById('modalEmployeurContribFieldObj').style.display = (isRRCD && detectedMode === 'objectif') ? 'block' : 'none';
+
+        // Reset retraite prompt
+        document.getElementById('modalRetraitePrompt').style.display = 'none';
+        if (clientAgeRetraite) {
+            document.getElementById('modalAgeRetraite').value = clientAgeRetraite;
+        }
+
+        updateModalSummary();
+        if (!isRRPD) updateProjection();
+        overlay.classList.add('show');
+    };
+
+    window.closeAssetModal = function(event) {
+        if (event && event.target !== event.currentTarget) return;
+        document.getElementById('assetModalOverlay').classList.remove('show');
+        modalState = { isEdit: false, editCardId: null, type: '', icon: '', mode: 'both', projetType: null, objectifMode: 'contribution' };
+    };
+
+    window.updateModalSummary = function() {
+        const actif = FINOX.parseNumber(document.getElementById('modalActif').value) || 0;
+        const passif = FINOX.parseNumber(document.getElementById('modalPassif').value) || 0;
+        const net = actif - passif;
+
+        document.getElementById('summaryActif').textContent = FINOX.formatCurrency(actif);
+        document.getElementById('summaryPassif').textContent = FINOX.formatCurrency(passif);
+
+        const netEl = document.getElementById('summaryNet');
+        if (modalState.mode === 'passif') {
+            netEl.textContent = FINOX.formatCurrency(passif);
+            netEl.className = 'value negative';
+        } else {
+            netEl.textContent = FINOX.formatCurrency(net);
+            netEl.className = 'value ' + (net >= 0 ? 'positive' : 'negative');
+        }
+
+        // Calcul impot au deces pour types qualifiants
+        const isQualifiant = typesQualifiantsImpot.includes(modalState.type);
+        if (isQualifiant) {
+            const pbr = FINOX.parseNumber(document.getElementById('modalPBR').value) || 0;
+            const jvm = actif;
+            const owner = document.getElementById('modalOwner').value;
+
+            // Determiner taux selon owner
+            let taux = 53;
+            if (owner === conjointPrenom) {
+                taux = parseFloat(document.getElementById('tauxMarginalConjoint')?.value) || 53;
+            } else {
+                taux = parseFloat(document.getElementById('tauxMarginalClient')?.value) || 53;
+            }
+
+            const gain = Math.max(0, jvm - pbr);
+            const gainImposable = gain * 0.5;
+            const impot = Math.round(gainImposable * (taux / 100));
+
+            document.getElementById('impotJVM').textContent = FINOX.formatCurrency(jvm);
+            document.getElementById('impotGain').textContent = FINOX.formatCurrency(gain);
+            document.getElementById('impotGainImposable').textContent = FINOX.formatCurrency(gainImposable);
+            document.getElementById('impotEstime').textContent = FINOX.formatCurrency(impot);
+            document.getElementById('summaryImpot').textContent = FINOX.formatCurrency(impot);
+        }
+    };
+
+    // ── PMT: calcul contribution mensuelle requise pour atteindre un objectif ──
+    function pmt(futureValue, presentValue, rateAnnual, years) {
+        if (years <= 0) return 0;
+        const r = rateAnnual / 100 / 12;
+        const n = years * 12;
+        if (r === 0) return Math.max(0, (futureValue - presentValue) / n);
+        const factor = Math.pow(1 + r, n);
+        return Math.max(0, (futureValue - presentValue * factor) * r / (factor - 1));
+    }
+
+    // ── Switch mode objectif: contribution ↔ objectif ──
+    window.switchObjectifMode = function(mode) {
+        modalState.objectifMode = mode;
+
+        // Tabs UI
+        document.getElementById('tabModeContrib').classList.toggle('active', mode === 'contribution');
+        document.getElementById('tabModeObjectif').classList.toggle('active', mode === 'objectif');
+
+        // Show/hide rows
+        document.getElementById('rowModeContrib').style.display = mode === 'contribution' ? 'flex' : 'none';
+        document.getElementById('rowModeObjectif').style.display = mode === 'objectif' ? 'flex' : 'none';
+
+        // Employer field for RRCD in objectif mode too
+        if (modalState.type === 'RRCD') {
+            document.getElementById('modalEmployeurContribFieldObj').style.display = 'block';
+        }
+
+        updateProjection();
+    };
+
+    // ── Projection temps réel dans la modal (dual mode) ──
+    window.updateProjection = function() {
+        const contribPreview = document.getElementById('modalProjPreview');
+        const objPreview = document.getElementById('modalObjPreview');
+
+        if (!modalState.projetType) {
+            if (contribPreview) contribPreview.style.display = 'none';
+            if (objPreview) objPreview.style.display = 'none';
+            return;
+        }
+
+        const solde = FINOX.parseNumber(document.getElementById('modalActif').value) || 0;
+        const rendement = parseFloat(document.getElementById('modalRendement').value) || 0;
+        const horizon = parseFloat(document.getElementById('modalHorizon').value) || 0;
+
+        if (horizon <= 0) {
+            contribPreview.style.display = 'none';
+            objPreview.style.display = 'none';
+            return;
+        }
+
+        if (modalState.objectifMode === 'objectif') {
+            // ── Mode Objectif: calculer contribution requise ──
+            contribPreview.style.display = 'none';
+            const objectif = FINOX.parseNumber(document.getElementById('modalObjectifMontant').value) || 0;
+            const contribEmpObj = FINOX.parseNumber(document.getElementById('modalContribEmployeurObj').value) || 0;
+
+            if (objectif <= 0) { objPreview.style.display = 'none'; return; }
+
+            const croissanceSolde = fvL(solde, rendement, horizon) - solde;
+            const reste = Math.max(0, objectif - solde - croissanceSolde);
+
+            // Contribution totale requise par mois
+            const totalRequis = pmt(objectif, solde, rendement, horizon);
+            // Si employeur: déduire sa part
+            const contribEmployeRequise = Math.max(0, totalRequis - contribEmpObj);
+
+            document.getElementById('objSoldeActuel').textContent = FINOX.formatCurrency(solde);
+            document.getElementById('objCroissanceSolde').textContent = '+ ' + FINOX.formatCurrency(Math.round(croissanceSolde));
+            document.getElementById('objResteAccumuler').textContent = FINOX.formatCurrency(Math.round(reste));
+
+            const empRow = document.getElementById('objEmployeurRow');
+            if (contribEmpObj > 0) {
+                empRow.style.display = 'flex';
+                document.getElementById('objEmployeurTotal').textContent = FINOX.formatCurrency(Math.round(contribEmpObj * horizon * 12));
+            } else {
+                empRow.style.display = 'none';
+            }
+
+            document.getElementById('objContribRequise').textContent = FINOX.formatCurrency(Math.round(contribEmployeRequise)) + '/mois';
+
+            // Mettre à jour le champ contribution caché pour la sauvegarde
+            document.getElementById('modalContribution').value = FINOX.formatNumber(Math.round(contribEmployeRequise));
+
+            objPreview.style.display = 'block';
+        } else {
+            // ── Mode Contribution: projection standard ──
+            objPreview.style.display = 'none';
+            const contrib = FINOX.parseNumber(document.getElementById('modalContribution').value) || 0;
+            const contribEmployeur = FINOX.parseNumber(document.getElementById('modalContribEmployeur').value) || 0;
+            const totalContribMensuelle = contrib + contribEmployeur;
+
+            const futureContrib = fv(totalContribMensuelle, rendement, horizon);
+            const futureLump = fvL(solde, rendement, horizon);
+            const futureTotal = futureContrib + futureLump;
+            const totalContrib = totalContribMensuelle * horizon * 12;
+            const interets = futureTotal - solde - totalContrib;
+
+            document.getElementById('projSoldeActuel').textContent = FINOX.formatCurrency(solde);
+            let contribLabel = FINOX.formatCurrency(totalContrib);
+            if (contribEmployeur > 0) {
+                contribLabel += ` (employé ${FINOX.formatCurrency(contrib * horizon * 12)} + employeur ${FINOX.formatCurrency(contribEmployeur * horizon * 12)})`;
+            }
+            document.getElementById('projContribTotal').textContent = contribLabel;
+            document.getElementById('projInterets').textContent = FINOX.formatCurrency(Math.max(0, interets));
+            document.getElementById('projValeurFinale').textContent = FINOX.formatCurrency(Math.round(futureTotal));
+            contribPreview.style.display = 'block';
+        }
+    };
+
+    window.toggleHorizonRetraite = function() {
+        const checked = document.getElementById('modalHorizonRetraite').checked;
+        if (!checked) {
+            document.getElementById('modalRetraitePrompt').style.display = 'none';
+            return;
+        }
+
+        if (clientAgeRetraite) {
+            // Calcul automatique de l'horizon
+            const age = getClientAge();
+            if (age) {
+                const h = Math.max(1, clientAgeRetraite - age);
+                document.getElementById('modalHorizon').value = h;
+                updateProjection();
+            }
+            document.getElementById('modalRetraitePrompt').style.display = 'none';
+        } else {
+            // Prompt pour saisir l'âge
+            document.getElementById('modalRetraitePrompt').style.display = 'flex';
+        }
+    };
+
+    window.onAgeRetraiteSet = function() {
+        const val = parseInt(document.getElementById('modalAgeRetraite').value);
+        if (!val || val < 45 || val > 80) return;
+
+        clientAgeRetraite = val;
+        const age = getClientAge();
+        if (age) {
+            const h = Math.max(1, val - age);
+            document.getElementById('modalHorizon').value = h;
+            updateProjection();
+        }
+        document.getElementById('modalRetraitePrompt').style.display = 'none';
+
+        // Sauvegarder age_retraite sur le client en background
+        FINOX.supabase.from('clients')
+            .update({ age_retraite: val })
+            .eq('id', FINOX.CLIENT_ID)
+            .then(() => console.log('✅ age_retraite sauvegardé:', val));
+    };
+
+    function getClientAge() {
+        if (!clientDateNaissance) return null;
+        const birth = FINOX.parseLocalDate ? FINOX.parseLocalDate(clientDateNaissance) : new Date(clientDateNaissance);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    }
+
+    // ── RRPD: fonctions de preview et pont ──
+    window.updateRRPDPreview = function() {
+        const rente = parseFloat(document.getElementById('modalRenteAnnuelle').value) || 0;
+        const age = parseInt(document.getElementById('modalAgeDebutRente').value) || 65;
+        const pontActif = document.getElementById('modalPontToggle').checked;
+        const pontMontant = FINOX.parseNumber(document.getElementById('modalPontMontant').value) || 0;
+        const pontJusquA = parseInt(document.getElementById('modalPontJusquA').value) || 65;
+
+        // Mise à jour slider label
+        document.getElementById('rrpdSliderValue').textContent = age + ' ans';
+
+        const preview = document.getElementById('rrpdPreview');
+        if (rente > 0) {
+            preview.style.display = 'block';
+            document.getElementById('rrpdPensionAnnuelle').textContent = FINOX.formatCurrency(rente) + '/an';
+            document.getElementById('rrpdPensionMensuelle').textContent = FINOX.formatCurrency(Math.round(rente / 12)) + '/mois';
+            document.getElementById('rrpdDebutPreview').textContent = age + ' ans';
+
+            const pontRow = document.getElementById('rrpdPontPreviewRow');
+            if (pontActif && pontMontant > 0) {
+                pontRow.style.display = 'flex';
+                document.getElementById('rrpdPontPreview').textContent = FINOX.formatCurrency(pontMontant) + '/an jusqu\'à ' + pontJusquA + ' ans';
+            } else {
+                pontRow.style.display = 'none';
+            }
+        } else {
+            preview.style.display = 'none';
+        }
+    };
+
+    window.toggleRRPDPont = function() {
+        const checked = document.getElementById('modalPontToggle').checked;
+        document.getElementById('rrpdPontFields').style.display = checked ? 'block' : 'none';
+        updateRRPDPreview();
+    };
+
+    window.saveAssetFromModal = function() {
+        const data = {
+            type: modalState.type,
+            icon: modalState.icon,
+            mode: modalState.mode,
+            institution: document.getElementById('modalInstitution').value === 'Autre' ? (document.getElementById('modalInstitutionAutre').value.trim() || 'Autre') : document.getElementById('modalInstitution').value,
+            actif: FINOX.parseNumber(document.getElementById('modalActif').value) || 0,
+            passif: FINOX.parseNumber(document.getElementById('modalPassif').value) || 0,
+            paiement: FINOX.parseNumber(document.getElementById('modalPaiement').value) || 0,
+            owner: document.getElementById('modalOwner').value,
+            garderDeces: document.getElementById('modalGarderDeces').checked,
+            pbr: FINOX.parseNumber(document.getElementById('modalPBR').value) || 0,
+            // Projet fields
+            projetType: modalState.projetType || '',
+            contribution: FINOX.parseNumber(document.getElementById('modalContribution').value) || 0,
+            contribEmployeur: modalState.objectifMode === 'objectif'
+                ? (FINOX.parseNumber(document.getElementById('modalContribEmployeurObj').value) || 0)
+                : (FINOX.parseNumber(document.getElementById('modalContribEmployeur').value) || 0),
+            objectifEpargne: modalState.objectifMode === 'objectif'
+                ? (FINOX.parseNumber(document.getElementById('modalObjectifMontant').value) || 0)
+                : 0,
+            rendement: parseFloat(document.getElementById('modalRendement').value) || 0,
+            horizon: parseInt(document.getElementById('modalHorizon').value) || 0,
+            horizonRetraite: document.getElementById('modalHorizonRetraite').checked,
+            // RRPD fields
+            rrpdRenteAnnuelle: parseFloat(document.getElementById('modalRenteAnnuelle').value) || 0,
+            rrpdAgeDebut: parseInt(document.getElementById('modalAgeDebutRente').value) || 65,
+            rrpdPontActif: document.getElementById('modalPontToggle').checked,
+            rrpdPontMontant: FINOX.parseNumber(document.getElementById('modalPontMontant').value) || 0,
+            rrpdPontJusquA: parseInt(document.getElementById('modalPontJusquA').value) || 65
+        };
+
+        if (modalState.isEdit && modalState.editCardId) {
+            updateAssetCard(modalState.editCardId, data);
+        } else {
+            createAssetCard(data);
+        }
+
+        closeAssetModal();
+        calculateNetWorth();
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    // ==========================================
+    // 2. FONCTIONS CARTES COMPACTES
+    // ==========================================
+
+    function createAssetCard(data, dbId) {
+        const container = document.getElementById('actifsPassifsBody');
+        const noAssetsMsg = document.getElementById('noAssetsMessage');
+        if (noAssetsMsg) noAssetsMsg.style.display = 'none';
+
+        // ID unique garanti (compteur au lieu de Date.now)
+        const cardId = 'asset_' + (++cardCounter);
+        const net = data.actif - data.passif;
+
+        const card = document.createElement('div');
+        card.className = 'asset-card-compact' + (data.mode === 'passif' ? ' passif-only' : '') + (data.owner ? ' validated' : '');
+        card.id = cardId;
+        card.dataset.type = data.type;
+        card.dataset.mode = data.mode;
+        card.dataset.institution = data.institution;
+        card.dataset.actif = data.actif;
+        card.dataset.passif = data.passif;
+        card.dataset.paiement = data.paiement || 0;
+        card.dataset.owner = data.owner;
+        card.dataset.garderDeces = data.garderDeces;
+        card.dataset.icon = data.icon;
+        card.dataset.pbr = data.pbr || 0;
+        // Projet fields
+        card.dataset.projetType = data.projetType || '';
+        card.dataset.contribution = data.contribution || 0;
+        card.dataset.contribEmployeur = data.contribEmployeur || 0;
+        card.dataset.objectifEpargne = data.objectifEpargne || 0;
+        card.dataset.rendement = data.rendement || 0;
+        card.dataset.horizon = data.horizon || 0;
+        card.dataset.horizonRetraite = data.horizonRetraite || false;
+        // RRPD fields
+        card.dataset.rrpdRenteAnnuelle = data.rrpdRenteAnnuelle || 0;
+        card.dataset.rrpdAgeDebut = data.rrpdAgeDebut || 65;
+        card.dataset.rrpdPontActif = data.rrpdPontActif || false;
+        card.dataset.rrpdPontMontant = data.rrpdPontMontant || 0;
+        card.dataset.rrpdPontJusquA = data.rrpdPontJusquA || 65;
+        if (dbId) card.dataset.dbId = dbId;
+
+        card.innerHTML = renderCardContent(data, net, cardId);
+
+        // Click pour éditer — lire type/icon/mode/projetType depuis dataset (pas closure)
+        card.addEventListener('click', (e) => {
+            if (!e.target.closest('.asset-card-compact-delete')) {
+                openAssetModal(card.dataset.type, card.dataset.icon, card.dataset.mode, cardId, card.dataset.projetType || null);
+            }
+        });
+
+        container.appendChild(card);
+        return cardId;
+    }
+
+    function updateAssetCard(cardId, data) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+
+        const net = data.actif - data.passif;
+
+        // Mettre à jour TOUTES les données du dataset
+        card.dataset.type = data.type;
+        card.dataset.mode = data.mode;
+        card.dataset.icon = data.icon;
+        card.dataset.institution = data.institution;
+        card.dataset.actif = data.actif;
+        card.dataset.passif = data.passif;
+        card.dataset.paiement = data.paiement || 0;
+        card.dataset.owner = data.owner;
+        card.dataset.garderDeces = data.garderDeces;
+        card.dataset.pbr = data.pbr || 0;
+        // Projet fields
+        card.dataset.projetType = data.projetType || '';
+        card.dataset.contribution = data.contribution || 0;
+        card.dataset.contribEmployeur = data.contribEmployeur || 0;
+        card.dataset.objectifEpargne = data.objectifEpargne || 0;
+        card.dataset.rendement = data.rendement || 0;
+        card.dataset.horizon = data.horizon || 0;
+        card.dataset.horizonRetraite = data.horizonRetraite || false;
+        // RRPD fields
+        card.dataset.rrpdRenteAnnuelle = data.rrpdRenteAnnuelle || 0;
+        card.dataset.rrpdAgeDebut = data.rrpdAgeDebut || 65;
+        card.dataset.rrpdPontActif = data.rrpdPontActif || false;
+        card.dataset.rrpdPontMontant = data.rrpdPontMontant || 0;
+        card.dataset.rrpdPontJusquA = data.rrpdPontJusquA || 65;
+
+        card.classList.toggle('validated', !!data.owner);
+        card.classList.toggle('passif-only', data.mode === 'passif');
+        card.innerHTML = renderCardContent(data, net, cardId);
+    }
+
+    function renderCardContent(data, net, cardId) {
+        const institutionDisplay = data.institution || 'Non spécifié';
+        const ownerDisplay = data.owner || 'Non assigné';
+
+        let valuesHTML = '';
+        if (data.mode === 'actif') {
+            valuesHTML = `
+                <div class="asset-card-compact-value">
+                    <span class="label">Valeur:</span>
+                    <span class="amount positive">${FINOX.formatCurrency(data.actif)}</span>
+                </div>
+            `;
+        } else if (data.mode === 'passif') {
+            valuesHTML = `
+                <div class="asset-card-compact-value">
+                    <span class="label">Dette:</span>
+                    <span class="amount negative">${FINOX.formatCurrency(data.passif)}</span>
+                </div>
+            `;
+        } else {
+            // Mode "both": afficher actif ET passif
+            valuesHTML = `
+                <div class="asset-card-compact-value">
+                    <span class="label">Actif:</span>
+                    <span class="amount positive">${FINOX.formatCurrency(data.actif)}</span>
+                </div>
+                <div class="asset-card-compact-value">
+                    <span class="label">Dette:</span>
+                    <span class="amount negative">${FINOX.formatCurrency(data.passif)}</span>
+                </div>
+            `;
+        }
+
+        // Net: afficher seulement pour mode "both" avec la vraie valeur (pas Math.abs)
+        let netLabel = '';
+        if (data.mode === 'both') {
+            netLabel = `<span class="asset-card-compact-net ${net >= 0 ? 'positive' : 'negative'}">${FINOX.formatCurrency(net)}</span>`;
+        }
+
+        // Badge impot si type qualifiant avec PBR
+        let impotBadge = '';
+        if (typesQualifiantsImpot.includes(data.type) && data.pbr > 0) {
+            const gain = Math.max(0, data.actif - data.pbr);
+            if (gain > 0) impotBadge = `<div class="impot-badge">🧾 Impot</div>`;
+        }
+
+        // Badge + projection pour cartes avec projet
+        let projetBadge = '';
+        let projectionHTML = '';
+
+        // ── RRPD: affichage pension au lieu de projection capital ──
+        if (data.type === 'RRPD' && data.projetType) {
+            const regimeInfo = (PROJET_TYPES_PAR_COMPTE['RRPD'] || []).find(p => p.id === data.projetType);
+            const regimeLabel = regimeInfo ? regimeInfo.label : data.projetType;
+            projetBadge = `<span class="asset-card-projet-badge">🏛️ ${regimeLabel}</span>`;
+
+            const rente = data.rrpdRenteAnnuelle || 0;
+            const ageDebut = data.rrpdAgeDebut || 65;
+            const pontActif = data.rrpdPontActif;
+            const pontMontant = data.rrpdPontMontant || 0;
+            const pontJusquA = data.rrpdPontJusquA || 65;
+
+            if (rente > 0) {
+                const mensuelle = Math.round(rente / 12);
+                let pontLine = '';
+                if (pontActif && pontMontant > 0) {
+                    pontLine = `<div class="asset-card-proj-details">🌉 Pont: ${FINOX.formatCurrency(pontMontant)}/an jusqu'à ${pontJusquA} ans</div>`;
+                }
+                projectionHTML = `
+                    <div class="asset-card-projection">
+                        <div class="asset-card-proj-row">
+                            <div class="asset-card-proj-arrow">
+                                <span class="proj-from">Pension: ${FINOX.formatCurrency(rente)}/an</span>
+                                <span style="font-size:11px;color:var(--text-muted);">à ${ageDebut} ans</span>
+                            </div>
+                        </div>
+                        <div class="asset-card-proj-details">🏛️ ${FINOX.formatCurrency(mensuelle)}/mois</div>
+                        ${pontLine}
+                    </div>
+                `;
+            }
+        } else if (data.projetType && data.horizon > 0) {
+            // ── Autres comptes: projection capital ──
+            const projets = PROJET_TYPES_PAR_COMPTE[data.type] || [];
+            const projetInfo = projets.find(p => p.id === data.projetType);
+            const projetLabel = projetInfo ? projetInfo.label : data.projetType;
+            projetBadge = `<span class="asset-card-projet-badge">🎯 ${projetLabel}</span>`;
+
+            const solde = data.actif || 0;
+            const contrib = data.contribution || 0;
+            const contribEmp = data.contribEmployeur || 0;
+            const totalContrib = contrib + contribEmp;
+            const rend = data.rendement || 0;
+            const h = data.horizon || 0;
+            const objEpargne = data.objectifEpargne || 0;
+            const futureTotal = objEpargne > 0 ? objEpargne : (fv(totalContrib, rend, h) + fvL(solde, rend, h));
+
+            // Détail contribution: si employeur, afficher (500+250)
+            let contribLabel = `${FINOX.formatCurrency(contrib)}/mois`;
+            if (contribEmp > 0) {
+                contribLabel = `${FINOX.formatCurrency(totalContrib)}/mois (${Math.round(contrib)}+${Math.round(contribEmp)})`;
+            }
+
+            // Mode objectif: affichage différent
+            let detailLine = `📈 ${contribLabel} · ${rend}% · ${h} ans`;
+            if (objEpargne > 0) {
+                detailLine = `🎯 Objectif ${FINOX.formatCurrency(objEpargne)} · ${contribLabel} · ${h} ans`;
+            }
+
+            projectionHTML = `
+                <div class="asset-card-projection">
+                    <div class="asset-card-proj-row">
+                        <div class="asset-card-proj-arrow">
+                            <span class="proj-from">${FINOX.formatCurrency(solde)}</span>
+                            →
+                            <span class="proj-to">${FINOX.formatCurrency(Math.round(futureTotal))}</span>
+                        </div>
+                        <span style="font-size:10px;color:var(--text-muted);">${h} ans</span>
+                    </div>
+                    <div class="asset-card-proj-details">
+                        ${detailLine}
+                    </div>
+                    <div class="asset-card-proj-bar">
+                        <div class="asset-card-proj-bar-fill" style="width:${Math.min(100, futureTotal > 0 ? (solde / futureTotal * 100) : 0)}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <button class="asset-card-compact-delete" onclick="event.stopPropagation(); showDeleteModal('${cardId}')" title="Supprimer">✕</button>
+            <div class="asset-card-compact-header">
+                <div class="asset-card-compact-icon">${data.icon}</div>
+                <div class="asset-card-compact-info">
+                    <div class="asset-card-compact-type">${data.type}</div>
+                    <div class="asset-card-compact-institution">${institutionDisplay}</div>
+                    <div class="asset-card-compact-owner">👤 ${ownerDisplay}${projetBadge}${impotBadge}</div>
+                </div>
+            </div>
+            <div class="asset-card-compact-values">
+                ${valuesHTML}
+                ${netLabel}
+            </div>
+            ${projectionHTML}
+            ${data.actif > 0 && ['CELI','CELI APP','REER','REEE','REEI','CRI','RRCD','RRPD','FERR','FRV','Non Enregistré','Compte Épargne','Compte Chèque'].includes(data.type) ? `<div onclick="event.stopPropagation(); createTransferOpportunity('${cardId}')" class="asset-card-transfer-btn">🔄 Créer opportunité de transfert</div>` : ''}
+        `;
+    }
+
+    // ==========================================
+    // 3. AUTRES FONCTIONS
+    // ==========================================
+
+    window.calculateNetWorth = function() {
+        let actifsClient = 0, passifsClient = 0;
+        let actifsConjoint = 0, passifsConjoint = 0;
+        let impotClient = 0, impotConjoint = 0;
+
+        const tauxClient = parseFloat(document.getElementById('tauxMarginalClient')?.value) || 53;
+        const tauxConjoint = parseFloat(document.getElementById('tauxMarginalConjoint')?.value) || 53;
+
+        document.querySelectorAll('#actifsPassifsBody .asset-card-compact').forEach(card => {
+            const actif = parseFloat(card.dataset.actif) || 0;
+            const passif = parseFloat(card.dataset.passif) || 0;
+            const owner = card.dataset.owner || '';
+
+            if (owner === clientPrenom) {
+                actifsClient += actif;
+                passifsClient += passif;
+            } else if (owner === conjointPrenom) {
+                actifsConjoint += actif;
+                passifsConjoint += passif;
+            } else if (owner === 'Les deux') {
+                actifsClient += actif / 2;
+                passifsClient += passif / 2;
+                actifsConjoint += actif / 2;
+                passifsConjoint += passif / 2;
+            }
+
+            // Impot au deces pour types qualifiants
+            const type = card.dataset.type || '';
+            if (typesQualifiantsImpot.includes(type)) {
+                const pbr = parseFloat(card.dataset.pbr) || 0;
+                const gain = Math.max(0, actif - pbr);
+                const gainImposable = gain * 0.5;
+
+                if (owner === clientPrenom) {
+                    impotClient += Math.round(gainImposable * (tauxClient / 100));
+                } else if (owner === conjointPrenom) {
+                    impotConjoint += Math.round(gainImposable * (tauxConjoint / 100));
+                } else if (owner === 'Les deux') {
+                    impotClient += Math.round((gainImposable / 2) * (tauxClient / 100));
+                    impotConjoint += Math.round((gainImposable / 2) * (tauxConjoint / 100));
+                }
+            }
+        });
+
+        const netWorthClient = actifsClient - passifsClient;
+        const netWorthConjoint = actifsConjoint - passifsConjoint;
+        const netWorthFamille = netWorthClient + netWorthConjoint;
+
+        document.getElementById('netWorthClient').textContent = FINOX.formatCurrency(netWorthClient);
+        document.getElementById('netWorthConjoint').textContent = FINOX.formatCurrency(netWorthConjoint);
+        document.getElementById('netWorthFamille').textContent = FINOX.formatCurrency(netWorthFamille);
+
+        document.getElementById('netWorthClient').className = 'net-worth-value ' + (netWorthClient >= 0 ? 'positive' : 'negative');
+        document.getElementById('netWorthConjoint').className = 'net-worth-value ' + (netWorthConjoint >= 0 ? 'positive' : 'negative');
+        document.getElementById('netWorthFamille').className = 'net-worth-value ' + (netWorthFamille >= 0 ? 'positive' : 'negative');
+
+        // Afficher total impot au deces
+        const totalImpot = impotClient + impotConjoint;
+        const impotEl = document.getElementById('netImpotsTotal');
+        if (impotEl) impotEl.textContent = FINOX.formatCurrency(totalImpot);
+
+        // Labels avec prénoms
+        const labelClient = document.getElementById('netWorthClientLabel');
+        if (labelClient) labelClient.textContent = '💰 Valeur Nette ' + clientPrenom;
+        if (hasConjoint) {
+            const labelConjoint = document.getElementById('netWorthConjointLabel');
+            if (labelConjoint) labelConjoint.textContent = '💰 Valeur Nette ' + conjointPrenom;
+        }
+
+        // ══════════════════════════════════════════
+        // Projections & Épargne Dashboard (2e rangée)
+        // ══════════════════════════════════════════
+        let pacTotal = 0;           // PAC mensuel total (contributions employé + employeur)
+        let valeurProjetee = 0;     // Somme des valeurs projetées
+        let pensionsTotal = 0;      // Pensions RRPD annuelles totales
+        let nbComptesProjets = 0;   // Nombre de comptes avec projets
+        let nbPensions = 0;         // Nombre de pensions RRPD
+        let pensionMensuelleTotal = 0;
+
+        document.querySelectorAll('#actifsPassifsBody .asset-card-compact').forEach(card => {
+            const type = card.dataset.type || '';
+            const contrib = parseFloat(card.dataset.contribution) || 0;
+            const contribEmp = parseFloat(card.dataset.contribEmployeur) || 0;
+            const rend = parseFloat(card.dataset.rendement) || 0;
+            const h = parseInt(card.dataset.horizon) || 0;
+            const solde = parseFloat(card.dataset.actif) || 0;
+            const objEpargne = parseFloat(card.dataset.objectifEpargne) || 0;
+            const projetType = card.dataset.projetType || '';
+
+            // Comptes avec projection (hors RRPD)
+            if (projetType && h > 0 && type !== 'RRPD') {
+                const totalContribMens = contrib + contribEmp;
+                pacTotal += totalContribMens;
+                nbComptesProjets++;
+
+                if (objEpargne > 0) {
+                    valeurProjetee += objEpargne;
+                } else {
+                    valeurProjetee += fv(totalContribMens, rend, h) + fvL(solde, rend, h);
+                }
+            }
+
+            // Pensions RRPD
+            if (type === 'RRPD') {
+                const rente = parseFloat(card.dataset.rrpdRenteAnnuelle) || 0;
+                if (rente > 0) {
+                    pensionsTotal += rente;
+                    pensionMensuelleTotal += Math.round(rente / 12);
+                    nbPensions++;
+                }
+            }
+        });
+
+        // (Projections dashboard supprimé — les infos sont dans les cartes individuelles)
+    };
+
+    window.onTauxChange = function() {
+        calculateNetWorth();
+        FINOX_NAV.markAsUnsaved();
+    };
+
+    window.showDeleteModal = function(cardId) {
+        deleteTargetId = cardId;
+        document.getElementById('deleteModalOverlay').classList.add('show');
+    };
+
+    window.closeDeleteModal = function(event) {
+        if (event && event.target !== event.currentTarget) return;
+        document.getElementById('deleteModalOverlay').classList.remove('show');
+        deleteTargetId = null;
+    };
+
+    window.confirmDeleteAsset = function() {
+        if (deleteTargetId) {
+            const card = document.getElementById(deleteTargetId);
+            if (card) card.remove();
+
+            const container = document.getElementById('actifsPassifsBody');
+            const noAssetsMsg = document.getElementById('noAssetsMessage');
+            if (container.children.length === 0 && noAssetsMsg) {
+                noAssetsMsg.style.display = 'block';
+            }
+
+            calculateNetWorth();
+            FINOX_NAV.markAsUnsaved();
+        }
+        closeDeleteModal();
+    };
+
+    window.saveAndNext = async function() {
+        console.log('💾 Sauvegarde Actifs et navigation...');
+
+        const result = await window.saveModuleData();
+
+        if (result.success) {
+            FINOX.showNotification('Actifs sauvegardés', 'success');
+            FINOX_NAV.markAsSaved();
+
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') {
+                FINOX_NAV.updateABFCheckmarks();
+            }
+
+            FINOX_NAV.loadModule('abf-assurances');
+        } else {
+            FINOX.showNotification('Erreur de sauvegarde: ' + result.error, 'error');
+        }
+    };
+
+    // ==========================================
+    // 4. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) {
+        console.error('❌ Aucun client trouvé');
+        return;
+    }
+
+    console.log('📋 Client chargé:', client.first_name, client.last_name);
+
+    clientPrenom = client.first_name || 'Client';
+    conjointPrenom = client.conjoint_first_name || 'Conjoint';
+    hasConjoint = client.has_conjoint || false;
+    clientAgeRetraite = client.age_retraite || null;
+    clientDateNaissance = client.date_of_birth || null;
+
+    // Masquer la carte Valeur Nette Conjoint si pas de conjoint
+    if (!hasConjoint) {
+        const conjointNW = document.getElementById('netWorthConjoint');
+        if (conjointNW) {
+            const nwCard = conjointNW.closest('.net-worth-card');
+            if (nwCard) nwCard.style.display = 'none';
+        }
+        document.querySelector('.net-worth-dashboard').style.gridTemplateColumns = 'repeat(3, 1fr)';
+    }
+
+    // Afficher taux conjoint si conjoint
+    if (hasConjoint) {
+        const tauxConjGroup = document.getElementById('tauxConjointGroup');
+        if (tauxConjGroup) tauxConjGroup.style.display = 'flex';
+    }
+
+    // Labels taux avec prénoms
+    const tauxLabelClient = document.getElementById('tauxLabelClient');
+    if (tauxLabelClient) tauxLabelClient.textContent = 'Taux marginal ' + clientPrenom + ' :';
+    if (hasConjoint) {
+        const tauxLabelConj = document.getElementById('tauxLabelConjoint');
+        if (tauxLabelConj) tauxLabelConj.textContent = 'Taux marginal ' + conjointPrenom + ' :';
+    }
+
+    // ==========================================
+    // 5. CHARGER LES ACTIFS EXISTANTS
+    // ==========================================
+    const abfData = client.abf_data || {};
+    let savedAssets = [];
+
+    try {
+        const { data: assetsData, error } = await FINOX.supabase
+            .from('abf_actifs')
+            .select('*')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('ordre', { ascending: true });
+
+        if (!error && assetsData) {
+            savedAssets = assetsData;
+            console.log('📊 Actifs chargés depuis DB:', savedAssets.length);
+        }
+    } catch (e) {
+        console.log('Utilisation abf_data fallback');
+        savedAssets = abfData.actifs_passifs || [];
+    }
+
+    // Créer les cartes compactes avec IDs uniques
+    const container = document.getElementById('actifsPassifsBody');
+    const noAssetsMsg = document.getElementById('noAssetsMessage');
+
+    if (savedAssets.length > 0) {
+        noAssetsMsg.style.display = 'none';
+
+        savedAssets.forEach(asset => {
+            const data = {
+                type: asset.type || asset.description || 'Actif',
+                icon: asset.icon || '📦',
+                mode: asset.categorie || 'both',
+                institution: asset.description || asset.institution || '',
+                actif: asset.valeur || 0,
+                passif: asset.valeur_passif || 0,
+                paiement: asset.paiement_mensuel || 0,
+                owner: asset.proprietaire || '',
+                garderDeces: asset.garder_au_deces || false,
+                pbr: asset.pbr || 0,
+                // Projet fields
+                projetType: asset.projet_type || '',
+                contribution: asset.contribution_mensuelle || 0,
+                contribEmployeur: asset.contribution_employeur || 0,
+                objectifEpargne: asset.objectif_epargne || 0,
+                rendement: asset.rendement_annuel || 0,
+                horizon: asset.horizon_annees || 0,
+                horizonRetraite: false,
+                // RRPD fields
+                rrpdRenteAnnuelle: asset.rrpd_rente_annuelle || 0,
+                rrpdAgeDebut: asset.rrpd_age_debut || 65,
+                rrpdPontActif: asset.rrpd_pont_actif || false,
+                rrpdPontMontant: asset.rrpd_pont_montant || 0,
+                rrpdPontJusquA: asset.rrpd_pont_jusqu_a || 65
+            };
+
+            createAssetCard(data, asset.id);
+        });
+    }
+
+    // Charger taux marginaux sauvegardés
+    if (abfData.taux_marginal_client) {
+        const inputTauxClient = document.getElementById('tauxMarginalClient');
+        if (inputTauxClient) inputTauxClient.value = abfData.taux_marginal_client;
+    }
+    if (abfData.taux_marginal_conjoint) {
+        const inputTauxConj = document.getElementById('tauxMarginalConjoint');
+        if (inputTauxConj) inputTauxConj.value = abfData.taux_marginal_conjoint;
+    }
+
+    calculateNetWorth();
+
+    // ==========================================
+    // 6. FONCTION DE SAUVEGARDE
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) {
+            console.log('⚠️ Sauvegarde déjà en cours, skip');
+            return { success: true };
+        }
+        isSaving = true;
+
+        console.log('💾 saveModuleData Actifs appelé');
+
+        const cardsInDOM = document.querySelectorAll('#actifsPassifsBody .asset-card-compact');
+        let totalActifs = 0, totalPassifs = 0;
+        let ordre = 0;
+
+        // Collecter les IDs DB existants pour savoir lesquels supprimer
+        const existingDbIds = new Set();
+        const toUpdate = [];
+        const toInsert = [];
+
+        cardsInDOM.forEach(card => {
+            const actif = parseFloat(card.dataset.actif) || 0;
+            const passif = parseFloat(card.dataset.passif) || 0;
+
+            totalActifs += actif;
+            totalPassifs += passif;
+
+            const record = {
+                client_id: FINOX.CLIENT_ID,
+                type: card.dataset.type,
+                categorie: card.dataset.mode,
+                description: card.dataset.institution,
+                icon: card.dataset.icon,
+                proprietaire: card.dataset.owner,
+                valeur: actif,
+                valeur_passif: passif,
+                garder_au_deces: card.dataset.garderDeces === 'true',
+                paiement_mensuel: parseFloat(card.dataset.paiement) || 0,
+                pbr: parseFloat(card.dataset.pbr) || 0,
+                ordre: ordre++,
+                // Projet fields
+                projet_type: card.dataset.projetType || null,
+                contribution_mensuelle: parseFloat(card.dataset.contribution) || 0,
+                contribution_employeur: parseFloat(card.dataset.contribEmployeur) || 0,
+                objectif_epargne: parseFloat(card.dataset.objectifEpargne) || 0,
+                rendement_annuel: parseFloat(card.dataset.rendement) || null,
+                horizon_annees: parseInt(card.dataset.horizon) || null,
+                // RRPD fields
+                rrpd_regime_type: card.dataset.projetType && card.dataset.type === 'RRPD' ? card.dataset.projetType : null,
+                rrpd_rente_annuelle: parseFloat(card.dataset.rrpdRenteAnnuelle) || null,
+                rrpd_age_debut: parseInt(card.dataset.rrpdAgeDebut) || 65,
+                rrpd_pont_actif: card.dataset.rrpdPontActif === 'true',
+                rrpd_pont_montant: parseFloat(card.dataset.rrpdPontMontant) || 0,
+                rrpd_pont_jusqu_a: parseInt(card.dataset.rrpdPontJusquA) || 65
+            };
+
+            if (card.dataset.dbId) {
+                existingDbIds.add(card.dataset.dbId);
+                toUpdate.push({ id: card.dataset.dbId, ...record, cardEl: card });
+            } else {
+                toInsert.push({ record, cardEl: card });
+            }
+        });
+
+        try {
+            // 1. Supprimer les actifs qui ne sont plus dans le DOM
+            const { data: allDbAssets } = await FINOX.supabase
+                .from('abf_actifs')
+                .select('id')
+                .eq('client_id', FINOX.CLIENT_ID);
+
+            if (allDbAssets) {
+                const idsToDelete = allDbAssets
+                    .map(a => a.id)
+                    .filter(id => !existingDbIds.has(id));
+
+                if (idsToDelete.length > 0) {
+                    await FINOX.supabase
+                        .from('abf_actifs')
+                        .delete()
+                        .in('id', idsToDelete);
+                }
+            }
+
+            // 2. Mettre à jour les existants
+            for (const item of toUpdate) {
+                const { cardEl, id, ...fields } = item;
+                await FINOX.supabase
+                    .from('abf_actifs')
+                    .update(fields)
+                    .eq('id', id);
+            }
+
+            // 3. Insérer les nouveaux
+            if (toInsert.length > 0) {
+                const { data: inserted, error: insertError } = await FINOX.supabase
+                    .from('abf_actifs')
+                    .insert(toInsert.map(i => i.record))
+                    .select('id, ordre');
+
+                if (insertError) throw insertError;
+
+                // Stocker les IDs DB dans le DOM pour les futures sauvegardes
+                if (inserted) {
+                    inserted.forEach(row => {
+                        const matchCard = toInsert.find(i => i.record.ordre === row.ordre);
+                        if (matchCard && matchCard.cardEl) {
+                            matchCard.cardEl.dataset.dbId = row.id;
+                        }
+                    });
+                }
+            }
+
+            // 4. Calculer impot au deces par owner
+            const tauxClient = parseFloat(document.getElementById('tauxMarginalClient')?.value) || 53;
+            const tauxConjoint = parseFloat(document.getElementById('tauxMarginalConjoint')?.value) || 53;
+            let impotTotalClient = 0, impotTotalConjoint = 0;
+
+            cardsInDOM.forEach(card => {
+                const type = card.dataset.type || '';
+                if (!typesQualifiantsImpot.includes(type)) return;
+
+                const actifVal = parseFloat(card.dataset.actif) || 0;
+                const pbrVal = parseFloat(card.dataset.pbr) || 0;
+                const owner = card.dataset.owner || '';
+                const gain = Math.max(0, actifVal - pbrVal);
+                const gainImposable = gain * 0.5;
+
+                if (owner === clientPrenom) {
+                    impotTotalClient += Math.round(gainImposable * (tauxClient / 100));
+                } else if (owner === conjointPrenom) {
+                    impotTotalConjoint += Math.round(gainImposable * (tauxConjoint / 100));
+                } else if (owner === 'Les deux') {
+                    impotTotalClient += Math.round((gainImposable / 2) * (tauxClient / 100));
+                    impotTotalConjoint += Math.round((gainImposable / 2) * (tauxConjoint / 100));
+                }
+            });
+
+            // 5. Calculer totaux ajustés pour besoins assurance vie (garder_au_deces)
+            let vieActifsClient = 0, viePassifsClient = 0;
+            let vieActifsConjoint = 0, viePassifsConjoint = 0;
+
+            cardsInDOM.forEach(card => {
+                const actifVal = parseFloat(card.dataset.actif) || 0;
+                const passifVal = parseFloat(card.dataset.passif) || 0;
+                const owner = card.dataset.owner || '';
+                const garderDeces = card.dataset.garderDeces === 'true';
+
+                // Si garder au décès: actif exclu (on le garde, pas vendable), passif reste
+                const actifAjuste = garderDeces ? 0 : actifVal;
+
+                if (owner === clientPrenom) {
+                    vieActifsClient += actifAjuste;
+                    viePassifsClient += passifVal;
+                } else if (owner === conjointPrenom) {
+                    vieActifsConjoint += actifAjuste;
+                    viePassifsConjoint += passifVal;
+                } else if (owner === 'Les deux') {
+                    vieActifsClient += actifAjuste / 2;
+                    viePassifsClient += passifVal / 2;
+                    vieActifsConjoint += actifAjuste / 2;
+                    viePassifsConjoint += passifVal / 2;
+                }
+            });
+
+            // 6. Mettre à jour le client avec les totaux
+            const currentClient = FINOX.getClientData();
+            const currentAbfData = currentClient?.abf_data || {};
+
+            const abfUpdate = {
+                ...currentAbfData,
+                actifs_a_faire: afaireItems,
+                total_actifs: totalActifs,
+                total_passifs: totalPassifs,
+                valeur_nette: totalActifs - totalPassifs,
+                vie_actifs_client: vieActifsClient,
+                vie_passifs_client: viePassifsClient,
+                vie_actifs_conjoint: vieActifsConjoint,
+                vie_passifs_conjoint: viePassifsConjoint,
+                taux_marginal_client: tauxClient,
+                taux_marginal_conjoint: tauxConjoint,
+                impots_client: {
+                    ...(currentAbfData.impots_client || {}),
+                    impot_estime: impotTotalClient
+                },
+                impots_conjoint: {
+                    ...(currentAbfData.impots_conjoint || {}),
+                    impot_estime: impotTotalConjoint
+                }
+            };
+
+            const { error: clientError } = await FINOX.supabase
+                .from('clients')
+                .update({
+                    abf_data: abfUpdate,
+                    total_actifs: totalActifs,
+                    total_passifs: totalPassifs,
+                    valeur_nette: totalActifs - totalPassifs,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', FINOX.CLIENT_ID);
+
+            if (clientError) throw clientError;
+
+            await FINOX.loadClientData(true);
+
+            console.log('✅ Actifs sauvegardés:', cardsInDOM.length, 'éléments');
+
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ==========================================
+    // 7. SECTION "À FAIRE / À PRÉVOIR"
+    // ==========================================
+    let afaireItems = [];
+
+    // Load from abf_data
+    const savedAfaire = (FINOX.getClientData()?.abf_data || {}).actifs_a_faire || [];
+    afaireItems = savedAfaire;
+
+    function renderAfaireItems() {
+        const container = document.getElementById('afaireBody');
+        const emptyMsg = document.getElementById('afaireEmpty');
+        const countEl = document.getElementById('afaireCount');
+        if (!container) return;
+
+        countEl.textContent = afaireItems.length;
+
+        if (afaireItems.length === 0) {
+            container.innerHTML = '';
+            emptyMsg.style.display = '';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+
+        container.innerHTML = afaireItems.map((item, idx) => {
+            const dateStr = item.date_cible ? new Date(item.date_cible + 'T00:00:00').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            const contribStr = item.contribution ? FINOX.formatCurrency(item.contribution) + '/mois' : '';
+
+            // Projection
+            let projHTML = '';
+            if (item.contribution > 0 && item.horizon > 0) {
+                const r = item.rendement || 0;
+                const h = item.horizon;
+                const m = item.contribution;
+                const futureVal = r === 0 ? m * h * 12 : m * ((Math.pow(1 + r/100/12, h*12) - 1) / (r/100/12));
+                projHTML = `
+                    <div class="asset-card-projection" style="margin-top:8px;">
+                        <div class="asset-card-proj-row">
+                            <div class="asset-card-proj-arrow">
+                                <span class="proj-from">0 $</span> → <span class="proj-to">${FINOX.formatCurrency(Math.round(futureVal))}</span>
+                            </div>
+                            <span style="font-size:10px;color:var(--text-muted);">${h} ans</span>
+                        </div>
+                        <div class="asset-card-proj-details">📈 ${contribStr} · ${r}% · ${h} ans</div>
+                        <div class="asset-card-proj-bar"><div class="asset-card-proj-bar-fill" style="width:0%"></div></div>
+                    </div>`;
+            }
+
+            // Objectif badge
+            const projetLabel = item.projet_type ? (function() {
+                const projets = PROJET_TYPES_PAR_COMPTE[item.type] || [];
+                const p = projets.find(p => p.id === item.projet_type);
+                return p ? p.label : item.projet_type;
+            })() : '';
+            const projetBadge = projetLabel ? `<span class="asset-card-projet-badge">🎯 ${projetLabel}</span>` : '';
+
+            return `<div class="afaire-card" onclick="editAfaireItem(${idx})">
+                <div class="afaire-card-icon">${item.icon || '📦'}</div>
+                <div class="afaire-card-info">
+                    <div class="afaire-card-type">${item.type} ${projetBadge}</div>
+                    <div class="afaire-card-desc">${item.notes || 'Aucune note'}</div>
+                    <div class="afaire-card-owner">👤 ${item.owner || 'Non assigné'}${contribStr ? ' · ' + contribStr : ''}</div>
+                    ${projHTML}
+                </div>
+                ${dateStr ? `<div class="afaire-card-date">📅 ${dateStr}</div>` : ''}
+                <div class="afaire-card-actions" onclick="event.stopPropagation()">
+                    <button class="afaire-card-btn" style="background:rgba(34,197,94,0.12);color:#22c55e;" onclick="event.stopPropagation(); convertAfaireToActif(${idx})" title="Convertir en actif actuel">✅</button>
+                    <button class="afaire-card-btn afaire-card-btn-delete" onclick="event.stopPropagation(); deleteAfaireItem(${idx})">✕</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.openAfairePicker = function() {
+        document.getElementById('afairePickerOverlay').classList.add('show');
+    };
+    window.closeAfairePicker = function() {
+        document.getElementById('afairePickerOverlay').classList.remove('show');
+    };
+
+    window.openAfaireConfig = function(type, icon, editIdx) {
+        closeAfairePicker();
+        document.getElementById('afaireConfigType').value = type;
+        document.getElementById('afaireConfigIcon').value = icon;
+        document.getElementById('afaireConfigTitle').innerHTML = `⏳ Planifier un ${type}`;
+        document.getElementById('afaireConfigEditId').value = editIdx !== undefined ? editIdx : '';
+
+        // Owner dropdown
+        const ownerSelect = document.getElementById('afaireConfigOwner');
+        ownerSelect.innerHTML = '<option value="">Sélectionner...</option>';
+        if (clientPrenom) ownerSelect.innerHTML += `<option value="${clientPrenom}">${clientPrenom} (Client)</option>`;
+        if (conjointPrenom) ownerSelect.innerHTML += `<option value="${conjointPrenom}">${conjointPrenom} (Conjoint)</option>`;
+        ownerSelect.innerHTML += '<option value="Les deux">Les deux</option>';
+
+        // Projet dropdown — same as asset modal step 2
+        const projetSelect = document.getElementById('afaireConfigProjet');
+        const projets = PROJET_TYPES_PAR_COMPTE[type] || [];
+        projetSelect.innerHTML = '<option value="">Sélectionner un objectif...</option>';
+        projets.forEach(p => {
+            projetSelect.innerHTML += `<option value="${p.id}">${p.icon} ${p.label}${p.sub ? ' — ' + p.sub : ''}</option>`;
+        });
+
+        // If editing, fill values
+        if (editIdx !== undefined && afaireItems[editIdx]) {
+            const item = afaireItems[editIdx];
+            ownerSelect.value = item.owner || '';
+            document.getElementById('afaireConfigDate').value = item.date_cible || '';
+            document.getElementById('afaireConfigNotes').value = item.notes || '';
+            document.getElementById('afaireConfigContrib').value = item.contribution || '';
+            projetSelect.value = item.projet_type || '';
+            document.getElementById('afaireConfigRendement').value = item.rendement || '';
+            document.getElementById('afaireConfigHorizon').value = item.horizon || '';
+        } else {
+            document.getElementById('afaireConfigDate').value = '';
+            document.getElementById('afaireConfigNotes').value = '';
+            document.getElementById('afaireConfigContrib').value = '';
+            projetSelect.value = '';
+            // Default rendement based on type
+            document.getElementById('afaireConfigRendement').value = type === 'CELI APP' ? 4 : type === 'REEE' ? 4 : 5;
+            document.getElementById('afaireConfigHorizon').value = type === 'CELI APP' ? 5 : type === 'REEE' ? 18 : 20;
+            ownerSelect.value = '';
+        }
+
+        // Reset and compute projection
+        updateAfaireProjection();
+        document.getElementById('afaireConfigOverlay').classList.add('show');
+    };
+    window.closeAfaireConfig = function() {
+        document.getElementById('afaireConfigOverlay').classList.remove('show');
+    };
+
+    window.editAfaireItem = function(idx) {
+        const item = afaireItems[idx];
+        if (!item) return;
+        openAfaireConfig(item.type, item.icon, idx);
+    };
+
+    window.updateAfaireProjection = function() {
+        const contrib = FINOX.parseNumber(document.getElementById('afaireConfigContrib').value) || 0;
+        const rendement = parseFloat(document.getElementById('afaireConfigRendement').value) || 0;
+        const horizon = parseInt(document.getElementById('afaireConfigHorizon').value) || 0;
+        const preview = document.getElementById('afaireProjectionPreview');
+
+        if (contrib > 0 && horizon > 0) {
+            const r = rendement;
+            const futureVal = r === 0 ? contrib * horizon * 12 : contrib * ((Math.pow(1 + r/100/12, horizon*12) - 1) / (r/100/12));
+            const totalContrib = contrib * horizon * 12;
+            const interets = futureVal - totalContrib;
+
+            document.getElementById('afaireProjContrib').textContent = FINOX.formatCurrency(Math.round(totalContrib));
+            document.getElementById('afaireProjInterets').textContent = FINOX.formatCurrency(Math.round(interets));
+            document.getElementById('afaireProjTotal').textContent = FINOX.formatCurrency(Math.round(futureVal));
+            preview.style.display = '';
+        } else {
+            preview.style.display = 'none';
+        }
+
+        // Auto-set rendement from projet type
+        const projetType = document.getElementById('afaireConfigProjet').value;
+        if (projetType && !document.getElementById('afaireConfigRendement').value) {
+            document.getElementById('afaireConfigRendement').value = DEFAULT_RENDEMENTS[projetType] || 5;
+        }
+    };
+
+    window.saveAfaireItem = function() {
+        const type = document.getElementById('afaireConfigType').value;
+        const icon = document.getElementById('afaireConfigIcon').value;
+        const owner = document.getElementById('afaireConfigOwner').value;
+        const dateCible = document.getElementById('afaireConfigDate').value || null;
+        const notes = document.getElementById('afaireConfigNotes').value.trim();
+        const contrib = FINOX.parseNumber(document.getElementById('afaireConfigContrib').value) || 0;
+        const projetType = document.getElementById('afaireConfigProjet').value || null;
+        const rendement = parseFloat(document.getElementById('afaireConfigRendement').value) || 0;
+        const horizon = parseInt(document.getElementById('afaireConfigHorizon').value) || 0;
+        const editIdx = document.getElementById('afaireConfigEditId').value;
+
+        if (!type) return;
+
+        const item = {
+            id: editIdx !== '' ? afaireItems[parseInt(editIdx)]?.id : 'af_' + Date.now(),
+            type, icon, owner,
+            date_cible: dateCible,
+            notes, contribution: contrib,
+            projet_type: projetType,
+            rendement: rendement,
+            horizon: horizon,
+            created_at: editIdx !== '' ? afaireItems[parseInt(editIdx)]?.created_at : new Date().toISOString()
+        };
+
+        if (editIdx !== '') {
+            afaireItems[parseInt(editIdx)] = item;
+        } else {
+            afaireItems.push(item);
+        }
+
+        renderAfaireItems();
+        closeAfaireConfig();
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+        FINOX.showNotification(`⏳ ${type} planifié — apparaîtra dans les recommandations`, 'success');
+    };
+
+    window.deleteAfaireItem = function(idx) {
+        afaireItems.splice(idx, 1);
+        renderAfaireItems();
+        if (typeof FINOX_NAV !== 'undefined') FINOX_NAV.markAsUnsaved();
+    };
+
+    window.convertAfaireToActif = function(idx) {
+        const item = afaireItems[idx];
+        if (!item) return;
+        if (!confirm(`Convertir "${item.type}" en actif actuel?\nCeci va créer une carte dans Actifs actuels et supprimer l'item planifié.`)) return;
+
+        // Map à faire item → asset card data
+        const data = {
+            type: item.type,
+            icon: item.icon || '📦',
+            mode: 'actif',
+            institution: '',
+            actif: 0,
+            passif: 0,
+            paiement: 0,
+            owner: item.owner || '',
+            garderDeces: false,
+            pbr: 0,
+            projetType: item.projet_type || '',
+            contribution: item.contribution || 0,
+            contribEmployeur: 0,
+            objectifEpargne: 0,
+            rendement: item.rendement || 0,
+            horizon: item.horizon || 0,
+            horizonRetraite: false,
+            rrpdRenteAnnuelle: 0,
+            rrpdAgeDebut: 65,
+            rrpdPontActif: false,
+            rrpdPontMontant: 0,
+            rrpdPontJusquA: 65
+        };
+
+        createAssetCard(data);
+        afaireItems.splice(idx, 1);
+        renderAfaireItems();
+        calculateNetWorth();
+        FINOX_NAV.markAsUnsaved();
+        FINOX.showToast && FINOX.showToast('✅ Converti en actif actuel', 'success');
+    };
+
+    // Add "Créer opportunité de transfert" button to existing cards
+    const ACTIVE_OPP_STAGES = ['active', 'identified', 'qualified', 'action_planned', 'in_progress', 'proposal_sent'];
+
+    window.createTransferOpportunity = async function(cardId) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+
+        const type = card.dataset.type;
+        const institution = card.dataset.institution || '';
+        const actif = parseFloat(card.dataset.actif) || 0;
+
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+
+        try {
+            // Vérifier si une opportunité active existe déjà pour cet actif
+            const { data: existing } = await FINOX.supabase
+                .from('client_opportunities')
+                .select('id, title, stage')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .eq('source', 'abf_actifs')
+                .in('stage', ACTIVE_OPP_STAGES)
+                .ilike('title', `%Transfert ${type}%`)
+                .limit(1);
+
+            if (existing && existing.length > 0) {
+                FINOX.showNotification(`⚠️ Une opportunité de transfert active existe déjà pour ${type}. Fermez-la d'abord pour en créer une nouvelle.`, 'error');
+                return;
+            }
+
+            const { data: profile } = await FINOX.supabase
+                .from('profiles')
+                .select('organization_id')
+                .eq('id', user.id)
+                .single();
+            if (!profile) return;
+
+            const { error } = await FINOX.supabase
+                .from('client_opportunities')
+                .insert({
+                    organization_id: profile.organization_id,
+                    client_id: FINOX.CLIENT_ID,
+                    conseiller_id: user.id,
+                    category: 'placement',
+                    title: `Transfert ${type} — ${institution || 'À déterminer'}`,
+                    description: `Transfert potentiel de ${FINOX.formatCurrency(actif)} (${type} chez ${institution})`,
+                    stage: 'active',
+                    priority: 'normal',
+                    source: 'abf_actifs',
+                    metadata: { source_type: 'transfer', asset_type: type, institution: institution, montant: actif }
+                });
+
+            if (error) throw error;
+
+            // Désactiver le bouton visuellement
+            const btn = card.querySelector('.asset-card-transfer-btn');
+            if (btn) {
+                btn.textContent = '✅ Opportunité créée';
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+            }
+
+            FINOX.showNotification(`🔄 Opportunité de transfert créée pour ${type}!`, 'success');
+            FINOX.addTimelineEntry('opportunity', `🔄 Opportunité transfert: ${type}`, `${institution} — ${FINOX.formatCurrency(actif)}`);
+        } catch (e) {
+            console.error('Erreur création opportunité:', e);
+            FINOX.showNotification('Erreur: ' + e.message, 'error');
+        }
+    };
+
+    // Render initial à-faire items
+    renderAfaireItems();
+
+    FINOX.setupAllMoneyInputs();
+    console.log('✅ Module ABF Actifs chargé v2');
+})();
+</script>

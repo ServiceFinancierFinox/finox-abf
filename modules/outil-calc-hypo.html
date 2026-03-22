@@ -1,0 +1,757 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: CALCULATEUR ASSURANCE HYPOTHÉCAIRE v3.0
+     Capitalisation semi-annuelle (norme canadienne)
+     1. Coût VISIBLE = différence de paiement mensuel
+     2. Coût CACHÉ = différence de solde après terme ÷ nombre de mois
+     3. Coût TOTAL = Visible + Caché
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* LAYOUT */
+.hypo-container{display:grid;grid-template-columns:1fr 380px;gap:24px;min-height:calc(100vh - 100px)}
+.hypo-main{display:flex;flex-direction:column;gap:20px}
+.hypo-side{display:flex;flex-direction:column;gap:16px}
+
+/* HEADER */
+.hypo-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--border-color)}
+.hypo-header-left{display:flex;align-items:center;gap:12px}
+.hypo-header-icon{width:48px;height:48px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.hypo-header-text h1{font-size:24px;font-weight:700;margin:0}
+.hypo-header-text p{font-size:13px;color:var(--text-muted);margin:0}
+.hypo-save-btn{display:flex;align-items:center;gap:8px;padding:12px 28px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:10px;color:#000;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s}
+.hypo-save-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,162,39,.35)}
+
+/* HERO MONTANT */
+.hypo-hero{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.05));border:1px solid rgba(59,130,246,.3);border-radius:16px;padding:24px;text-align:center}
+.hypo-hero-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.hypo-hero-value{font-family:'Montserrat',sans-serif;font-size:42px;font-weight:700;color:#3b82f6}
+.hypo-hero-sub{font-size:13px;color:var(--text-secondary);margin-top:8px}
+.hypo-hero-sub span{color:var(--gold);font-weight:600}
+
+/* INPUTS PANEL */
+.hypo-inputs{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:24px}
+.hypo-inputs-title{font-size:16px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.hypo-inputs-title span{font-size:20px}
+.hypo-inputs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.hypo-input-group{display:flex;flex-direction:column;gap:6px}
+.hypo-input-group.full{grid-column:span 2}
+.hypo-input-label{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+.hypo-input-label span{font-size:14px}
+.hypo-input{padding:12px 14px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:10px;color:var(--text-primary);font-size:15px;font-weight:600;transition:all .2s}
+.hypo-input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.hypo-input::placeholder{color:var(--text-muted);font-weight:400}
+.hypo-input-hint{font-size:10px;color:var(--text-muted)}
+
+/* COMPARISON CARDS */
+.hypo-comparison{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.hypo-card{background:var(--bg-card);border:2px solid var(--border-color);border-radius:16px;padding:24px;text-align:center;transition:all .3s}
+.hypo-card.sans{border-color:rgba(16,185,129,.4);background:linear-gradient(135deg,rgba(16,185,129,.08),transparent)}
+.hypo-card.avec{border-color:rgba(239,68,68,.4);background:linear-gradient(135deg,rgba(239,68,68,.08),transparent)}
+.hypo-card-icon{font-size:32px;margin-bottom:8px}
+.hypo-card-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.hypo-card-value{font-family:'Montserrat',sans-serif;font-size:28px;font-weight:700}
+.hypo-card.sans .hypo-card-value{color:#10b981}
+.hypo-card.avec .hypo-card-value{color:#ef4444}
+.hypo-card-detail{font-size:11px;color:var(--text-secondary);margin-top:8px}
+.hypo-card-solde{font-size:12px;color:var(--text-muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color)}
+.hypo-card-solde strong{color:var(--text-primary);font-size:14px}
+
+/* PERCEPTION VS RÉALITÉ */
+.hypo-perception{background:linear-gradient(135deg,rgba(245,158,11,.12),transparent);border:2px solid rgba(245,158,11,.4);border-radius:16px;padding:20px}
+.hypo-perception-title{font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.hypo-perception-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(245,158,11,.2)}
+.hypo-perception-row:last-child{border-bottom:none;padding-bottom:0}
+.hypo-perception-label{font-size:13px;color:var(--text-secondary)}
+.hypo-perception-value{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:700}
+.hypo-perception-value.wrong{color:#f59e0b;text-decoration:line-through;opacity:.8}
+.hypo-perception-value.right{color:#ef4444}
+
+/* COSTS BREAKDOWN */
+.hypo-costs{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px}
+.hypo-costs-title{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+.hypo-costs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hypo-cost-item{padding:16px;background:rgba(0,0,0,.2);border-radius:12px;position:relative}
+.hypo-cost-item.visible{border-left:4px solid #f59e0b}
+.hypo-cost-item.cache{border-left:4px solid #ef4444}
+.hypo-cost-step{position:absolute;top:10px;right:10px;width:24px;height:24px;background:rgba(255,255,255,.1);border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+.hypo-cost-label{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.hypo-cost-value{font-family:'Montserrat',sans-serif;font-size:24px;font-weight:700}
+.hypo-cost-item.visible .hypo-cost-value{color:#f59e0b}
+.hypo-cost-item.cache .hypo-cost-value{color:#ef4444}
+.hypo-cost-explain{font-size:10px;color:var(--text-muted);margin-top:8px;line-height:1.4}
+.hypo-cost-formula{font-size:10px;color:var(--text-secondary);margin-top:6px;padding:6px 8px;background:rgba(0,0,0,.2);border-radius:6px;font-family:monospace}
+
+/* TOTAL */
+.hypo-total{background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(239,68,68,.08));border:2px solid rgba(239,68,68,.5);border-radius:16px;padding:28px;text-align:center}
+.hypo-total-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.hypo-total-value{font-family:'Montserrat',sans-serif;font-size:48px;font-weight:700;color:#ef4444}
+.hypo-total-sub{font-size:13px;color:var(--text-secondary);margin-top:10px}
+.hypo-total-breakdown{display:flex;justify-content:center;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(239,68,68,.3);flex-wrap:wrap}
+.hypo-total-part{text-align:center;padding:8px 16px;background:rgba(0,0,0,.2);border-radius:8px}
+.hypo-total-part-label{font-size:10px;color:var(--text-muted);margin-bottom:4px}
+.hypo-total-part-value{font-size:16px;font-weight:700}
+.hypo-total-part-value.visible{color:#f59e0b}
+.hypo-total-part-value.cache{color:#ef4444}
+
+/* SIDEBAR - ÉCONOMIES */
+.hypo-savings{background:linear-gradient(135deg,rgba(16,185,129,.1),transparent);border:1px solid rgba(16,185,129,.3);border-radius:16px;padding:20px;text-align:center}
+.hypo-savings-icon{font-size:40px;margin-bottom:12px}
+.hypo-savings-title{font-size:14px;font-weight:600;color:#10b981;margin-bottom:16px}
+.hypo-savings-item{padding:12px;background:rgba(0,0,0,.2);border-radius:10px;margin-bottom:10px}
+.hypo-savings-label{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.hypo-savings-value{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700;color:#10b981}
+
+/* SIDEBAR - INFO */
+.hypo-info{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px}
+.hypo-info-title{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.hypo-info-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border-color)}
+.hypo-info-item:last-child{border-bottom:none}
+.hypo-info-icon{font-size:18px;flex-shrink:0}
+.hypo-info-text{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.hypo-info-text strong{color:var(--text-primary)}
+.hypo-info-text .highlight{color:#ef4444;font-weight:600}
+
+/* DISCLAIMER */
+.hypo-disclaimer{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:14px;font-size:11px;color:var(--text-secondary);line-height:1.5}
+.hypo-disclaimer-title{font-weight:600;color:#f59e0b;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.hypo-container{grid-template-columns:1fr}.hypo-side{flex-direction:row;flex-wrap:wrap}.hypo-savings,.hypo-info{flex:1;min-width:280px}}
+@media(max-width:700px){.hypo-comparison{grid-template-columns:1fr}.hypo-inputs-grid{grid-template-columns:1fr}.hypo-input-group.full{grid-column:span 1}.hypo-costs-grid{grid-template-columns:1fr}.hypo-total-breakdown{flex-direction:column;gap:8px}}
+</style>
+
+<!-- HEADER -->
+<div class="hypo-header">
+    <div class="hypo-header-left">
+        <div class="hypo-header-icon">🏠</div>
+        <div class="hypo-header-text">
+            <h1>Calculateur Assurance Hypothécaire</h1>
+            <p>Découvrez le VRAI coût de l'assurance prêt intégrée au taux — Calculs conformes aux normes canadiennes</p>
+        </div>
+    </div>
+    <button class="hypo-save-btn" onclick="saveHypoCalc()"><span>💾</span> Sauvegarder</button>
+</div>
+
+<!-- LAYOUT -->
+<div class="hypo-container">
+    <div class="hypo-main">
+        
+        <!-- Hero Montant -->
+        <div class="hypo-hero">
+            <div class="hypo-hero-label">Montant du prêt hypothécaire</div>
+            <div class="hypo-hero-value" id="displayMontant">0 $</div>
+            <div class="hypo-hero-sub">Terme: <span id="displayTerme">5</span> ans | Amortissement: <span id="displayAmort">25</span> ans</div>
+        </div>
+        
+        <!-- Inputs -->
+        <div class="hypo-inputs">
+            <div class="hypo-inputs-title"><span>⚙️</span> Paramètres du prêt</div>
+            <div class="hypo-inputs-grid">
+                <div class="hypo-input-group full">
+                    <label class="hypo-input-label"><span>💰</span> Montant du prêt hypothécaire</label>
+                    <input type="text" class="hypo-input money-input" id="hypoMontant" placeholder="Ex: 360 000 $" oninput="calculateHypo()">
+                </div>
+                <div class="hypo-input-group">
+                    <label class="hypo-input-label"><span>📅</span> Terme du prêt</label>
+                    <select class="hypo-input" id="hypoTerme" onchange="calculateHypo()">
+                        <option value="1">1 an</option>
+                        <option value="2">2 ans</option>
+                        <option value="3">3 ans</option>
+                        <option value="4">4 ans</option>
+                        <option value="5" selected>5 ans</option>
+                        <option value="7">7 ans</option>
+                        <option value="10">10 ans</option>
+                    </select>
+                    <div class="hypo-input-hint">Durée avant renégociation du taux</div>
+                </div>
+                <div class="hypo-input-group">
+                    <label class="hypo-input-label"><span>🏠</span> Amortissement</label>
+                    <select class="hypo-input" id="hypoDuree" onchange="calculateHypo()">
+                        <option value="15">15 ans</option>
+                        <option value="20">20 ans</option>
+                        <option value="25" selected>25 ans</option>
+                        <option value="30">30 ans</option>
+                    </select>
+                    <div class="hypo-input-hint">Durée totale de remboursement</div>
+                </div>
+                <div class="hypo-input-group">
+                    <label class="hypo-input-label"><span>📉</span> Taux SANS assurance</label>
+                    <input type="text" class="hypo-input" id="hypoTauxSans" placeholder="Ex: 4.00%" oninput="onTauxSansChange()">
+                    <div class="hypo-input-hint">Taux standard du marché</div>
+                </div>
+                <div class="hypo-input-group">
+                    <label class="hypo-input-label"><span>🔺</span> Prime assurance (pts %)</label>
+                    <input type="text" class="hypo-input" id="hypoPrime" placeholder="Ex: 0.30" oninput="onPrimeChange()" style="border-color:rgba(245,158,11,.4)">
+                    <div class="hypo-input-hint">Majoration Desjardins en points (ex: 0.30 = +0.30%)</div>
+                </div>
+                <div class="hypo-input-group full">
+                    <label class="hypo-input-label"><span>📈</span> Taux AVEC assurance</label>
+                    <input type="text" class="hypo-input" id="hypoTauxAvec" placeholder="Auto-calculé ou manuel" oninput="onTauxAvecManual()">
+                    <div class="hypo-input-hint">= Taux SANS + Prime. Modifiable manuellement si besoin.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Cards -->
+        <div class="hypo-comparison">
+            <div class="hypo-card sans">
+                <div class="hypo-card-icon">✅</div>
+                <div class="hypo-card-label">SANS assurance bancaire</div>
+                <div class="hypo-card-value" id="paySans">0 $/mois</div>
+                <div class="hypo-card-detail">Taux: <span id="tauxSansDisplay">0%</span></div>
+                <div class="hypo-card-solde">Solde après <span id="termeSans">5</span> ans: <strong id="soldeSans">0 $</strong></div>
+            </div>
+            <div class="hypo-card avec">
+                <div class="hypo-card-icon">🏦</div>
+                <div class="hypo-card-label">AVEC assurance bancaire</div>
+                <div class="hypo-card-value" id="payAvec">0 $/mois</div>
+                <div class="hypo-card-detail">Taux: <span id="tauxAvecDisplay">0%</span></div>
+                <div class="hypo-card-solde">Solde après <span id="termeAvec">5</span> ans: <strong id="soldeAvec">0 $</strong></div>
+            </div>
+        </div>
+        
+        <!-- Ce que le client PENSE vs RÉALITÉ -->
+        <div class="hypo-perception">
+            <div class="hypo-perception-title">🤔 Ce que le client pense VS la réalité</div>
+            <div class="hypo-perception-row">
+                <span class="hypo-perception-label">Surplus de paiement mensuel visible</span>
+                <span class="hypo-perception-value" id="diffVisible">+0 $/mois</span>
+            </div>
+            <div class="hypo-perception-row">
+                <span class="hypo-perception-label">❌ Le client pense payer</span>
+                <span class="hypo-perception-value wrong" id="clientPense">0 $/mois</span>
+            </div>
+            <div class="hypo-perception-row">
+                <span class="hypo-perception-label">✅ Coût RÉEL de l'assurance</span>
+                <span class="hypo-perception-value right" id="clientReel">0 $/mois</span>
+            </div>
+        </div>
+        
+        <!-- Costs Breakdown -->
+        <div class="hypo-costs">
+            <div class="hypo-costs-title">💡 Décomposition du coût RÉEL</div>
+            <div class="hypo-costs-grid">
+                <div class="hypo-cost-item visible">
+                    <div class="hypo-cost-step">1</div>
+                    <div class="hypo-cost-label">Coût VISIBLE (surplus de paiement)</div>
+                    <div class="hypo-cost-value" id="coutVisible">0 $/mois</div>
+                    <div class="hypo-cost-explain">La différence entre les deux paiements mensuels. C'est ce que le client voit et pense être le coût total.</div>
+                    <div class="hypo-cost-formula" id="formulaVisible">2200$ - 2000$ = 200$/mois</div>
+                </div>
+                <div class="hypo-cost-item cache">
+                    <div class="hypo-cost-step">2</div>
+                    <div class="hypo-cost-label">Coût CACHÉ (capital non remboursé)</div>
+                    <div class="hypo-cost-value" id="coutCache">0 $/mois</div>
+                    <div class="hypo-cost-explain">Avec un taux plus élevé, plus d'intérêts = moins de capital remboursé. Cette différence de solde, mensualisée.</div>
+                    <div class="hypo-cost-formula" id="formulaCache">5000$ ÷ 60 mois = 83$/mois</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total -->
+        <div class="hypo-total">
+            <div class="hypo-total-label">🚨 Coût RÉEL TOTAL de l'assurance bancaire</div>
+            <div class="hypo-total-value" id="coutTotal">0 $/mois</div>
+            <div class="hypo-total-sub">Ce montant est systématiquement sous-estimé par les clients!</div>
+            <div class="hypo-total-breakdown">
+                <div class="hypo-total-part">
+                    <div class="hypo-total-part-label">Visible</div>
+                    <div class="hypo-total-part-value visible" id="partVisible">0 $</div>
+                </div>
+                <div class="hypo-total-part">
+                    <div class="hypo-total-part-label"></div>
+                    <div class="hypo-total-part-value">+</div>
+                </div>
+                <div class="hypo-total-part">
+                    <div class="hypo-total-part-label">Caché</div>
+                    <div class="hypo-total-part-value cache" id="partCache">0 $</div>
+                </div>
+                <div class="hypo-total-part">
+                    <div class="hypo-total-part-label"></div>
+                    <div class="hypo-total-part-value">=</div>
+                </div>
+                <div class="hypo-total-part">
+                    <div class="hypo-total-part-label">Total</div>
+                    <div class="hypo-total-part-value" style="color:#ef4444;font-size:20px" id="partTotal">0 $</div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- SIDEBAR -->
+    <div class="hypo-side">
+        
+        <!-- Coût Réel Total -->
+        <div class="hypo-savings" style="background:linear-gradient(135deg,rgba(239,68,68,.15),transparent);border-color:rgba(239,68,68,.4)">
+            <div class="hypo-savings-icon">🚨</div>
+            <div class="hypo-savings-title" style="color:#ef4444">Coût RÉEL de l'assurance bancaire</div>
+            <div class="hypo-savings-item">
+                <div class="hypo-savings-label">Par mois</div>
+                <div class="hypo-savings-value" id="sideTotal" style="color:#ef4444">0 $</div>
+            </div>
+            <div class="hypo-savings-item">
+                <div class="hypo-savings-label">Par année</div>
+                <div class="hypo-savings-value" id="sideTotalAn" style="color:#ef4444">0 $</div>
+            </div>
+            <div class="hypo-savings-item">
+                <div class="hypo-savings-label">Sur le terme (<span id="sideTermeLabel">5</span> ans)</div>
+                <div class="hypo-savings-value" id="sideTotalTerme" style="color:#ef4444">0 $</div>
+            </div>
+        </div>
+        
+        <!-- Métriques complémentaires -->
+        <div class="hypo-info" id="sideMetrics" style="display:none">
+            <div class="hypo-info-title"><span>📊</span> Métriques clés</div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">💲</span>
+                <div class="hypo-info-text"><strong>Coût par 1 000$ de prêt:</strong><br><span id="sidePer1000" style="color:#ef4444;font-size:16px;font-weight:700">0 $/mois</span><div style="font-size:10px;color:var(--text-muted);margin-top:4px">Métrique standard de l'industrie</div></div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">📅</span>
+                <div class="hypo-info-text"><strong>Coût total sur l'amortissement complet:</strong><br><span id="sideTotalAmort" style="color:#ef4444;font-size:16px;font-weight:700">0 $</span><div style="font-size:10px;color:var(--text-muted);margin-top:4px">Total intérêts supplémentaires sur <span id="sideAmortLabel">25</span> ans</div></div>
+            </div>
+        </div>
+
+        <!-- Comparaison individuelle -->
+        <div class="hypo-savings" id="sideCompare" style="display:none">
+            <div class="hypo-savings-icon">⚖️</div>
+            <div class="hypo-savings-title" style="color:#10b981">Comparaison assurance individuelle</div>
+            <div style="margin-bottom:12px">
+                <label class="hypo-input-label" style="margin-bottom:6px"><span>💵</span> Prime individuelle mensuelle</label>
+                <input type="text" class="hypo-input money-input" id="hypoPrimeIndiv" placeholder="Ex: 45 $/mois" oninput="calculateHypo()" style="text-align:center;font-size:14px">
+            </div>
+            <div class="hypo-savings-item" id="compareResult" style="display:none">
+                <div class="hypo-savings-label">Économie avec l'assurance individuelle</div>
+                <div class="hypo-savings-value" id="sideEconomie">0 $/mois</div>
+            </div>
+            <div class="hypo-savings-item" id="compareResultTerme" style="display:none">
+                <div class="hypo-savings-label">Économie sur le terme (<span id="sideCompareTerme">5</span> ans)</div>
+                <div class="hypo-savings-value" id="sideEconomieTerme">0 $</div>
+            </div>
+        </div>
+
+        <!-- Explications du calcul -->
+        <div class="hypo-info">
+            <div class="hypo-info-title"><span>🧮</span> Comment ça fonctionne</div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">🇨🇦</span>
+                <div class="hypo-info-text"><strong>Capitalisation semi-annuelle:</strong> Conforme à la <span class="highlight">Loi sur l'intérêt du Canada</span>. Les hypothèques à taux fixe capitalisent 2×/an, pas 12×/an.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">1️⃣</span>
+                <div class="hypo-info-text"><strong>Situation de départ:</strong> Paiement hypothécaire SANS assurance, calculé avec le taux standard et la capitalisation semi-annuelle canadienne.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">2️⃣</span>
+                <div class="hypo-info-text"><strong>Avec assurance intégrée:</strong> Le taux augmente de la « prime Desjardins » en points (ex: +0.30%), donc le paiement augmente. Cette différence = coût <span class="highlight">visible</span>.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">3️⃣</span>
+                <div class="hypo-info-text"><strong>Le coût caché:</strong> Avec un taux plus élevé, plus d'intérêts = <span class="highlight">moins de capital remboursé</span>. Après le terme, le solde est plus élevé!</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">4️⃣</span>
+                <div class="hypo-info-text"><strong>Mensualisé:</strong> Cette différence de solde ÷ nombre de mois du terme = coût caché mensuel.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">5️⃣</span>
+                <div class="hypo-info-text"><strong>Coût RÉEL:</strong> Visible + Caché. Souvent <span class="highlight">30-40% de plus</span> que ce que le client pense!</div>
+            </div>
+        </div>
+        
+        <!-- Info avantages -->
+        <div class="hypo-info">
+            <div class="hypo-info-title"><span>📚</span> Avantages assurance individuelle</div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">📉</span>
+                <div class="hypo-info-text"><strong>Couverture FIXE:</strong> L'assurance bancaire diminue avec le solde. L'individuelle reste stable.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">🔒</span>
+                <div class="hypo-info-text"><strong>Portabilité:</strong> Vous gardez votre assurance si vous changez de banque.</div>
+            </div>
+            <div class="hypo-info-item">
+                <span class="hypo-info-icon">👨‍👩‍👧</span>
+                <div class="hypo-info-text"><strong>Bénéficiaire:</strong> Vous choisissez qui reçoit le capital, pas la banque automatiquement.</div>
+            </div>
+        </div>
+        
+        <!-- Disclaimer -->
+        <div class="hypo-disclaimer">
+            <div class="hypo-disclaimer-title"><span>⚠️</span> Avis important</div>
+            Cet outil fournit une estimation à titre indicatif. Les calculs utilisent la <strong>capitalisation semi-annuelle</strong> conforme aux normes canadiennes (Loi sur l'intérêt). Les taux et conditions réels peuvent varier. Consultez un professionnel pour une analyse personnalisée.
+        </div>
+        
+    </div>
+</div>
+
+<script>
+(async function() {
+    console.log('🏠 Calculateur Hypothécaire v3.0 - Init (capitalisation semi-annuelle)');
+
+    let client = null;
+
+    // Utilitaires
+    const fmt = v => new Intl.NumberFormat('fr-CA', {minimumFractionDigits: 0, maximumFractionDigits: 0}).format(v || 0) + ' $';
+    const fmtDec = v => new Intl.NumberFormat('fr-CA', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(v || 0) + ' $';
+    const parse = v => FINOX.parseNumber(v);
+    const parsePct = v => FINOX.parseNumber(v);
+
+    /**
+     * Taux mensuel effectif — CAPITALISATION SEMI-ANNUELLE (norme canadienne)
+     *
+     * Au Canada, les hypothèques à taux fixe capitalisent les intérêts 2x/an (Loi sur l'intérêt).
+     * Le taux nominal annuel est divisé en 2 (semi-annuel), puis converti en mensuel:
+     *   r_mensuel = (1 + taux_nominal / 2) ^ (1/6) - 1
+     *
+     * Ex: taux nominal 5% → semi-annuel = 2.5%
+     *   r = (1.025)^(1/6) - 1 = 0.004123915 → ~0.4124%/mois
+     *   (vs 0.4167%/mois avec formule US — la différence fausse tout!)
+     */
+    function calcMonthlyRate(nominalAnnualRate) {
+        const semiAnnualRate = nominalAnnualRate / 100 / 2;
+        return Math.pow(1 + semiAnnualRate, 1 / 6) - 1;
+    }
+
+    /**
+     * Calcul paiement mensuel hypothécaire
+     * Utilise le taux mensuel effectif (capitalisation semi-annuelle canadienne)
+     */
+    function calcPayment(principal, annualRate, years) {
+        if (principal <= 0 || annualRate <= 0 || years <= 0) return 0;
+
+        const r = calcMonthlyRate(annualRate); // Taux mensuel effectif (semi-annuel → mensuel)
+        const n = years * 12; // Nombre de paiements
+
+        // PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
+        const payment = principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        return payment;
+    }
+
+    /**
+     * Calcul du solde restant après X années
+     * C'est LA CLÉ pour calculer le coût caché!
+     * Utilise le taux mensuel effectif (capitalisation semi-annuelle canadienne)
+     */
+    function calcBalanceAfter(principal, annualRate, amortYears, yearsElapsed) {
+        if (principal <= 0 || annualRate <= 0 || amortYears <= 0) return principal;
+
+        const r = calcMonthlyRate(annualRate); // Taux mensuel effectif (semi-annuel → mensuel)
+        const n = amortYears * 12; // Paiements totaux sur l'amortissement
+        const p = yearsElapsed * 12; // Paiements effectués
+
+        // Solde restant après p paiements
+        // B = P * [(1+r)^n - (1+r)^p] / [(1+r)^n - 1]
+        const balance = principal * (Math.pow(1 + r, n) - Math.pow(1 + r, p)) / (Math.pow(1 + r, n) - 1);
+        return Math.max(0, balance);
+    }
+    
+    /**
+     * Auto-fill: quand le taux SANS change, recalculer taux AVEC si prime existe
+     */
+    window.onTauxSansChange = function() {
+        const tauxSans = parsePct(document.getElementById('hypoTauxSans').value);
+        const prime = parsePct(document.getElementById('hypoPrime').value);
+        if (prime > 0 && tauxSans > 0) {
+            document.getElementById('hypoTauxAvec').value = (tauxSans + prime).toFixed(2) + '%';
+        }
+        calculateHypo();
+    };
+
+    /**
+     * Auto-fill: quand la prime change, recalculer taux AVEC = taux SANS + prime
+     */
+    window.onPrimeChange = function() {
+        const tauxSans = parsePct(document.getElementById('hypoTauxSans').value);
+        const prime = parsePct(document.getElementById('hypoPrime').value);
+        if (tauxSans > 0 && prime > 0) {
+            document.getElementById('hypoTauxAvec').value = (tauxSans + prime).toFixed(2) + '%';
+        }
+        calculateHypo();
+    };
+
+    /**
+     * Quand taux AVEC est modifié manuellement, recalculer la prime implicite
+     */
+    window.onTauxAvecManual = function() {
+        const tauxSans = parsePct(document.getElementById('hypoTauxSans').value);
+        const tauxAvec = parsePct(document.getElementById('hypoTauxAvec').value);
+        if (tauxSans > 0 && tauxAvec > tauxSans) {
+            document.getElementById('hypoPrime').value = (tauxAvec - tauxSans).toFixed(2);
+        }
+        calculateHypo();
+    };
+
+    /**
+     * CALCUL PRINCIPAL - VRAIE LOGIQUE
+     * 
+     * Exemple avec tes chiffres:
+     * - Hypothèque: 360 000$
+     * - Taux SANS: 4%, Paiement: ~2000$/mois
+     * - Taux AVEC: 4.5%, Paiement: ~2200$/mois
+     * 
+     * 1. Coût VISIBLE = 2200 - 2000 = 200$/mois
+     * 
+     * 2. Après 5 ans:
+     *    - Solde SANS (4%): ~350 000$
+     *    - Solde AVEC (4.5%): ~355 000$
+     *    - Différence: 5 000$ de capital en plus!
+     * 
+     * 3. Coût CACHÉ = 5000 ÷ 60 mois = 83$/mois
+     * 
+     * 4. Coût TOTAL = 200 + 83 = 283$/mois
+     */
+    window.calculateHypo = function() {
+        const montant = parse(document.getElementById('hypoMontant').value);
+        const terme = parseInt(document.getElementById('hypoTerme').value) || 5;
+        const amort = parseInt(document.getElementById('hypoDuree').value) || 25;
+        const tauxSans = parsePct(document.getElementById('hypoTauxSans').value);
+        const tauxAvec = parsePct(document.getElementById('hypoTauxAvec').value);
+        
+        // Affichage header
+        document.getElementById('displayMontant').textContent = fmt(montant);
+        document.getElementById('displayTerme').textContent = terme;
+        document.getElementById('displayAmort').textContent = amort;
+        document.getElementById('termeSans').textContent = terme;
+        document.getElementById('termeAvec').textContent = terme;
+        document.getElementById('tauxSansDisplay').textContent = tauxSans + '%';
+        document.getElementById('tauxAvecDisplay').textContent = tauxAvec + '%';
+        
+        if (montant <= 0 || tauxSans <= 0) {
+            resetDisplay();
+            return;
+        }
+        
+        const moisTerme = terme * 12;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ÉTAPE 1: Calcul des paiements mensuels
+        // ═══════════════════════════════════════════════════════════
+        const paySans = calcPayment(montant, tauxSans, amort);
+        const payAvec = tauxAvec > 0 ? calcPayment(montant, tauxAvec, amort) : paySans;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ÉTAPE 2: Coût VISIBLE = différence de paiement mensuel
+        // Ex: 2200$ - 2000$ = 200$/mois
+        // ═══════════════════════════════════════════════════════════
+        const coutVisible = payAvec - paySans;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ÉTAPE 3: Calcul des soldes après le TERME
+        // Ex: Après 5 ans, SANS = 350k, AVEC = 355k
+        // ═══════════════════════════════════════════════════════════
+        const soldeSans = calcBalanceAfter(montant, tauxSans, amort, terme);
+        const soldeAvec = tauxAvec > 0 ? calcBalanceAfter(montant, tauxAvec, amort, terme) : soldeSans;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ÉTAPE 4: Coût CACHÉ = différence de solde ÷ mois du terme
+        // Ex: (355k - 350k) ÷ 60 = 5000 ÷ 60 = 83$/mois
+        // ═══════════════════════════════════════════════════════════
+        const diffSolde = soldeAvec - soldeSans;
+        const coutCache = diffSolde / moisTerme;
+        
+        // ═══════════════════════════════════════════════════════════
+        // ÉTAPE 5: Coût TOTAL = Visible + Caché
+        // Ex: 200$ + 83$ = 283$/mois
+        // ═══════════════════════════════════════════════════════════
+        const coutTotal = coutVisible + coutCache;
+        
+        // ═══════════════════════════════════════════════════════════
+        // Coût total sur différentes périodes
+        // ═══════════════════════════════════════════════════════════
+        const coutTotalAn = coutTotal * 12;
+        const coutTotalTerme = coutTotal * moisTerme;
+        
+        // ═══════════════════════════════════════════════════════════
+        // MISE À JOUR DE L'INTERFACE
+        // ═══════════════════════════════════════════════════════════
+        
+        // Cartes comparaison
+        document.getElementById('paySans').textContent = fmtDec(paySans) + '/mois';
+        document.getElementById('payAvec').textContent = fmtDec(payAvec) + '/mois';
+        document.getElementById('soldeSans').textContent = fmt(soldeSans);
+        document.getElementById('soldeAvec').textContent = fmt(soldeAvec);
+        
+        // Perception client
+        document.getElementById('diffVisible').textContent = '+' + fmtDec(coutVisible) + '/mois';
+        document.getElementById('clientPense').textContent = fmtDec(coutVisible) + '/mois';
+        document.getElementById('clientReel').textContent = fmtDec(coutTotal) + '/mois';
+        
+        // Décomposition
+        document.getElementById('coutVisible').textContent = fmtDec(coutVisible) + '/mois';
+        document.getElementById('coutCache').textContent = fmtDec(coutCache) + '/mois';
+        
+        // Formules explicatives
+        document.getElementById('formulaVisible').textContent = 
+            `${fmtDec(payAvec)} - ${fmtDec(paySans)} = ${fmtDec(coutVisible)}/mois`;
+        document.getElementById('formulaCache').textContent = 
+            `${fmt(diffSolde)} ÷ ${moisTerme} mois = ${fmtDec(coutCache)}/mois`;
+        
+        // Total
+        document.getElementById('coutTotal').textContent = fmtDec(coutTotal) + '/mois';
+        document.getElementById('partVisible').textContent = fmtDec(coutVisible);
+        document.getElementById('partCache').textContent = fmtDec(coutCache);
+        document.getElementById('partTotal').textContent = fmtDec(coutTotal);
+        
+        // Sidebar - Coût total
+        document.getElementById('sideTotal').textContent = fmtDec(coutTotal);
+        document.getElementById('sideTotalAn').textContent = fmt(coutTotalAn);
+        document.getElementById('sideTotalTerme').textContent = fmt(coutTotalTerme);
+        document.getElementById('sideTermeLabel').textContent = terme;
+
+        // ═══════════════════════════════════════════════════════════
+        // MÉTRIQUES COMPLÉMENTAIRES
+        // ═══════════════════════════════════════════════════════════
+
+        // Coût par 1 000$ de prêt
+        const per1000 = montant > 0 ? (coutTotal / montant) * 1000 : 0;
+        document.getElementById('sidePer1000').textContent = fmtDec(per1000) + '/mois';
+
+        // Coût total sur l'amortissement complet (pas juste le terme)
+        const payTotalSansAmort = paySans * amort * 12;
+        const payTotalAvecAmort = payAvec * amort * 12;
+        const coutTotalAmort = payTotalAvecAmort - payTotalSansAmort;
+        document.getElementById('sideTotalAmort').textContent = fmt(coutTotalAmort);
+        document.getElementById('sideAmortLabel').textContent = amort;
+
+        // Afficher/masquer le bloc métriques
+        const metricsBlock = document.getElementById('sideMetrics');
+        if (metricsBlock) metricsBlock.style.display = (coutTotal > 0) ? '' : 'none';
+
+        // Comparaison individuelle
+        const primeIndiv = parse(document.getElementById('hypoPrimeIndiv').value);
+        const compareBlock = document.getElementById('sideCompare');
+        if (compareBlock) compareBlock.style.display = (coutTotal > 0) ? '' : 'none';
+
+        if (primeIndiv > 0 && coutTotal > 0) {
+            const economie = coutTotal - primeIndiv;
+            document.getElementById('sideEconomie').textContent = fmtDec(economie) + '/mois';
+            document.getElementById('sideEconomie').style.color = economie > 0 ? '#10b981' : '#ef4444';
+            document.getElementById('sideEconomieTerme').textContent = fmt(economie * moisTerme);
+            document.getElementById('sideEconomieTerme').style.color = economie > 0 ? '#10b981' : '#ef4444';
+            document.getElementById('sideCompareTerme').textContent = terme;
+            document.getElementById('compareResult').style.display = '';
+            document.getElementById('compareResultTerme').style.display = '';
+        } else {
+            document.getElementById('compareResult').style.display = 'none';
+            document.getElementById('compareResultTerme').style.display = 'none';
+        }
+
+        // Log pour debug
+        console.log('📊 Calcul Hypo v3.0 (semi-annuel):', {
+            montant, terme, amort, tauxSans, tauxAvec,
+            paySans: paySans.toFixed(2),
+            payAvec: payAvec.toFixed(2),
+            coutVisible: coutVisible.toFixed(2),
+            soldeSans: soldeSans.toFixed(2),
+            soldeAvec: soldeAvec.toFixed(2),
+            diffSolde: diffSolde.toFixed(2),
+            coutCache: coutCache.toFixed(2),
+            coutTotal: coutTotal.toFixed(2)
+        });
+    };
+    
+    function resetDisplay() {
+        const zeros = ['paySans', 'payAvec', 'soldeSans', 'soldeAvec', 'diffVisible',
+                       'clientPense', 'clientReel', 'coutVisible', 'coutCache', 'coutTotal',
+                       'partVisible', 'partCache', 'partTotal', 'sideTotal', 'sideTotalAn', 'sideTotalTerme',
+                       'sidePer1000', 'sideTotalAmort', 'sideEconomie', 'sideEconomieTerme'];
+        zeros.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0 $';
+        });
+        document.getElementById('formulaVisible').textContent = '... - ... = .../mois';
+        document.getElementById('formulaCache').textContent = '... ÷ ... mois = .../mois';
+        // Masquer les blocs dynamiques
+        const metricsBlock = document.getElementById('sideMetrics');
+        const compareBlock = document.getElementById('sideCompare');
+        if (metricsBlock) metricsBlock.style.display = 'none';
+        if (compareBlock) compareBlock.style.display = 'none';
+    }
+    
+    // Charger données existantes
+    async function loadData() {
+        try {
+            if (typeof FINOX !== 'undefined' && FINOX.CLIENT_ID) {
+                client = FINOX.getClientData ? FINOX.getClientData() : null;
+                if (!client) client = await FINOX.loadClientData?.(true);
+            }
+            
+            if (client && client.tools_data && client.tools_data.calc_hypo) {
+                const d = client.tools_data.calc_hypo;
+                if (d.montant) document.getElementById('hypoMontant').value = fmt(d.montant);
+                if (d.terme) document.getElementById('hypoTerme').value = d.terme;
+                if (d.amort) document.getElementById('hypoDuree').value = d.amort;
+                if (d.tauxSans) document.getElementById('hypoTauxSans').value = d.tauxSans + '%';
+                if (d.prime) document.getElementById('hypoPrime').value = d.prime;
+                if (d.tauxAvec) document.getElementById('hypoTauxAvec').value = d.tauxAvec + '%';
+                calculateHypo();
+            }
+        } catch (err) {
+            console.error('Erreur loadData:', err);
+        }
+    }
+    
+    // Sauvegarder
+    window.saveHypoCalc = async function() {
+        try {
+            if (typeof FINOX === 'undefined' || !FINOX.CLIENT_ID) {
+                console.warn('Pas de client pour sauvegarde');
+                await FINOX.alert('Données sauvegardées localement uniquement (pas de client sélectionné)');
+                return;
+            }
+            
+            const montant = parse(document.getElementById('hypoMontant').value);
+            const terme = parseInt(document.getElementById('hypoTerme').value) || 5;
+            const amort = parseInt(document.getElementById('hypoDuree').value) || 25;
+            const tauxSans = parsePct(document.getElementById('hypoTauxSans').value);
+            const prime = parsePct(document.getElementById('hypoPrime').value);
+            const tauxAvec = parsePct(document.getElementById('hypoTauxAvec').value);
+
+            // Recalculer pour sauvegarde
+            const paySans = calcPayment(montant, tauxSans, amort);
+            const payAvec = tauxAvec > 0 ? calcPayment(montant, tauxAvec, amort) : paySans;
+            const coutVisible = payAvec - paySans;
+            const soldeSans = calcBalanceAfter(montant, tauxSans, amort, terme);
+            const soldeAvec = tauxAvec > 0 ? calcBalanceAfter(montant, tauxAvec, amort, terme) : soldeSans;
+            const diffSolde = soldeAvec - soldeSans;
+            const coutCache = diffSolde / (terme * 12);
+            const coutTotal = coutVisible + coutCache;
+            
+            const hypoData = {
+                montant, terme, amort, tauxSans, prime, tauxAvec,
+                paySans, payAvec, coutVisible,
+                soldeSans, soldeAvec, diffSolde,
+                coutCache, coutTotal,
+                saved_at: new Date().toISOString()
+            };
+            
+            const currentToolsData = client?.tools_data || {};
+            const updatedToolsData = { ...currentToolsData, calc_hypo: hypoData };
+            
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ tools_data: updatedToolsData })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            FINOX.showNotification('✅ Calcul hypothécaire sauvegardé', 'success');
+            
+        } catch (err) {
+            console.error('Erreur saveHypoCalc:', err);
+            if (typeof FINOX !== 'undefined' && FINOX.showNotification) {
+                FINOX.showNotification('❌ Erreur: ' + err.message, 'error');
+            }
+        }
+    };
+    
+    // Init
+    await loadData();
+    FINOX.setupAllMoneyInputs();
+    calculateHypo();
+    
+    console.log('✅ Calculateur Hypothécaire v3.0 prêt (capitalisation semi-annuelle)');
+})();
+</script>

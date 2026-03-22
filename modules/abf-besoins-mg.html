@@ -1,0 +1,1163 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-BESOINS-MG (Maladie Grave)
+     Calcul des besoins en assurance maladies graves
+     EXTRAIT DU MONOLITHIQUE - Visuel compact original + SQL
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Person Tabs — style intégré */
+.person-tabs-container { margin-bottom: 0; }
+.person-tabs { display: flex; gap: 4px; margin-bottom: 0; }
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+.person-tab .tab-icon { font-size: 16px; }
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+.conjoint-tab { display: none; }
+.conjoint-tab.visible { display: flex; }
+.enfant-tab { display: none; }
+.enfant-tab.visible { display: flex; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* MG Compact Container */
+.mg-compact-container {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 16px;
+    border: 1px solid rgba(76, 175, 80, 0.15);
+    overflow: hidden;
+}
+
+.mg-compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(76, 175, 80, 0.08);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vie-param-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vie-param-inline label {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vie-param-inline input {
+    width: 110px;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+.auto-tag {
+    font-size: 9px;
+    color: #81C784;
+    margin-left: 2px;
+}
+
+/* MG Cards */
+.mg-cards-wrapper { padding: 12px; }
+
+.maladie-grave-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 800px) {
+    .maladie-grave-cards { grid-template-columns: 1fr; }
+}
+
+.mg-card {
+    background: var(--bg-primary, #121212);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(232, 180, 77, 0.15);
+    transition: all 0.2s ease;
+}
+
+.mg-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.mg-selectable {
+    cursor: pointer;
+    display: block;
+}
+
+.mg-selectable input[type="radio"] {
+    display: none;
+}
+
+.mg-card-inner {
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.mg-selectable:hover .mg-card-inner {
+    border-color: rgba(232, 180, 77, 0.5);
+}
+
+.mg-selectable input[type="radio"]:checked + .mg-card-inner {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(232, 180, 77, 0.3);
+}
+
+.mg-card-header {
+    padding: 10px 12px;
+    text-align: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mg-repit .mg-card-header { background: linear-gradient(135deg, #3A8B8C, #2D7A7B); }
+.mg-tranquillite .mg-card-header { background: linear-gradient(135deg, #2574A3, #1D6590); }
+.mg-confort .mg-card-header { background: linear-gradient(135deg, var(--gold), #D4A040); }
+
+.mg-icon { font-size: 22px; flex-shrink: 0; }
+
+.mg-card-header-text { text-align: left; flex: 1; }
+
+.mg-card-header h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.mg-duration {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mg-card-body { padding: 10px 12px; }
+
+.mg-formula { margin-bottom: 8px; }
+
+.mg-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 10px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.mg-row:last-child { border-bottom: none; }
+
+.mg-row span:last-child {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 10px;
+}
+
+.mg-row.mg-minus span:last-child { color: #4CAF50; }
+
+.mg-result {
+    background: rgba(232, 180, 77, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid rgba(232, 180, 77, 0.2);
+}
+
+.mg-result-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.mg-result-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #D4A03D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mg-card-footer {
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.3;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-selected-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--gold);
+    color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 8px;
+    font-weight: 700;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+}
+
+.mg-selectable input[type="radio"]:checked + .mg-card-inner .mg-selected-badge {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Legend */
+.mg-legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.mg-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mg-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.mg-legend-dot.repit { background: linear-gradient(135deg, #3A8B8C, #2D7A7B); }
+.mg-legend-dot.tranquillite { background: linear-gradient(135deg, #2574A3, #1D6590); }
+.mg-legend-dot.confort { background: linear-gradient(135deg, var(--gold), #D4A040); }
+
+/* Enfant simple display */
+.enfant-mg-simple {
+    padding: 20px;
+    text-align: center;
+}
+
+.enfant-mg-result {
+    padding: 20px;
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.enfant-mg-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.enfant-mg-value { font-size: 28px; font-weight: 800; color: #64B5F6; }
+
+.enfant-mg-info {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+/* Enfant Protection Toggle */
+.enfant-protection-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(76, 175, 80, 0.08);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.protection-disabled-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.enfant-content-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.enfant-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #4CAF50, #81C784);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    width: 44px;
+    height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.toggle-switch.active {
+    background: #4CAF50;
+}
+
+.toggle-switch.active::after {
+    left: 24px;
+}
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.nav-btn-save:hover { border-color: #81C784; color: #81C784; }
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+</style>
+
+
+
+<!-- Person Tabs -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="maladieTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchMaladieTab('client')">
+            <span class="tab-icon">🏥</span>
+            <span id="maladieTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchMaladieTab('conjoint')">
+            <span class="tab-icon">🏥</span>
+            <span id="maladieTabConjointName">Conjoint</span>
+        </div>
+        <!-- Enfants tabs seront ajoutés dynamiquement -->
+    </div>
+    <div class="tab-content-wrapper">
+
+<!-- ========== CLIENT TAB ========== -->
+<div class="tab-content active" id="maladieClientContent">
+    <div class="mg-compact-container">
+        <div class="mg-compact-header">
+            <div class="vie-param-inline">
+                <label>Revenu net annuel <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetClientMG" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>Assurance en vigueur <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="maladieGraveVigueurClient" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+        </div>
+
+        <div class="mg-cards-wrapper">
+            <div class="maladie-grave-cards">
+                <!-- Répit -->
+                <label class="mg-card mg-repit mg-selectable">
+                    <input type="radio" name="niveau_mg_client" value="repit" onchange="updateMGClient()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">🏥</div>
+                            <div class="mg-card-header-text">
+                                <h4>Répit Temporaire</h4>
+                                <span class="mg-duration">6 mois</span>
+                            </div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>6 mois revenu</span><span id="mgRepitRevenuClient">$0</span></div>
+                                <div class="mg-row"><span>+ Frais immédiats</span><span>$20,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgRepitVigueurClient">-$0</span></div>
+                            </div>
+                            <div class="mg-result">
+                                <div class="mg-result-label">Besoin</div>
+                                <div class="mg-result-value" id="besoinRepitClient">$0</div>
+                            </div>
+                        </div>
+                        <div class="mg-card-footer">Transport, hébergement, aide ménagère</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+
+                <!-- Tranquillité -->
+                <label class="mg-card mg-tranquillite mg-selectable">
+                    <input type="radio" name="niveau_mg_client" value="tranquillite" checked onchange="updateMGClient()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">💚</div>
+                            <div class="mg-card-header-text">
+                                <h4>Tranquillité d'Esprit</h4>
+                                <span class="mg-duration">12 mois</span>
+                            </div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>12 mois revenu</span><span id="mgTranqRevenuClient">$0</span></div>
+                                <div class="mg-row"><span>+ Soins & médic.</span><span>$45,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgTranqVigueurClient">-$0</span></div>
+                            </div>
+                            <div class="mg-result">
+                                <div class="mg-result-label">Besoin</div>
+                                <div class="mg-result-value" id="besoinTranquilliteClient">$0</div>
+                            </div>
+                        </div>
+                        <div class="mg-card-footer">Médicaments, soins spécialisés, soutien psy</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+
+                <!-- Confort -->
+                <label class="mg-card mg-confort mg-selectable">
+                    <input type="radio" name="niveau_mg_client" value="confort" onchange="updateMGClient()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">🏠</div>
+                            <div class="mg-card-header-text">
+                                <h4>Confort Complet</h4>
+                                <span class="mg-duration">24 mois</span>
+                            </div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>24 mois revenu</span><span id="mgConfortRevenuClient">$0</span></div>
+                                <div class="mg-row"><span>+ Couv. totale</span><span>$75,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgConfortVigueurClient">-$0</span></div>
+                            </div>
+                            <div class="mg-result">
+                                <div class="mg-result-label">Besoin</div>
+                                <div class="mg-result-value" id="besoinConfortClient">$0</div>
+                            </div>
+                        </div>
+                        <div class="mg-card-footer">Adaptation domicile, dettes, autonomie</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="mg-legend">
+            <div class="mg-legend-item"><span class="mg-legend-dot repit"></span> Frais immédiats</div>
+            <div class="mg-legend-item"><span class="mg-legend-dot tranquillite"></span> Qualité de vie</div>
+            <div class="mg-legend-item"><span class="mg-legend-dot confort"></span> Protection max</div>
+            <div class="mg-legend-item" style="margin-left: auto; color: var(--gold);">💡 Assurance calculée depuis tableau</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CONJOINT TAB ========== -->
+<div class="tab-content" id="maladieConjointContent">
+    <div class="mg-compact-container">
+        <div class="mg-compact-header">
+            <div class="vie-param-inline">
+                <label>Revenu net annuel <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetConjointMG" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>Assurance en vigueur <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="maladieGraveVigueurConjoint" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+        </div>
+
+        <div class="mg-cards-wrapper">
+            <div class="maladie-grave-cards">
+                <label class="mg-card mg-repit mg-selectable">
+                    <input type="radio" name="niveau_mg_conjoint" value="repit" onchange="updateMGConjoint()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">🏥</div>
+                            <div class="mg-card-header-text"><h4>Répit Temporaire</h4><span class="mg-duration">6 mois</span></div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>6 mois revenu</span><span id="mgRepitRevenuConjoint">$0</span></div>
+                                <div class="mg-row"><span>+ Frais immédiats</span><span>$20,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgRepitVigueurConjoint">-$0</span></div>
+                            </div>
+                            <div class="mg-result"><div class="mg-result-label">Besoin</div><div class="mg-result-value" id="besoinRepitConjoint">$0</div></div>
+                        </div>
+                        <div class="mg-card-footer">Transport, hébergement, aide ménagère</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+
+                <label class="mg-card mg-tranquillite mg-selectable">
+                    <input type="radio" name="niveau_mg_conjoint" value="tranquillite" checked onchange="updateMGConjoint()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">💚</div>
+                            <div class="mg-card-header-text"><h4>Tranquillité d'Esprit</h4><span class="mg-duration">12 mois</span></div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>12 mois revenu</span><span id="mgTranqRevenuConjoint">$0</span></div>
+                                <div class="mg-row"><span>+ Soins & médic.</span><span>$45,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgTranqVigueurConjoint">-$0</span></div>
+                            </div>
+                            <div class="mg-result"><div class="mg-result-label">Besoin</div><div class="mg-result-value" id="besoinTranquilliteConjoint">$0</div></div>
+                        </div>
+                        <div class="mg-card-footer">Médicaments, soins spécialisés, soutien psy</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+
+                <label class="mg-card mg-confort mg-selectable">
+                    <input type="radio" name="niveau_mg_conjoint" value="confort" onchange="updateMGConjoint()">
+                    <div class="mg-card-inner">
+                        <div class="mg-card-header">
+                            <div class="mg-icon">🏠</div>
+                            <div class="mg-card-header-text"><h4>Confort Complet</h4><span class="mg-duration">24 mois</span></div>
+                        </div>
+                        <div class="mg-card-body">
+                            <div class="mg-formula">
+                                <div class="mg-row"><span>24 mois revenu</span><span id="mgConfortRevenuConjoint">$0</span></div>
+                                <div class="mg-row"><span>+ Couv. totale</span><span>$75,000</span></div>
+                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgConfortVigueurConjoint">-$0</span></div>
+                            </div>
+                            <div class="mg-result"><div class="mg-result-label">Besoin</div><div class="mg-result-value" id="besoinConfortConjoint">$0</div></div>
+                        </div>
+                        <div class="mg-card-footer">Adaptation domicile, dettes, autonomie</div>
+                        <div class="mg-selected-badge">✓</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="mg-legend">
+            <div class="mg-legend-item"><span class="mg-legend-dot repit"></span> Frais immédiats</div>
+            <div class="mg-legend-item"><span class="mg-legend-dot tranquillite"></span> Qualité de vie</div>
+            <div class="mg-legend-item"><span class="mg-legend-dot confort"></span> Protection max</div>
+        </div>
+    </div>
+</div>
+
+<!-- Container pour les onglets enfants (générés dynamiquement) -->
+<div id="enfantsTabsContent"></div>
+    </div><!-- /tab-content-wrapper -->
+</div><!-- /person-tabs-container -->
+<script>
+(async function() {
+    console.log('🏥 Module ABF Besoins MG - Init');
+    let isSaving = false;
+    let revenuNetClient = 0;
+    let revenuNetConjoint = 0;
+    let mgVigueurClient = 0;
+    let mgVigueurConjoint = 0;
+    let niveauClient = 'tranquillite';
+    let niveauConjoint = 'tranquillite';
+    let enfantsData = [];
+    let enfantsMGVigueur = {};
+    
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS WINDOW
+    // ==========================================
+    
+    window.switchMaladieTab = function(tab) {
+        document.querySelectorAll('#maladieTabs .person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#maladieTabs .person-tab[data-tab="${tab}"]`)?.classList.add('active');
+        
+        // Cacher tous les contenus
+        document.getElementById('maladieClientContent').classList.remove('active');
+        document.getElementById('maladieConjointContent').classList.remove('active');
+        document.querySelectorAll('[id^="maladieEnfant"]').forEach(el => el.classList.remove('active'));
+        
+        // Afficher le bon contenu
+        if (tab === 'client') {
+            document.getElementById('maladieClientContent').classList.add('active');
+        } else if (tab === 'conjoint') {
+            document.getElementById('maladieConjointContent').classList.add('active');
+        } else if (tab.startsWith('enfant-')) {
+            document.getElementById(`maladieEnfant${tab.replace('enfant-', '')}Content`)?.classList.add('active');
+        }
+    };
+    
+    window.updateMGClient = function() {
+        niveauClient = document.querySelector('input[name="niveau_mg_client"]:checked')?.value || 'tranquillite';
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.updateMGConjoint = function() {
+        niveauConjoint = document.querySelector('input[name="niveau_mg_conjoint"]:checked')?.value || 'tranquillite';
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    function calculateAllMG() {
+        // CLIENT
+        const revenuMensuelClient = revenuNetClient / 12;
+        
+        const repit6Client = revenuMensuelClient * 6;
+        const tranq12Client = revenuMensuelClient * 12;
+        const confort24Client = revenuMensuelClient * 24;
+        
+        document.getElementById('mgRepitRevenuClient').textContent = FINOX.formatCurrency(repit6Client);
+        document.getElementById('mgTranqRevenuClient').textContent = FINOX.formatCurrency(tranq12Client);
+        document.getElementById('mgConfortRevenuClient').textContent = FINOX.formatCurrency(confort24Client);
+        
+        document.getElementById('mgRepitVigueurClient').textContent = '-' + FINOX.formatCurrency(mgVigueurClient);
+        document.getElementById('mgTranqVigueurClient').textContent = '-' + FINOX.formatCurrency(mgVigueurClient);
+        document.getElementById('mgConfortVigueurClient').textContent = '-' + FINOX.formatCurrency(mgVigueurClient);
+        
+        document.getElementById('besoinRepitClient').textContent = FINOX.formatCurrency(Math.max(0, repit6Client + 20000 - mgVigueurClient));
+        document.getElementById('besoinTranquilliteClient').textContent = FINOX.formatCurrency(Math.max(0, tranq12Client + 45000 - mgVigueurClient));
+        document.getElementById('besoinConfortClient').textContent = FINOX.formatCurrency(Math.max(0, confort24Client + 75000 - mgVigueurClient));
+        
+        // CONJOINT
+        const revenuMensuelConjoint = revenuNetConjoint / 12;
+        
+        const repit6Conjoint = revenuMensuelConjoint * 6;
+        const tranq12Conjoint = revenuMensuelConjoint * 12;
+        const confort24Conjoint = revenuMensuelConjoint * 24;
+        
+        document.getElementById('mgRepitRevenuConjoint').textContent = FINOX.formatCurrency(repit6Conjoint);
+        document.getElementById('mgTranqRevenuConjoint').textContent = FINOX.formatCurrency(tranq12Conjoint);
+        document.getElementById('mgConfortRevenuConjoint').textContent = FINOX.formatCurrency(confort24Conjoint);
+        
+        document.getElementById('mgRepitVigueurConjoint').textContent = '-' + FINOX.formatCurrency(mgVigueurConjoint);
+        document.getElementById('mgTranqVigueurConjoint').textContent = '-' + FINOX.formatCurrency(mgVigueurConjoint);
+        document.getElementById('mgConfortVigueurConjoint').textContent = '-' + FINOX.formatCurrency(mgVigueurConjoint);
+        
+        document.getElementById('besoinRepitConjoint').textContent = FINOX.formatCurrency(Math.max(0, repit6Conjoint + 20000 - mgVigueurConjoint));
+        document.getElementById('besoinTranquilliteConjoint').textContent = FINOX.formatCurrency(Math.max(0, tranq12Conjoint + 45000 - mgVigueurConjoint));
+        document.getElementById('besoinConfortConjoint').textContent = FINOX.formatCurrency(Math.max(0, confort24Conjoint + 75000 - mgVigueurConjoint));
+    }
+    
+    // Calcul du revenu de référence pour les enfants
+    function getRevenuEnfant() {
+        // Si deux parents avec revenu, prendre la moyenne
+        if (revenuNetClient > 0 && revenuNetConjoint > 0) {
+            return Math.round((revenuNetClient + revenuNetConjoint) / 2);
+        }
+        // Sinon prendre celui qui a un revenu
+        return revenuNetClient > 0 ? revenuNetClient : revenuNetConjoint;
+    }
+    
+    window.toggleProtectionMGEnfant = function(index) {
+        const toggle = document.getElementById(`protectionMGEnfant${index}Toggle`);
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
+        
+        document.getElementById(`protectionMGEnfant${index}Content`).style.display = isActive ? 'block' : 'none';
+        document.getElementById(`protectionMGEnfant${index}Disabled`).style.display = isActive ? 'none' : 'flex';
+        
+        // Mettre à jour les données de l'enfant
+        if (enfantsData[index]) {
+            enfantsData[index].protection_mg_active = isActive;
+        }
+        
+        if (isActive) {
+            calculateMGEnfant(index);
+        }
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.updateMGEnfant = function(index) {
+        if (enfantsData[index]) {
+            enfantsData[index].mg_niveau = document.querySelector(`input[name="niveau_mg_enfant${index}"]:checked`)?.value || 'tranquillite';
+        }
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.calculateMGEnfant = function(index) {
+        const revenuEnfant = getRevenuEnfant();
+        const revenuMensuel = revenuEnfant / 12;
+        const vigueur = enfantsData[index] ? (enfantsMGVigueur[enfantsData[index].prenom] || 0) : 0;
+        
+        const repit6 = revenuMensuel * 6;
+        const tranq12 = revenuMensuel * 12;
+        const confort24 = revenuMensuel * 24;
+        
+        // Frais réduits pour enfants
+        const fraisRepit = 20000;
+        const fraisTranq = 35000;
+        const fraisConfort = 50000;
+        
+        document.getElementById(`mgRepitRevenuEnfant${index}`).textContent = FINOX.formatCurrency(repit6);
+        document.getElementById(`mgTranqRevenuEnfant${index}`).textContent = FINOX.formatCurrency(tranq12);
+        document.getElementById(`mgConfortRevenuEnfant${index}`).textContent = FINOX.formatCurrency(confort24);
+        
+        document.getElementById(`mgRepitVigueurEnfant${index}`).textContent = '-' + FINOX.formatCurrency(vigueur);
+        document.getElementById(`mgTranqVigueurEnfant${index}`).textContent = '-' + FINOX.formatCurrency(vigueur);
+        document.getElementById(`mgConfortVigueurEnfant${index}`).textContent = '-' + FINOX.formatCurrency(vigueur);
+        
+        document.getElementById(`besoinRepitEnfant${index}`).textContent = FINOX.formatCurrency(Math.max(0, repit6 + fraisRepit - vigueur));
+        document.getElementById(`besoinTranqEnfant${index}`).textContent = FINOX.formatCurrency(Math.max(0, tranq12 + fraisTranq - vigueur));
+        document.getElementById(`besoinConfortEnfant${index}`).textContent = FINOX.formatCurrency(Math.max(0, confort24 + fraisConfort - vigueur));
+    };
+    
+    function renderEnfantsTabs() {
+        const tabsContainer = document.getElementById('maladieTabs');
+        const contentContainer = document.getElementById('enfantsTabsContent');
+        
+        // Supprimer anciens onglets enfants
+        document.querySelectorAll('.enfant-tab').forEach(el => el.remove());
+        contentContainer.innerHTML = '';
+        
+        const revenuEnfant = getRevenuEnfant();
+        const hasConjoint = revenuNetConjoint > 0;
+        const revenuInfo = hasConjoint ? 'Revenu: moyenne parents' : 'Revenu: parent principal';
+        
+        enfantsData.forEach((enfant, index) => {
+            const enfantName = enfant.prenom || `Enfant ${index + 1}`;
+            const vigueur = enfantsMGVigueur[enfant.prenom] || 0;
+            const isActive = enfant.protection_mg_active || false;
+            const niveau = enfant.mg_niveau || 'tranquillite';
+            
+            // Créer l'onglet
+            const tab = document.createElement('div');
+            tab.className = 'person-tab enfant-tab visible';
+            tab.setAttribute('data-tab', `enfant-${index}`);
+            tab.onclick = () => switchMaladieTab(`enfant-${index}`);
+            tab.innerHTML = `<span class="tab-icon">👶</span><span>${enfantName}</span>`;
+            tabsContainer.appendChild(tab);
+            
+            // Créer le contenu avec les 3 cartes
+            const content = document.createElement('div');
+            content.className = 'tab-content';
+            content.id = `maladieEnfant${index}Content`;
+            content.innerHTML = `
+                <div class="mg-compact-container">
+                    <!-- Toggle pour activer la protection -->
+                    <div class="enfant-protection-toggle">
+                        <div class="toggle-switch ${isActive ? 'active' : ''}" id="protectionMGEnfant${index}Toggle" onclick="toggleProtectionMGEnfant(${index})"></div>
+                        <span style="font-weight: 600; color: var(--text-primary);">Activer protection maladie grave pour ${enfantName}</span>
+                    </div>
+                    
+                    <!-- Contenu de protection -->
+                    <div id="protectionMGEnfant${index}Content" style="display: ${isActive ? 'block' : 'none'};">
+                        <!-- Header compact avec infos enfant -->
+                        <div class="mg-compact-header">
+                            <div class="enfant-content-header">
+                                <div class="enfant-avatar">👶</div>
+                                <div>
+                                    <div style="font-weight: 600; color: #81C784; font-size: 13px;">${enfantName}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">${revenuInfo}</div>
+                                </div>
+                            </div>
+                            <div class="vie-param-inline">
+                                <label>Revenu réf. <span class="auto-tag">AUTO</span></label>
+                                <input type="text" class="money-input" id="revenuNetEnfant${index}MG" value="${revenuEnfant}" readonly style="background:var(--bg-primary); opacity: 0.7; width:100px;">
+                            </div>
+                            <div class="vie-param-inline">
+                                <label>En vigueur <span class="auto-tag">AUTO</span></label>
+                                <input type="text" class="money-input" value="${vigueur}" readonly style="background:var(--bg-primary); opacity: 0.7; width:100px;">
+                            </div>
+                        </div>
+
+                        <!-- 3 Cards compact -->
+                        <div class="mg-cards-wrapper">
+                            <div class="maladie-grave-cards">
+                                <label class="mg-card mg-repit mg-selectable">
+                                    <input type="radio" name="niveau_mg_enfant${index}" value="repit" ${niveau === 'repit' ? 'checked' : ''} onchange="updateMGEnfant(${index})">
+                                    <div class="mg-card-inner">
+                                        <div class="mg-card-header">
+                                            <div class="mg-icon">🏥</div>
+                                            <div class="mg-card-header-text">
+                                                <h4>Répit Temporaire</h4>
+                                                <span class="mg-duration">6 mois</span>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-body">
+                                            <div class="mg-formula">
+                                                <div class="mg-row"><span>6 mois revenu</span><span id="mgRepitRevenuEnfant${index}">$0</span></div>
+                                                <div class="mg-row"><span>+ Frais immédiats</span><span>$20,000</span></div>
+                                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgRepitVigueurEnfant${index}">-$0</span></div>
+                                            </div>
+                                            <div class="mg-result">
+                                                <div class="mg-result-label">Besoin</div>
+                                                <div class="mg-result-value" id="besoinRepitEnfant${index}">$0</div>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-footer">Transport, hébergement, aide</div>
+                                        <div class="mg-selected-badge">✓</div>
+                                    </div>
+                                </label>
+
+                                <label class="mg-card mg-tranquillite mg-selectable">
+                                    <input type="radio" name="niveau_mg_enfant${index}" value="tranquillite" ${niveau === 'tranquillite' ? 'checked' : ''} onchange="updateMGEnfant(${index})">
+                                    <div class="mg-card-inner">
+                                        <div class="mg-card-header">
+                                            <div class="mg-icon">💚</div>
+                                            <div class="mg-card-header-text">
+                                                <h4>Tranquillité d'Esprit</h4>
+                                                <span class="mg-duration">12 mois</span>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-body">
+                                            <div class="mg-formula">
+                                                <div class="mg-row"><span>12 mois revenu</span><span id="mgTranqRevenuEnfant${index}">$0</span></div>
+                                                <div class="mg-row"><span>+ Soins & médic.</span><span>$35,000</span></div>
+                                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgTranqVigueurEnfant${index}">-$0</span></div>
+                                            </div>
+                                            <div class="mg-result">
+                                                <div class="mg-result-label">Besoin</div>
+                                                <div class="mg-result-value" id="besoinTranqEnfant${index}">$0</div>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-footer">Médicaments, soins, soutien</div>
+                                        <div class="mg-selected-badge">✓</div>
+                                    </div>
+                                </label>
+
+                                <label class="mg-card mg-confort mg-selectable">
+                                    <input type="radio" name="niveau_mg_enfant${index}" value="confort" ${niveau === 'confort' ? 'checked' : ''} onchange="updateMGEnfant(${index})">
+                                    <div class="mg-card-inner">
+                                        <div class="mg-card-header">
+                                            <div class="mg-icon">🏠</div>
+                                            <div class="mg-card-header-text">
+                                                <h4>Confort Complet</h4>
+                                                <span class="mg-duration">24 mois</span>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-body">
+                                            <div class="mg-formula">
+                                                <div class="mg-row"><span>24 mois revenu</span><span id="mgConfortRevenuEnfant${index}">$0</span></div>
+                                                <div class="mg-row"><span>+ Couv. totale</span><span>$50,000</span></div>
+                                                <div class="mg-row mg-minus"><span>- En vigueur</span><span id="mgConfortVigueurEnfant${index}">-$0</span></div>
+                                            </div>
+                                            <div class="mg-result">
+                                                <div class="mg-result-label">Besoin</div>
+                                                <div class="mg-result-value" id="besoinConfortEnfant${index}">$0</div>
+                                            </div>
+                                        </div>
+                                        <div class="mg-card-footer">Adaptation, dettes, autonomie</div>
+                                        <div class="mg-selected-badge">✓</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Légende compacte -->
+                        <div class="mg-legend">
+                            <div class="mg-legend-item"><span class="mg-legend-dot repit"></span> Frais immédiats</div>
+                            <div class="mg-legend-item"><span class="mg-legend-dot tranquillite"></span> Qualité de vie</div>
+                            <div class="mg-legend-item"><span class="mg-legend-dot confort"></span> Protection max</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Message quand protection désactivée -->
+                    <div id="protectionMGEnfant${index}Disabled" class="protection-disabled-msg" style="display: ${isActive ? 'none' : 'flex'};">
+                        <span>🏥</span>
+                        <span>Activez le toggle ci-dessus pour calculer les besoins en maladie grave de ${enfantName}</span>
+                    </div>
+                </div>
+            `;
+            contentContainer.appendChild(content);
+            
+            // Calculer si actif
+            if (isActive) {
+                setTimeout(() => calculateMGEnfant(index), 100);
+            }
+        });
+
+        // Formater les inputs monétaires dynamiques des enfants
+        FINOX.setupAllMoneyInputs(contentContainer);
+    }
+    
+    window.saveAndNext = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Besoins MG sauvegardés', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-projets-epargne');
+        } else {
+            FINOX.showNotification('Erreur: ' + result.error, 'error');
+        }
+    };
+    
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    // Afficher conjoint
+    if (client.has_conjoint) {
+        document.querySelector('.conjoint-tab').classList.add('visible');
+    }
+    
+    // Noms
+    document.getElementById('maladieTabClientName').textContent = client.first_name || 'Client';
+    document.getElementById('maladieTabConjointName').textContent = client.conjoint_first_name || 'Conjoint';
+    
+    // Revenus nets (70% du brut)
+    revenuNetClient = Math.round((client.revenu_emploi || 0) * 0.7);
+    revenuNetConjoint = Math.round((client.revenu_emploi_conjoint || 0) * 0.7);
+    document.getElementById('revenuNetClientMG').value = revenuNetClient;
+    document.getElementById('revenuNetConjointMG').value = revenuNetConjoint;
+    
+    // Charger enfants depuis abf_enfants
+    try {
+        const { data: enfants } = await FINOX.supabase
+            .from('abf_enfants')
+            .select('id, prenom, date_naissance, protection_mg_active, mg_niveau')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('ordre', { ascending: true });
+        
+        if (enfants && enfants.length > 0) {
+            enfantsData = enfants;
+            console.log('👶 Enfants chargés:', enfantsData.length, enfantsData);
+        }
+    } catch (err) { console.warn('Erreur chargement enfants:', err); }
+    
+    // Charger assurances MG en vigueur depuis abf_assurances
+    try {
+        const { data: assurances } = await FINOX.supabase
+            .from('abf_assurances')
+            .select('type, assure, montant_couverture, exclure_calcul')
+            .eq('client_id', FINOX.CLIENT_ID);
+        
+        if (assurances) {
+            const clientPrenom = client.first_name || 'Client';
+            const conjointPrenom = client.conjoint_first_name || 'Conjoint';
+            
+            assurances.forEach(a => {
+                if (a.exclure_calcul) return;
+                if (a.type?.includes('Maladie Grave')) {
+                    if (a.assure === clientPrenom || a.assure === 'client') {
+                        mgVigueurClient += a.montant_couverture || 0;
+                    } else if (a.assure === conjointPrenom || a.assure === 'conjoint') {
+                        mgVigueurConjoint += a.montant_couverture || 0;
+                    } else {
+                        // C'est probablement un enfant
+                        enfantsMGVigueur[a.assure] = (enfantsMGVigueur[a.assure] || 0) + (a.montant_couverture || 0);
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('maladieGraveVigueurClient').value = mgVigueurClient;
+        document.getElementById('maladieGraveVigueurConjoint').value = mgVigueurConjoint;
+    } catch (err) { console.warn('Erreur assurances:', err); }
+    
+    // Charger valeurs sauvegardées depuis abf_data
+    const abfData = client.abf_data || {};
+    
+    if (abfData.mg_niveau_client) {
+        niveauClient = abfData.mg_niveau_client;
+        const radio = document.querySelector(`input[name="niveau_mg_client"][value="${niveauClient}"]`);
+        if (radio) radio.checked = true;
+    }
+    
+    if (abfData.mg_niveau_conjoint) {
+        niveauConjoint = abfData.mg_niveau_conjoint;
+        const radio = document.querySelector(`input[name="niveau_mg_conjoint"][value="${niveauConjoint}"]`);
+        if (radio) radio.checked = true;
+    }
+    
+    // Formater les inputs monétaires
+    FINOX.setupAllMoneyInputs();
+
+    // Calculs et rendu
+    calculateAllMG();
+    renderEnfantsTabs();
+    
+    // ==========================================
+    // 3. FONCTION DE SAUVEGARDE SQL
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) return { success: true };
+        isSaving = true;
+        
+        const currentAbfData = client.abf_data || {};
+        
+        // Récupérer le besoin sélectionné
+        let besoinClient = 0;
+        if (niveauClient === 'repit') besoinClient = FINOX.parseNumber(document.getElementById('besoinRepitClient').textContent);
+        else if (niveauClient === 'tranquillite') besoinClient = FINOX.parseNumber(document.getElementById('besoinTranquilliteClient').textContent);
+        else besoinClient = FINOX.parseNumber(document.getElementById('besoinConfortClient').textContent);
+        
+        let besoinConjoint = 0;
+        if (niveauConjoint === 'repit') besoinConjoint = FINOX.parseNumber(document.getElementById('besoinRepitConjoint').textContent);
+        else if (niveauConjoint === 'tranquillite') besoinConjoint = FINOX.parseNumber(document.getElementById('besoinTranquilliteConjoint').textContent);
+        else besoinConjoint = FINOX.parseNumber(document.getElementById('besoinConfortConjoint').textContent);
+        
+        const abfUpdate = {
+            ...currentAbfData,
+            mg_niveau_client: niveauClient,
+            mg_niveau_conjoint: niveauConjoint,
+            mg_besoin_client: besoinClient,
+            mg_besoin_conjoint: besoinConjoint
+        };
+        
+        try {
+            // Sauvegarder abf_data dans clients
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            // Sauvegarder les données des enfants dans abf_enfants
+            for (let i = 0; i < enfantsData.length; i++) {
+                const enfant = enfantsData[i];
+                if (enfant && enfant.id) {
+                    const toggle = document.getElementById(`protectionMGEnfant${i}Toggle`);
+                    const protectionActive = toggle ? toggle.classList.contains('active') : false;
+                    const niveau = document.querySelector(`input[name="niveau_mg_enfant${i}"]:checked`)?.value || 'tranquillite';
+                    
+                    // Calculer le besoin MG de l'enfant
+                    let besoinMGEnfant = 0;
+                    if (protectionActive) {
+                        if (niveau === 'repit') besoinMGEnfant = FINOX.parseNumber(document.getElementById(`besoinRepitEnfant${i}`)?.textContent);
+                        else if (niveau === 'tranquillite') besoinMGEnfant = FINOX.parseNumber(document.getElementById(`besoinTranquilliteEnfant${i}`)?.textContent);
+                        else besoinMGEnfant = FINOX.parseNumber(document.getElementById(`besoinConfortEnfant${i}`)?.textContent);
+                    }
+                    
+                    const { error: enfantError } = await FINOX.supabase
+                        .from('abf_enfants')
+                        .update({
+                            protection_mg_active: protectionActive,
+                            mg_niveau: niveau,
+                            mg_besoin_calcule: besoinMGEnfant
+                        })
+                        .eq('id', enfant.id);
+                    
+                    if (enfantError) console.warn('Erreur sauvegarde enfant MG:', enfantError);
+                }
+            }
+            
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            await FINOX.loadClientData(true);
+            
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+    
+    console.log('✅ Module ABF Besoins MG chargé');
+})();
+</script>

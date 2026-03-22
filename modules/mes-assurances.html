@@ -1,0 +1,1234 @@
+<!-- MODULE: MES ASSURANCES v2.0 - Édition directe + Onglets (Modifier/Timeline/Documents) -->
+<style>
+.ins-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.ins-header-left{display:flex;align-items:center;gap:16px}
+.ins-header-icon{width:56px;height:56px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.ins-header h1{font-size:28px;font-weight:700}
+.ins-header p{color:var(--text-muted);font-size:14px;margin-top:4px}
+.ins-btn{padding:12px 20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s}
+.ins-btn:hover{border-color:var(--gold);color:var(--gold)}
+.ins-btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;color:#000}
+.ins-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--gold-glow);color:#000}
+.ins-btn-sm{padding:8px 14px;font-size:12px}
+.ins-btn-danger{background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3)}
+.ins-btn-danger:hover{background:rgba(239,68,68,.25)}
+
+.ins-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.ins-dashboard-card{padding:20px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;text-align:center}
+.ins-dashboard-card:last-child{background:linear-gradient(135deg,rgba(139,92,246,.1),transparent);border-color:rgba(139,92,246,.3)}
+.ins-dashboard-label{font-size:12px;color:var(--text-muted);margin-bottom:8px}
+.ins-dashboard-value{font-size:24px;font-weight:700}
+.ins-dashboard-value.purple{color:#8b5cf6}
+.ins-dashboard-value.green{color:#22c55e}
+.ins-dashboard-value.gold{color:var(--gold)}
+
+.ins-section{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px;margin-bottom:20px}
+.ins-section-title{font-size:16px;font-weight:600;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+.ins-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.ins-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;transition:all .2s;cursor:pointer}
+.ins-card:hover{border-color:rgba(139,92,246,.3);transform:translateY(-2px)}
+.ins-card.en_vigueur{border-left:4px solid #22c55e}
+.ins-card.en_cours{border-left:4px solid #f59e0b}
+.ins-card.annule{border-left:4px solid #ef4444}
+
+.ins-card-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border-color);background:rgba(255,255,255,.02)}
+.ins-card-header-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.ins-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(139,92,246,.15);flex-shrink:0}
+.ins-card-title-wrap{min-width:0;flex:1}
+.ins-card-title{font-size:15px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ins-card-subtitle{font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+.ins-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
+.ins-badge.assureur{background:rgba(59,130,246,.15);color:#60a5fa}
+.ins-badge.en_vigueur{background:rgba(34,197,94,.2);color:#22c55e}
+.ins-badge.en_cours{background:rgba(245,158,11,.2);color:#f59e0b}
+.ins-badge.annule{background:rgba(239,68,68,.2);color:#ef4444}
+
+.ins-card-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ins-value-box{background:rgba(0,0,0,.25);border-radius:10px;padding:12px}
+.ins-value-box.gold{border:1px solid rgba(201,162,39,.3)}
+.ins-value-box.green{border:1px solid rgba(34,197,94,.3)}
+.ins-value-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.ins-value-label.gold{color:var(--gold)}
+.ins-value-label.green{color:#22c55e}
+.ins-value{font-size:18px;font-weight:700}
+.ins-value.gold{color:var(--gold)}
+.ins-value.green{color:#22c55e}
+
+.ins-card-footer{padding:12px 16px;background:rgba(0,0,0,.15);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted)}
+.ins-card-footer-item{display:flex;align-items:center;gap:4px}
+
+.ins-empty-msg{color:var(--text-muted);text-align:center;padding:40px 20px;font-size:14px;grid-column:1/-1}
+.ins-loading{text-align:center;padding:40px;color:var(--text-muted)}
+
+.ins-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.ins-modal-overlay.show{display:flex}
+.ins-modal{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;width:100%;max-width:750px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+.ins-modal-header{padding:20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(139,92,246,.1),transparent)}
+.ins-modal-title{font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px}
+.ins-modal-close{width:36px;height:36px;border-radius:8px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ins-modal-close:hover{background:rgba(239,68,68,.15);border-color:#ef4444;color:#ef4444}
+
+.ins-modal-tabs{display:flex;border-bottom:1px solid var(--border-color);background:rgba(0,0,0,.2)}
+.ins-modal-tab{padding:12px 16px;background:none;border:none;color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.ins-modal-tab:hover{color:var(--text-primary);background:var(--bg-hover)}
+.ins-modal-tab.active{color:#8b5cf6;border-bottom-color:#8b5cf6}
+
+.ins-modal-body{padding:20px;overflow-y:auto;flex:1}
+.ins-tab-content{display:none}
+.ins-tab-content.active{display:block}
+
+.ins-modal-footer{padding:16px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;gap:12px;background:rgba(0,0,0,.2)}
+.ins-modal-footer-left{display:flex;gap:12px}
+.ins-modal-footer-right{display:flex;gap:12px}
+
+.ins-form-section{margin-bottom:20px}
+.ins-form-section:last-child{margin-bottom:0}
+.ins-form-section-title{font-size:12px;font-weight:600;color:#8b5cf6;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.ins-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ins-form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.ins-form-group{display:flex;flex-direction:column;gap:4px}
+.ins-form-group.full{grid-column:span 2}
+.ins-form-label{font-size:11px;color:var(--text-muted)}
+.ins-form-input,.ins-form-select{padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:13px}
+.ins-form-input:focus,.ins-form-select:focus{outline:none;border-color:var(--gold, #C9A227)}
+.ins-form-textarea{padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:13px;min-height:60px;resize:vertical;font-family:inherit}
+
+.ins-person-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ins-person-chip{display:flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s}
+.ins-person-chip:hover{border-color:rgba(139,92,246,.3)}
+.ins-person-chip.checked{background:rgba(139,92,246,.15);border-color:#8b5cf6}
+.ins-person-chip input{display:none}
+
+.ins-types-grid{display:flex;flex-wrap:wrap;gap:6px}
+.ins-type-chip{display:flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border-color);border-radius:6px;cursor:pointer;font-size:11px;transition:all .2s}
+.ins-type-chip:hover{border-color:rgba(139,92,246,.3)}
+.ins-type-chip.checked{background:rgba(139,92,246,.15);border-color:#8b5cf6;color:#a78bfa}
+.ins-type-chip input{display:none}
+
+.ins-timeline{position:relative;padding-left:24px}
+.ins-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border-color)}
+.ins-timeline-item{position:relative;padding-bottom:16px}
+.ins-timeline-item:last-child{padding-bottom:0}
+.ins-timeline-item::before{content:'';position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:#8b5cf6;border:2px solid var(--bg-card)}
+.ins-timeline-item.note::before{background:var(--gold)}
+.ins-timeline-item.document_ajoute::before{background:#3b82f6}
+.ins-timeline-date{font-size:10px;color:var(--text-muted);margin-bottom:2px}
+.ins-timeline-title{font-weight:600;font-size:12px;margin-bottom:2px}
+.ins-timeline-desc{font-size:11px;color:var(--text-secondary)}
+.ins-timeline-empty{text-align:center;padding:30px;color:var(--text-muted)}
+
+.ins-note-form{display:flex;flex-direction:column;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)}
+.ins-note-form textarea{min-height:80px}
+
+.ins-docs-upload{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;padding:16px;background:rgba(59,130,246,.05);border:1px dashed rgba(59,130,246,.3);border-radius:12px;flex-wrap:wrap}
+.ins-docs-upload input[type="file"]{display:none}
+.ins-docs-upload-btn{padding:10px 16px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:#60a5fa;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.ins-docs-upload-btn:hover{background:rgba(59,130,246,.25)}
+.ins-file-preview{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;font-size:12px;color:#93c5fd;max-width:300px;animation:insFileIn .25s ease}
+.ins-file-preview .ins-fp-icon{font-size:18px;flex-shrink:0}
+.ins-file-preview .ins-fp-info{flex:1;min-width:0;overflow:hidden}
+.ins-file-preview .ins-fp-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ins-file-preview .ins-fp-size{color:var(--text-muted);font-size:11px}
+.ins-file-preview .ins-fp-remove{background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:background .2s}
+.ins-file-preview .ins-fp-remove:hover{background:rgba(248,113,113,.15)}
+@keyframes insFileIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+.ins-docs-list{display:flex;flex-direction:column;gap:8px}
+.ins-doc-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:8px}
+.ins-doc-item:hover{border-color:rgba(59,130,246,.3)}
+.ins-doc-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.ins-doc-icon{font-size:24px}
+.ins-doc-details{min-width:0}
+.ins-doc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ins-doc-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
+.ins-doc-actions{display:flex;gap:6px}
+.ins-doc-action{width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:rgba(255,255,255,.05)}
+.ins-doc-action:hover{background:rgba(255,255,255,.1)}
+.ins-doc-action.delete:hover{background:rgba(239,68,68,.2);color:#ef4444}
+.ins-docs-empty{text-align:center;padding:30px;color:var(--text-muted)}
+
+@media(max-width:768px){
+.ins-cards-grid{grid-template-columns:1fr}
+.ins-form-grid,.ins-form-grid.cols-3{grid-template-columns:1fr}
+.ins-form-group.full{grid-column:span 1}
+}
+
+</style>
+
+<div class="ins-header">
+<div class="ins-header-left"><div class="ins-header-icon">🛡️</div><div><h1>Mes Assurances</h1><p>Polices d'assurance du client</p></div></div>
+<div class="ins-header-actions"><button class="ins-btn ins-btn-primary" onclick="INS.openAddModal()">➕ Nouvelle Assurance</button></div>
+</div>
+
+<div class="ins-dashboard">
+<div class="ins-dashboard-card"><div class="ins-dashboard-label">Total Polices</div><div class="ins-dashboard-value purple" id="statTotal">0</div></div>
+<div class="ins-dashboard-card"><div class="ins-dashboard-label">En Vigueur</div><div class="ins-dashboard-value green" id="statVigueur">0</div></div>
+<div class="ins-dashboard-card"><div class="ins-dashboard-label">En Cours</div><div class="ins-dashboard-value" id="statEnCours">0</div></div>
+<div class="ins-dashboard-card"><div class="ins-dashboard-label">Projetées (en attente)</div><div class="ins-dashboard-value gold" id="statCommPrevues">0 $</div></div>
+<div class="ins-dashboard-card"><div class="ins-dashboard-label">Commissions reçues</div><div class="ins-dashboard-value green" id="statCommissions">0 $</div></div>
+</div>
+
+<div class="ins-section">
+<h3 class="ins-section-title">📋 Polices d'Assurance</h3>
+<div class="ins-cards-grid" id="insList"><div class="ins-loading">⏳ Chargement...</div></div>
+</div>
+
+<!-- Modal Unifiée avec Onglets -->
+<div class="ins-modal-overlay" id="insModal" onclick="if(event.target===this)INS.closeModal()">
+<div class="ins-modal">
+<div class="ins-modal-header">
+<div class="ins-modal-title"><span id="modalIcon">🛡️</span><span id="modalTitle">Assurance</span></div>
+<button class="ins-modal-close" onclick="INS.closeModal()">✕</button>
+</div>
+<div class="ins-modal-tabs" id="modalTabs">
+<button class="ins-modal-tab active" data-tab="edit">✏️ Modifier</button>
+<button class="ins-modal-tab" data-tab="documents">📎 Documents</button>
+<button class="ins-modal-tab" data-tab="timeline">📅 Timeline</button>
+</div>
+<div class="ins-modal-body">
+<!-- Onglet Modifier (Formulaire) -->
+<div class="ins-tab-content active" id="tabEdit">
+<input type="hidden" id="insId">
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">📦 Type de produit</div>
+<div class="ins-types-grid" id="insTypesGrid"></div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">📋 Informations</div>
+<div class="ins-form-grid">
+<div class="ins-form-group"><label class="ins-form-label">Assureur</label><select class="ins-form-select" id="insAssureur" onchange="if(this.value==='Autre'){document.getElementById('insAssureurAutre').style.display='block'}else{document.getElementById('insAssureurAutre').style.display='none'}"><option value="">Choisir...</option><option>Assomption Vie</option><option>Beneva</option><option>BMO</option><option>Canada Vie</option><option>Chevaliers de Colomb</option><option>Combined</option><option>CPP</option><option>Desjardins</option><option>Emma</option><option>Empire Vie</option><option>Équitable</option><option>Foresters</option><option>Humania</option><option>iA Groupe Financier</option><option>Ivari</option><option>Manuvie</option><option>Primerica</option><option>RBC</option><option>Securian</option><option>Sun Life</option><option>UV Assurance</option><option>Autre</option></select><input type="text" class="ins-form-input" id="insAssureurAutre" placeholder="Nom de l'assureur..." style="display:none;margin-top:6px;"></div>
+<div class="ins-form-group"><label class="ins-form-label">Statut</label><select class="ins-form-select" id="insStatut">
+<option value="proposition_soumise">📤 Proposition soumise</option>
+<option value="attente_conseiller">👤 En attente du conseiller</option>
+<option value="tarification">⏳ Tarification</option>
+<option value="exigence_assureur">🏢 Assureur - En attente d'exigence</option>
+<option value="exigence_finox">📋 Finox - En attente d'exigence</option>
+<option value="a_faire_signature">✍️ À faire - Signature et conformité</option>
+<option value="attente_signature">⏱️ En attente - Signature et conformité</option>
+<option value="traiter_commission">💰 Traiter commission</option>
+<option value="en_vigueur">✅ En Vigueur</option>
+<option value="annule_ferme">❌ Contrat annulé / fermé</option>
+</select></div>
+<div class="ins-form-group"><label class="ins-form-label">N° Dossier</label><input type="text" class="ins-form-input" id="insNumeroDossier"></div>
+<div class="ins-form-group"><label class="ins-form-label">N° Police</label><input type="text" class="ins-form-input" id="insNumeroPolice"></div>
+</div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">📝 Preneur (Titulaire)</div>
+<div class="ins-person-chips" id="insPreneurChips"></div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">👥 Personnes assurées</div>
+<div class="ins-person-chips" id="insAssuresChips"></div>
+</div>
+
+<!-- Type de contrat multi-assurés (visible seulement quand 2+ assurés cochés) -->
+<div class="ins-form-section" id="insTypeContratSection" style="display:none;">
+<div class="ins-form-section-title">📋 Type de contrat</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <label class="ins-person-chip checked" style="cursor:pointer;">
+        <input type="radio" name="typeContrat" value="premier_deces" checked style="display:none;">
+        <span>💑</span> Conjoint 1er décès
+    </label>
+    <label class="ins-person-chip" style="cursor:pointer;">
+        <input type="radio" name="typeContrat" value="vie_multiple" style="display:none;">
+        <span>👥</span> Vie multiple
+    </label>
+</div>
+<div id="insVieMultipleInfo" style="display:none;margin-top:8px;font-size:11px;color:var(--text-muted);padding:6px 10px;background:rgba(201,162,39,0.08);border-radius:8px;border:1px solid rgba(201,162,39,0.2);">
+    ℹ️ Un seul contrat, une seule prime — mais un montant de couverture par personne assurée.
+</div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">💰 Couverture & Primes</div>
+<!-- Couverture unique (1er décès ou 1 seul assuré) -->
+<div id="insCouvertureUnique">
+<div class="ins-form-grid cols-3">
+<div class="ins-form-group"><label class="ins-form-label">Couverture ($)</label><input type="text" class="ins-form-input money-input" id="insCouverture"></div>
+<div class="ins-form-group"><label class="ins-form-label">Prime/mois ($)</label><input type="text" class="ins-form-input money-input" id="insPrimeMois"></div>
+<div class="ins-form-group"><label class="ins-form-label">Prime/an ($)</label><input type="text" class="ins-form-input money-input" id="insPrimeAn"></div>
+</div>
+</div>
+<!-- Couverture par personne (vie multiple) -->
+<div id="insCouvertureMultiple" style="display:none;">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+<div id="insMontantsParAssure"></div>
+<div>
+<div class="ins-form-group" style="margin-bottom:8px;"><label class="ins-form-label">Prime/mois ($)</label><input type="text" class="ins-form-input money-input" id="insPrimeMoisMulti"></div>
+<div class="ins-form-group"><label class="ins-form-label">Prime/an ($)</label><input type="text" class="ins-form-input money-input" id="insPrimeAnMulti"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">📅 Dates</div>
+<div class="ins-form-grid cols-2">
+<div class="ins-form-group"><label class="ins-form-label">Date de création</label><input type="date" class="ins-form-input" id="insDateCreation" disabled style="opacity:0.6;cursor:not-allowed;"></div>
+<div class="ins-form-group"><label class="ins-form-label">En vigueur</label><input type="date" class="ins-form-input" id="insDateVigueur"></div>
+</div>
+</div>
+
+<div class="ins-form-section">
+<div class="ins-form-section-title">💵 Commissions</div>
+<div id="insCommissionCalc" style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:var(--text-secondary);display:none;">
+<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Base (prime annuelle / 2)</span><span id="insCalcBase" style="font-weight:600;color:var(--text-primary);">--</span></div>
+<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Boni (<span id="insCalcBoniPct">--</span>%)</span><span id="insCalcBoni" style="font-weight:600;color:var(--gold);">--</span></div>
+<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-color);padding-top:6px;margin-top:4px;"><span style="font-weight:600;">Commission prévue</span><span id="insCalcTotal" style="font-weight:700;color:var(--gold);font-size:14px;">--</span></div>
+</div>
+<div class="ins-form-grid cols-2">
+<div class="ins-form-group"><label class="ins-form-label">Prévue ($)</label><input type="text" class="ins-form-input money-input" id="insCommPrevue" readonly style="opacity:0.7;cursor:not-allowed;"></div>
+<div class="ins-form-group"><label class="ins-form-label">Reçue ($)</label><input type="text" class="ins-form-input money-input" id="insCommRecue"></div>
+</div>
+</div>
+
+</div>
+
+<!-- Onglet Timeline -->
+<div class="ins-tab-content" id="tabTimeline"></div>
+
+<!-- Onglet Documents -->
+<div class="ins-tab-content" id="tabDocuments"></div>
+</div>
+<div class="ins-modal-footer">
+<div class="ins-modal-footer-left">
+<button class="ins-btn ins-btn-danger" id="btnDelete" style="display:none" onclick="INS.confirmDelete()">🗑️ Supprimer</button>
+</div>
+<div class="ins-modal-footer-right">
+<button class="ins-btn" onclick="INS.closeModal()">Annuler</button>
+<button class="ins-btn ins-btn-primary" onclick="INS.save()">💾 Enregistrer</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// Nettoyer l'instance précédente si elle existe
+if (window.INS) { delete window.INS; }
+
+window.INS = {
+assurances: [],
+currentAssurance: null,
+timeline: [],
+documents: [],
+family: { client: null, conjoint: null, enfants: [], corpoPersons: [], isCorpo: false },
+_bonusRate: null,
+
+TYPES: [
+{v:'vie_temporaire',l:'Vie Temporaire',i:'⏱️'},
+{v:'vie_permanente',l:'Vie Permanente',i:'♾️'},
+{v:'vie_universelle',l:'Vie Universelle',i:'🌐'},
+{v:'vie_participative',l:'Vie Participative',i:'🌿'},
+{v:'invalidite_courte',l:'Invalidité CD',i:'🩹'},
+{v:'invalidite_longue',l:'Invalidité LD',i:'🏥'},
+{v:'maladie_grave',l:'Maladie Grave',i:'💊'},
+{v:'collective',l:'Collective',i:'🏢'},
+{v:'autre',l:'Autre',i:'📋'}
+],
+
+STATUTS: {
+    proposition_soumise: { label: '📤 Proposition soumise', progress: 60, color: '#6366f1' },
+    attente_conseiller: { label: '👤 En attente du conseiller', progress: 65, color: '#f59e0b' },
+    tarification: { label: '⏳ Tarification', progress: 85, color: '#3b82f6' },
+    exigence_assureur: { label: '🏢 Assureur - En attente d\'exigence', progress: 85, color: '#ef4444' },
+    exigence_finox: { label: '📋 Finox - En attente d\'exigence', progress: 85, color: '#f97316' },
+    a_faire_signature: { label: '✍️ À faire - Signature et conformité', progress: 90, color: '#8b5cf6' },
+    attente_signature: { label: '⏱️ En attente - Signature et conformité', progress: 90, color: '#a855f7' },
+    traiter_commission: { label: '💰 Traiter commission', progress: 95, color: '#10b981' },
+    en_vigueur: { label: '✅ En Vigueur', progress: 100, color: '#22c55e' },
+    annule_ferme: { label: '❌ Contrat annulé / fermé', progress: 0, color: '#6b7280' }
+},
+
+// Helper pour obtenir le label du statut (compatibilité)
+getStatutLabel(key) {
+    const s = this.STATUTS[key];
+    return s ? (typeof s === 'object' ? s.label : s) : key;
+},
+
+DOC_TYPES: [
+{v:'proposition',l:'Proposition'},
+{v:'police',l:'Police'},
+{v:'avenant',l:'Avenant'},
+{v:'illustration',l:'Illustration'},
+{v:'preuve_paiement',l:'Preuve paiement'},
+{v:'rapport_conseiller',l:'Rapport du conseiller'},
+{v:'preuve_signature',l:'Preuve de signature / Récapitulatif'},
+{v:'declaration_assurabilite',l:'Déclaration d\'assurabilité'},
+{v:'correspondance',l:'Correspondance'},
+{v:'autre',l:'Autre'}
+],
+
+async init() {
+    this.renderTypesGrid();
+    this.setupTabs();
+    await this.loadBonusRate();
+    await this.loadFamily();
+    await this.load();
+    // Limiter les champs date à 4 chiffres pour l'année
+    FINOX.setupAllDateInputs();
+    FINOX.setupAllMoneyInputs();
+    // Auto-calcul commission quand prime change
+    ['insPrimeMois','insPrimeAn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => this.calcCommission());
+    });
+},
+
+async loadBonusRate() {
+    try {
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+        const { data } = await FINOX.supabase.from('profiles').select('bonus_rate').eq('id', user.id).single();
+        this._bonusRate = data?.bonus_rate || null;
+    } catch(e) { console.error('Erreur chargement bonus_rate:', e); }
+},
+
+calcCommission() {
+    const primeMois = FINOX.parseNumber(document.getElementById('insPrimeMois').value) || 0;
+    const primeAn = FINOX.parseNumber(document.getElementById('insPrimeAn').value) || 0;
+    const annuelle = primeAn > 0 ? primeAn : (primeMois * 12);
+    const calcBox = document.getElementById('insCommissionCalc');
+    const prevueInput = document.getElementById('insCommPrevue');
+
+    if (annuelle <= 0 || !this._bonusRate) {
+        if (calcBox) calcBox.style.display = 'none';
+        if (prevueInput) prevueInput.value = '';
+        return;
+    }
+
+    const base = annuelle / 2;
+    const boni = base * (this._bonusRate / 100);
+    const total = base + boni;
+
+    if (calcBox) {
+        calcBox.style.display = 'block';
+        document.getElementById('insCalcBase').textContent = FINOX.formatNumber(base) + ' $';
+        document.getElementById('insCalcBoniPct').textContent = this._bonusRate;
+        document.getElementById('insCalcBoni').textContent = FINOX.formatNumber(boni) + ' $';
+        document.getElementById('insCalcTotal').textContent = FINOX.formatNumber(total) + ' $';
+    }
+    if (prevueInput) prevueInput.value = FINOX.formatNumber(total);
+},
+
+async loadFamily() {
+    try {
+        const c = await FINOX.loadClientData();
+        if (c) {
+            this.family.isCorpo = c.type_contact === 'corpo';
+            this.family.client = { prenom: c.first_name || 'Client', full: (c.first_name||'')+ ' ' + (c.last_name||'') };
+            if (c.has_conjoint) {
+                this.family.conjoint = { prenom: c.conjoint_first_name || 'Conjoint', full: (c.conjoint_first_name||'') + ' ' + (c.conjoint_last_name||'') };
+            }
+
+            // Corpo: charger personnes clés, actionnaires et relations
+            if (this.family.isCorpo) {
+                const corpoData = c.abf_data?.corpo || {};
+                const seen = new Set();
+                const addPerson = (nom, label, group) => {
+                    if (nom && !seen.has(nom.toLowerCase())) {
+                        seen.add(nom.toLowerCase());
+                        this.family.corpoPersons.push({ name: nom, label, group });
+                    }
+                };
+                // Corporation elle-même
+                const corpoName = c.company_name || c.first_name || 'Corporation';
+                addPerson(corpoName, corpoName + ' (Corporation)', 'corpo');
+                // Personnes clés
+                (corpoData.personnes_cles || []).forEach(p => {
+                    const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
+                    addPerson(nom, nom + (p.fonction ? ' (' + p.fonction + ')' : ''), 'cle');
+                });
+                // Actionnaires
+                (corpoData.actionnaires || []).forEach(a => {
+                    const nom = [a.prenom, a.nom].filter(Boolean).join(' ');
+                    addPerson(nom, nom + (a.parts_pct ? ' (' + a.parts_pct + '%)' : ''), 'cle');
+                });
+                // Relations
+                try {
+                    const { data: rels } = await FINOX.supabase
+                        .from('client_relationships')
+                        .select('relationship_type, clients!client_relationships_related_client_id_fkey(first_name, last_name)')
+                        .eq('client_id', FINOX.CLIENT_ID);
+                    if (rels) {
+                        rels.forEach(r => {
+                            const rc = r.clients;
+                            if (rc) {
+                                const nom = [rc.first_name, rc.last_name].filter(Boolean).join(' ');
+                                addPerson(nom, nom + (r.relationship_type ? ' (' + r.relationship_type + ')' : ''), 'relation');
+                            }
+                        });
+                    }
+                } catch(e) { console.warn('⚠️ Erreur relations:', e); }
+            }
+        }
+        const {data: enf} = await FINOX.supabase.from('abf_enfants').select('id, prenom, nom').eq('client_id', FINOX.CLIENT_ID).order('ordre');
+        if (enf) this.family.enfants = enf.map(e => ({id: e.id, prenom: e.prenom || 'Enfant', full: (e.prenom||'') + ' ' + (e.nom||'')}));
+    } catch(e) { console.warn('Erreur famille:', e); }
+},
+
+async load() {
+    try {
+        const {data} = await FINOX.supabase.from('assurances_vendues').select('*').eq('client_id', FINOX.CLIENT_ID).order('created_at', {ascending: false});
+        this.assurances = data || [];
+        this.stats();
+        this.render();
+    } catch(e) {
+        console.error('Erreur load:', e);
+        document.getElementById('insList').innerHTML = '<p class="ins-empty-msg">Erreur chargement</p>';
+    }
+},
+
+fmt(n) { return (n||0).toLocaleString('fr-CA', {style:'currency', currency:'CAD', minimumFractionDigits:0}); },
+fmtDate(d) { if (!d) return '--'; const dt = new Date(d); return dt.toLocaleDateString('fr-CA'); },
+getType(v) { return this.TYPES.find(t => t.v === v) || {v:'autre',l:'Autre',i:'📋'}; },
+getDocTypeLabel(v) { return (this.DOC_TYPES.find(t => t.v === v) || {l:'Autre'}).l; },
+
+stats() {
+    const t = this.assurances.length;
+    const v = this.assurances.filter(a => a.statut === 'en_vigueur').length;
+    const enCours = this.assurances.filter(a => !['en_vigueur','annule_ferme'].includes(a.statut));
+    const e = enCours.length;
+    const commRecues = this.assurances.reduce((s,a) => s + (parseFloat(a.commission_recue) || 0), 0);
+    const commPrevues = enCours.reduce((s,a) => s + (parseFloat(a.commission_prevue) || 0), 0);
+    document.getElementById('statTotal').textContent = t;
+    document.getElementById('statVigueur').textContent = v;
+    document.getElementById('statEnCours').textContent = e;
+    document.getElementById('statCommPrevues').textContent = this.fmt(commPrevues);
+    document.getElementById('statCommissions').textContent = this.fmt(commRecues);
+},
+
+render() {
+    const c = document.getElementById('insList');
+    if (this.assurances.length === 0) {
+        c.innerHTML = '<p class="ins-empty-msg">Aucune assurance. Cliquez sur "+ Nouvelle Assurance".</p>';
+        return;
+    }
+    c.innerHTML = this.assurances.map(a => this.card(a)).join('');
+},
+
+card(a) {
+    const ti = this.getType(a.type_produit);
+    const sc = a.statut === 'en_vigueur' ? 'en_vigueur' : a.statut === 'annule_ferme' ? 'annule' : 'en_cours';
+    const sl = this.getStatutLabel(a.statut);
+    let ass = a.assure_nom || '--';
+    if (a.assures && a.assures.length > 0) ass = a.assures.map(x => x.prenom || x.nom).join(', ');
+    const isVieMulti = a.type_contrat === 'vie_multiple' && a.assures && a.assures.length >= 2;
+    const typeContratBadge = a.assures && a.assures.length >= 2
+        ? (isVieMulti ? '<span class="ins-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa;margin-left:4px;">👥 Vie multiple</span>' : '<span class="ins-badge" style="background:rgba(236,72,153,0.15);color:#f472b6;margin-left:4px;">💑 1er décès</span>')
+        : '';
+    // Montants par personne pour vie multiple
+    let couvertureHTML = '';
+    if (isVieMulti) {
+        const details = a.assures.map(x => (x.prenom||x.nom) + ': ' + this.fmt(x.montant_couverture || 0)).join(' · ');
+        couvertureHTML = '<div class="ins-value-box gold"><div class="ins-value-label gold">💰 Couverture totale</div><div class="ins-value gold">'+(a.montant_couverture ? this.fmt(a.montant_couverture) : '--')+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+details+'</div></div>';
+    } else {
+        couvertureHTML = '<div class="ins-value-box gold"><div class="ins-value-label gold">💰 Couverture</div><div class="ins-value gold">'+(a.montant_couverture ? this.fmt(a.montant_couverture) : '--')+'</div></div>';
+    }
+    return '<div class="ins-card '+sc+'" onclick="INS.openModal(\''+a.id+'\')">'+
+'<div class="ins-card-header"><div class="ins-card-header-left">'+
+'<div class="ins-card-icon">'+ti.i+'</div>'+
+'<div class="ins-card-title-wrap"><div class="ins-card-title">'+ti.l+'</div>'+
+'<div class="ins-card-subtitle"><span class="ins-badge assureur">'+(a.assureur||'--')+'</span><span class="ins-badge '+sc+'">'+sl+'</span>'+typeContratBadge+'</div></div></div></div>'+
+'<div class="ins-card-body">'+
+couvertureHTML+
+'<div class="ins-value-box green"><div class="ins-value-label green">📅 Prime/mois</div><div class="ins-value green">'+(a.prime_mensuelle ? this.fmt(a.prime_mensuelle) : '--')+'</div></div></div>'+
+'<div class="ins-card-footer"><div class="ins-card-footer-item">📝 '+(a.preneur_nom || '--')+'</div>'+
+'<div class="ins-card-footer-item">👤 '+ass+'</div>'+
+'<div class="ins-card-footer-item">'+(a.numero_police ? '#'+a.numero_police : '--')+'</div></div></div>';
+},
+
+setupTabs() {
+    document.querySelectorAll('#modalTabs .ins-modal-tab').forEach(tab => {
+        tab.onclick = () => this.switchTab(tab.dataset.tab);
+    });
+},
+
+async switchTab(tabName) {
+    // Auto-save when leaving edit tab (ensures assurance exists for documents/timeline)
+    const currentTab = document.querySelector('#modalTabs .ins-modal-tab.active');
+    if (currentTab && currentTab.dataset.tab === 'edit') {
+        try {
+            await this.save(true); // silent save
+        } catch(e) {
+            console.warn('[Assurance] Auto-save error:', e.message);
+        }
+    }
+
+    document.querySelectorAll('#modalTabs .ins-modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ins-tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('#modalTabs .ins-modal-tab[data-tab="'+tabName+'"]').classList.add('active');
+    const tabId = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+    document.getElementById('tab' + tabId).classList.add('active');
+
+    // Reload documents/timeline after auto-save (ID now exists)
+    const assuranceId = document.getElementById('insId').value;
+    if (assuranceId) {
+        if (tabName === 'documents') { await this.loadDocuments(assuranceId); this.renderDocumentsTab(); }
+        if (tabName === 'timeline') { await this.loadTimeline(assuranceId); this.renderTimelineTab(); }
+    }
+},
+
+// OUVRE DIRECTEMENT EN MODE ÉDITION
+async openModal(id) {
+    const a = this.assurances.find(x => x.id === id);
+    if (!a) return;
+    this.currentAssurance = a;
+    
+    const ti = this.getType(a.type_produit);
+    document.getElementById('modalIcon').textContent = ti.i;
+    document.getElementById('modalTitle').textContent = ti.l + (a.assureur ? ' - ' + a.assureur : '');
+    document.getElementById('btnDelete').style.display = 'block';
+    
+    // Remplir le formulaire d'édition
+    this.fillEditForm(a);
+    
+    // Charger timeline et documents
+    await this.loadTimeline(a.id);
+    this.renderTimelineTab();
+    await this.loadDocuments(a.id);
+    this.renderDocumentsTab();
+    
+    // Afficher l'onglet Modifier par défaut
+    this.switchTab('edit');
+    
+    document.getElementById('insModal').classList.add('show');
+},
+
+// Remplir le formulaire avec les données existantes
+fillEditForm(a) {
+    this.resetForm();
+    
+    document.getElementById('insId').value = a.id;
+    
+    const types = a.types_produits || [a.type_produit];
+    types.filter(Boolean).forEach(t => {
+        const c = document.querySelector('.ins-type-chip[data-value="'+t+'"]');
+        if (c) { c.classList.add('checked'); c.querySelector('input').checked = true; }
+    });
+    
+    document.getElementById('insAssureur').value = a.assureur || '';
+    document.getElementById('insStatut').value = a.statut || 'proposition_soumise';
+    document.getElementById('insNumeroDossier').value = a.numero_dossier || '';
+    document.getElementById('insNumeroPolice').value = a.numero_police || '';
+    document.getElementById('insCouverture').value = a.montant_couverture ? FINOX.formatNumber(a.montant_couverture) : '';
+    document.getElementById('insPrimeMois').value = a.prime_mensuelle ? FINOX.formatNumber(a.prime_mensuelle) : '';
+    document.getElementById('insPrimeAn').value = a.prime_annuelle ? FINOX.formatNumber(a.prime_annuelle) : '';
+    document.getElementById('insDateCreation').value = a.created_at ? a.created_at.substring(0, 10) : '';
+    document.getElementById('insDateVigueur').value = a.date_en_vigueur || '';
+    document.getElementById('insCommRecue').value = a.commission_recue ? FINOX.formatNumber(a.commission_recue) : '';
+    this.calcCommission();
+    this.renderPreneurChips(a.preneur_type);
+    this.renderAssuresChips(a.assures || []);
+
+    // Restaurer type de contrat multi-assurés
+    const tc = a.type_contrat || 'premier_deces';
+    const tcRadio = document.querySelector('input[name="typeContrat"][value="' + tc + '"]');
+    if (tcRadio) {
+        tcRadio.checked = true;
+        document.querySelectorAll('input[name="typeContrat"]').forEach(r => {
+            r.closest('label').classList.toggle('checked', r.checked);
+        });
+    }
+    // Si vie_multiple, restaurer les primes multi
+    if (tc === 'vie_multiple') {
+        document.getElementById('insPrimeMoisMulti').value = a.prime_mensuelle ? FINOX.formatNumber(a.prime_mensuelle) : '';
+        document.getElementById('insPrimeAnMulti').value = a.prime_annuelle ? FINOX.formatNumber(a.prime_annuelle) : '';
+    }
+    this.updateTypeContratVisibility();
+},
+
+openAddModal() {
+    this.currentAssurance = null;
+    this.resetForm();
+    document.getElementById('modalIcon').textContent = '🛡️';
+    document.getElementById('modalTitle').textContent = 'Nouvelle Assurance';
+    document.getElementById('btnDelete').style.display = 'none';
+    this.renderPreneurChips('client');
+    this.renderAssuresChips([{type:'client'}]);
+    
+    // Vider timeline et documents pour nouvelle assurance
+    document.getElementById('tabTimeline').innerHTML = '<div class="ins-timeline-empty">📅 La timeline sera disponible après création</div>';
+    document.getElementById('tabDocuments').innerHTML = '<div class="ins-docs-empty">📎 Les documents seront disponibles après création</div>';
+    
+    this.switchTab('edit');
+    document.getElementById('insModal').classList.add('show');
+},
+
+closeModal() {
+    document.getElementById('insModal').classList.remove('show');
+    this.currentAssurance = null;
+    // Toujours recharger la liste pour refléter les changements
+    this.load();
+},
+
+async loadTimeline(id) {
+    try {
+        const {data} = await FINOX.supabase.from('assurance_timeline').select('*').eq('assurance_id', id).order('created_at', {ascending: false});
+        this.timeline = data || [];
+    } catch(e) { this.timeline = []; }
+},
+
+async loadDocuments(id) {
+    try {
+        const {data} = await FINOX.supabase.from('assurance_documents').select('*').eq('assurance_id', id).order('uploaded_at', {ascending: false});
+        this.documents = data || [];
+    } catch(e) { this.documents = []; }
+},
+
+renderTimelineTab() {
+    let html = '';
+    if (this.timeline.length === 0) {
+        html = '<div class="ins-timeline-empty">📅 Aucun événement</div>';
+    } else {
+        html = '<div class="ins-timeline">';
+        this.timeline.forEach(e => {
+            html += '<div class="ins-timeline-item '+e.type_event+'">'+
+            '<div class="ins-timeline-date">'+this.fmtDate(e.created_at)+'</div>'+
+            '<div class="ins-timeline-title">'+e.titre+'</div>'+
+            '<div class="ins-timeline-desc">'+(e.description||'')+'</div></div>';
+        });
+        html += '</div>';
+    }
+    
+    html += '<div class="ins-note-form"><label class="ins-form-label">Ajouter une note</label>'+
+    '<textarea class="ins-form-textarea" id="insNewNote" placeholder="Écrire une note..."></textarea>'+
+    '<button class="ins-btn ins-btn-sm ins-btn-primary" onclick="INS.addNote()">➕ Ajouter</button></div>';
+    
+    document.getElementById('tabTimeline').innerHTML = html;
+},
+
+async addNote() {
+    if (!this.currentAssurance) return;
+    const note = document.getElementById('insNewNote').value.trim();
+    if (!note) return;
+    
+    try {
+        await FINOX.supabase.from('assurance_timeline').insert({
+            assurance_id: this.currentAssurance.id,
+            type_event: 'note',
+            titre: 'Note ajoutée',
+            description: note,
+            source: 'manuel'
+        });
+        document.getElementById('insNewNote').value = '';
+        await this.loadTimeline(this.currentAssurance.id);
+        this.renderTimelineTab();
+        FINOX.showNotification('📝 Note ajoutée', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur', 'error');
+    }
+},
+
+renderDocumentsTab() {
+    let html = '<div class="ins-docs-upload">'+
+    '<input type="file" id="insDocFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="INS.onFileSelected(this)">'+
+    '<select class="ins-form-select" id="insDocType" style="width:150px">'+
+    this.DOC_TYPES.map(t => '<option value="'+t.v+'">'+t.l+'</option>').join('')+
+    '</select>'+
+    '<label for="insDocFile" class="ins-docs-upload-btn">📎 Choisir fichier</label>'+
+    '<span id="insFilePreview"></span>'+
+    '<button class="ins-btn ins-btn-sm ins-btn-primary" onclick="INS.uploadDocument()">⬆️ Uploader</button></div>';
+    
+    if (this.documents.length === 0) {
+        html += '<div class="ins-docs-empty">📎 Aucun document</div>';
+    } else {
+        html += '<div class="ins-docs-list">';
+        this.documents.forEach(d => {
+            const icon = d.mime_type?.includes('pdf') ? '📄' : d.mime_type?.includes('image') ? '🖼️' : '📎';
+            const size = d.taille_fichier ? (d.taille_fichier / 1024).toFixed(1) + ' KB' : '';
+            html += '<div class="ins-doc-item">'+
+            '<div class="ins-doc-info"><div class="ins-doc-icon">'+icon+'</div>'+
+            '<div class="ins-doc-details"><div class="ins-doc-name">'+d.nom_fichier+'</div>'+
+            '<div class="ins-doc-meta">'+this.getDocTypeLabel(d.type_document)+' • '+size+' • '+this.fmtDate(d.uploaded_at)+'</div></div></div>'+
+            '<div class="ins-doc-actions">'+
+            '<button class="ins-doc-action" onclick="INS.downloadDocument(\''+d.id+'\')" title="Télécharger">⬇️</button>'+
+            '<button class="ins-doc-action delete" onclick="INS.deleteDocument(\''+d.id+'\')" title="Supprimer">🗑️</button></div></div>';
+        });
+        html += '</div>';
+    }
+    document.getElementById('tabDocuments').innerHTML = html;
+},
+
+onFileSelected(input) {
+    const preview = document.getElementById('insFilePreview');
+    if (!preview) return;
+    if (!input.files || !input.files[0]) { preview.innerHTML = ''; return; }
+    const f = input.files[0];
+    const icon = f.type.includes('pdf') ? '📄' : f.type.includes('image') ? '🖼️' : '📎';
+    const size = f.size < 1024 ? f.size + ' o' : f.size < 1048576 ? (f.size/1024).toFixed(1) + ' Ko' : (f.size/1048576).toFixed(1) + ' Mo';
+    preview.innerHTML = '<div class="ins-file-preview"><span class="ins-fp-icon">' + icon + '</span><div class="ins-fp-info"><div class="ins-fp-name">' + FINOX.escapeHtml(f.name) + '</div><div class="ins-fp-size">' + size + '</div></div><button class="ins-fp-remove" onclick="INS.clearFileInput()" title="Retirer">✕</button></div>';
+},
+
+clearFileInput() {
+    const fi = document.getElementById('insDocFile');
+    if (fi) fi.value = '';
+    const p = document.getElementById('insFilePreview');
+    if (p) p.innerHTML = '';
+},
+
+async uploadDocument() {
+    if (!this.currentAssurance) return;
+    const fileInput = document.getElementById('insDocFile');
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    const typeDoc = document.getElementById('insDocType').value;
+
+    try {
+        FINOX.showNotification('⏳ Upload en cours...', 'info');
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = this.currentAssurance.id + '/' + Date.now() + '.' + fileExt;
+
+        // Renommage automatique: Type - Nom Assuré - Numéro
+        const typeLabel = this.getDocTypeLabel(typeDoc);
+        const a = this.currentAssurance;
+        let assureNom = a.assure_nom || '';
+        if (a.assures && a.assures.length > 0) {
+            assureNom = a.assures.map(x => x.nom || x.prenom || '').filter(Boolean).join(', ');
+        }
+        const numero = a.numero_police || a.numero_dossier || '';
+        const autoName = [typeLabel, assureNom, numero].filter(Boolean).join(' - ') + '.' + fileExt;
+
+        const {data: uploadData, error: uploadError} = await FINOX.supabase.storage
+            .from('assurance-documents')
+            .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const {data: insDoc, error} = await FINOX.supabase.from('assurance_documents').insert({
+            assurance_id: this.currentAssurance.id,
+            type_document: typeDoc,
+            nom_fichier: autoName,
+            storage_path: 'assurance-documents/' + fileName,
+            taille_fichier: file.size,
+            mime_type: file.type
+        }).select('id').single();
+
+        if (error) throw error;
+
+        // Double-écriture: aussi dans client_documents pour vue 360°
+        const assuranceLabel = (a.assureur || '') + (a.numero_police ? ' #' + a.numero_police : '');
+        await FINOX.supabase.from('client_documents').insert({
+            client_id: FINOX.CLIENT_ID,
+            organization_id: a.organization_id || (await FINOX.loadClientData()).organization_id,
+            nom_fichier: autoName,
+            storage_path: 'assurance-documents/' + fileName,
+            taille_fichier: file.size,
+            mime_type: file.type,
+            folder: 'assurances',
+            description: this.getDocTypeLabel(typeDoc) + (assuranceLabel ? ' — ' + assuranceLabel : ''),
+            source: 'assurance',
+            source_id: insDoc?.id || null
+        }).then(() => {}).catch(e => console.warn('Sync client_documents:', e.message));
+
+        await FINOX.supabase.from('assurance_timeline').insert({
+            assurance_id: this.currentAssurance.id,
+            type_event: 'document_ajoute',
+            titre: 'Document ajouté',
+            description: autoName + ' (' + typeLabel + ')',
+            source: 'manuel'
+        });
+        
+        fileInput.value = '';
+        await this.loadDocuments(this.currentAssurance.id);
+        await this.loadTimeline(this.currentAssurance.id);
+        this.renderDocumentsTab();
+        this.renderTimelineTab();
+        FINOX.showNotification('✅ Document uploadé', 'success');
+        
+    } catch(e) {
+        console.error('Erreur upload:', e);
+        FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+    }
+},
+
+async downloadDocument(docId) {
+    const doc = this.documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    try {
+        const storageName = doc.storage_path.replace('assurance-documents/', '');
+        const downloadName = doc.nom_fichier || storageName.split('/').pop();
+        const {data} = await FINOX.supabase.storage.from('assurance-documents').createSignedUrl(storageName, 3600, { download: downloadName });
+        if (data && data.signedUrl) window.open(data.signedUrl, '_blank');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur téléchargement', 'error');
+    }
+},
+
+async deleteDocument(docId) {
+    if (!(await FINOX.confirm('Supprimer ce document?'))) return;
+
+    const doc = this.documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    try {
+        const fileName = doc.storage_path.replace('assurance-documents/', '');
+        await FINOX.supabase.storage.from('assurance-documents').remove([fileName]);
+        
+        const {error} = await FINOX.supabase.from('assurance_documents').delete().eq('id', docId);
+        if (error) throw error;
+
+        // Sync: supprimer aussi le miroir dans client_documents
+        await FINOX.supabase.from('client_documents')
+            .delete()
+            .eq('source', 'assurance')
+            .eq('source_id', docId)
+            .then(() => {}).catch(e => console.warn('Sync delete client_documents:', e.message));
+        // Fallback: supprimer par storage_path si source_id pas trouvé
+        await FINOX.supabase.from('client_documents')
+            .delete()
+            .eq('storage_path', doc.storage_path)
+            .eq('source', 'assurance')
+            .then(() => {}).catch(() => {});
+
+        await this.loadDocuments(this.currentAssurance.id);
+        this.renderDocumentsTab();
+        FINOX.showNotification('🗑️ Document supprimé', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+    }
+},
+
+renderTypesGrid() {
+    let html = '';
+    this.TYPES.forEach(t => {
+        html += '<label class="ins-type-chip" data-value="'+t.v+'"><input type="checkbox" value="'+t.v+'"><span>'+t.i+'</span><span>'+t.l+'</span></label>';
+    });
+    document.getElementById('insTypesGrid').innerHTML = html;
+    document.querySelectorAll('.ins-type-chip').forEach(c => {
+        c.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cb = this.querySelector('input');
+            cb.checked = !cb.checked;
+            this.classList.toggle('checked', cb.checked);
+        });
+    });
+},
+
+resetForm() {
+    document.querySelectorAll('.ins-type-chip').forEach(c => { c.classList.remove('checked'); c.querySelector('input').checked = false; });
+    ['insId','insNumeroDossier','insNumeroPolice','insCouverture','insPrimeMois','insPrimeAn','insDateVigueur','insCommPrevue','insCommRecue'].forEach(x => document.getElementById(x).value = '');
+    document.getElementById('insDateCreation').value = new Date().toISOString().substring(0, 10);
+    const calcBox = document.getElementById('insCommissionCalc');
+    if (calcBox) calcBox.style.display = 'none';
+    document.getElementById('insAssureur').value = '';
+    document.getElementById('insStatut').value = 'proposition_soumise';
+    // Reset type contrat
+    const premierDecesRadio = document.querySelector('input[name="typeContrat"][value="premier_deces"]');
+    if (premierDecesRadio) { premierDecesRadio.checked = true; }
+    document.querySelectorAll('input[name="typeContrat"]').forEach(r => r.closest('label').classList.toggle('checked', r.checked));
+    document.getElementById('insTypeContratSection').style.display = 'none';
+    document.getElementById('insCouvertureUnique').style.display = '';
+    document.getElementById('insCouvertureMultiple').style.display = 'none';
+    document.getElementById('insMontantsParAssure').innerHTML = '';
+    ['insPrimeMoisMulti','insPrimeAnMulti'].forEach(x => { const el = document.getElementById(x); if (el) el.value = ''; });
+},
+
+renderPreneurChips(sel) {
+    sel = sel || 'client';
+    let h = '';
+    if (this.family.isCorpo && this.family.corpoPersons.length > 0) {
+        // Corpo mode: show corpo persons as preneur options
+        const corpoP = this.family.corpoPersons;
+        if (!sel || sel === 'client') sel = corpoP[0]?.name || '';
+        corpoP.forEach(p => {
+            const icon = p.group === 'corpo' ? '🏛️' : p.group === 'relation' ? '🔗' : '👤';
+            const checked = sel === p.name;
+            h += '<label class="ins-person-chip'+(checked?' checked':'')+'"><input type="radio" name="preneur" value="'+p.name+'"'+(checked?' checked':'')+'><span>'+icon+'</span>'+p.label+'</label>';
+        });
+    } else {
+        h = '<label class="ins-person-chip'+(sel==='client'?' checked':'')+'"><input type="radio" name="preneur" value="client"'+(sel==='client'?' checked':'')+'><span>👤</span>'+(this.family.client ? this.family.client.prenom : 'Client')+'</label>';
+        if (this.family.conjoint) {
+            h += '<label class="ins-person-chip'+(sel==='conjoint'?' checked':'')+'"><input type="radio" name="preneur" value="conjoint"'+(sel==='conjoint'?' checked':'')+'><span>💑</span>'+this.family.conjoint.prenom+'</label>';
+            h += '<label class="ins-person-chip'+(sel==='both'?' checked':'')+'"><input type="radio" name="preneur" value="both"'+(sel==='both'?' checked':'')+'><span>👫</span>Les deux</label>';
+        }
+    }
+    document.getElementById('insPreneurChips').innerHTML = h;
+    document.querySelectorAll('#insPreneurChips .ins-person-chip').forEach(c => {
+        c.onclick = function() {
+            document.querySelectorAll('#insPreneurChips .ins-person-chip').forEach(x => x.classList.remove('checked'));
+            this.classList.add('checked');
+            this.querySelector('input').checked = true;
+        };
+    });
+},
+
+renderAssuresChips(sel) {
+    sel = sel || [];
+    let h = '';
+    if (this.family.isCorpo && this.family.corpoPersons.length > 0) {
+        // Corpo mode: show corpo persons (skip the corporation itself — it's preneur not assuré)
+        const isChk = (name) => sel.some(x => x.type === 'corpo_person' && x.nom === name);
+        this.family.corpoPersons.forEach(p => {
+            if (p.group === 'corpo') return; // Corporation = preneur, pas assuré
+            const icon = p.group === 'relation' ? '🔗' : '👤';
+            const checked = isChk(p.name);
+            h += '<label class="ins-person-chip'+(checked ? ' checked' : '')+'"><input type="checkbox" value="corpo_'+p.name+'"'+(checked ? ' checked' : '')+'><span>'+icon+'</span>'+p.label+'</label>';
+        });
+    } else {
+        const isChk = (t, id) => sel.some(x => x.type === t && (!id || x.id === id));
+        h = '<label class="ins-person-chip'+(isChk('client') ? ' checked' : '')+'"><input type="checkbox" value="client"'+(isChk('client') ? ' checked' : '')+'><span>👤</span>'+(this.family.client ? this.family.client.prenom : 'Client')+'</label>';
+        if (this.family.conjoint) {
+            h += '<label class="ins-person-chip'+(isChk('conjoint') ? ' checked' : '')+'"><input type="checkbox" value="conjoint"'+(isChk('conjoint') ? ' checked' : '')+'><span>💑</span>'+this.family.conjoint.prenom+'</label>';
+        }
+        this.family.enfants.forEach(e => {
+            h += '<label class="ins-person-chip'+(isChk('enfant', e.id) ? ' checked' : '')+'" data-id="'+e.id+'"><input type="checkbox" value="enfant_'+e.id+'"'+(isChk('enfant', e.id) ? ' checked' : '')+'><span>👶</span>'+e.prenom+'</label>';
+        });
+    }
+    document.getElementById('insAssuresChips').innerHTML = h;
+    document.querySelectorAll('#insAssuresChips .ins-person-chip').forEach(c => {
+        c.onclick = function() {
+            const cb = this.querySelector('input');
+            cb.checked = !cb.checked;
+            this.classList.toggle('checked', cb.checked);
+            INS.updateTypeContratVisibility();
+        };
+    });
+},
+
+// ── Type de contrat multi-assurés ──
+updateTypeContratVisibility() {
+    const checkedCount = document.querySelectorAll('#insAssuresChips input:checked').length;
+    const section = document.getElementById('insTypeContratSection');
+    if (checkedCount >= 2) {
+        section.style.display = '';
+        this.onTypeContratChange();
+    } else {
+        section.style.display = 'none';
+        // Revenir au mode couverture unique
+        document.getElementById('insCouvertureUnique').style.display = '';
+        document.getElementById('insCouvertureMultiple').style.display = 'none';
+    }
+},
+
+onTypeContratChange() {
+    const typeContrat = document.querySelector('input[name="typeContrat"]:checked')?.value;
+    const infoDiv = document.getElementById('insVieMultipleInfo');
+    const couvertureUnique = document.getElementById('insCouvertureUnique');
+    const couvertureMultiple = document.getElementById('insCouvertureMultiple');
+
+    if (typeContrat === 'vie_multiple') {
+        infoDiv.style.display = '';
+        couvertureUnique.style.display = 'none';
+        couvertureMultiple.style.display = '';
+        this.renderMontantsParAssure();
+    } else {
+        infoDiv.style.display = 'none';
+        couvertureUnique.style.display = '';
+        couvertureMultiple.style.display = 'none';
+    }
+},
+
+renderMontantsParAssure() {
+    const container = document.getElementById('insMontantsParAssure');
+    const checked = document.querySelectorAll('#insAssuresChips input:checked');
+    let html = '';
+    checked.forEach(cb => {
+        const v = cb.value;
+        let label = '';
+        if (v === 'client' && this.family.client) label = this.family.client.prenom;
+        else if (v === 'conjoint' && this.family.conjoint) label = this.family.conjoint.prenom;
+        else if (v.startsWith('enfant_')) {
+            const eid = v.replace('enfant_', '');
+            const e = this.family.enfants.find(x => x.id === eid);
+            label = e ? e.prenom : 'Enfant';
+        } else if (v.startsWith('corpo_')) {
+            label = v.replace('corpo_', '');
+        }
+        // Récupérer le montant existant si on édite
+        const existingAmount = this._getMontantAssure(v);
+        html += '<div class="ins-form-group" style="margin-bottom:8px;">' +
+            '<label class="ins-form-label">Couverture — ' + (label || v) + '</label>' +
+            '<input type="text" class="ins-form-input money-input" data-assure-key="' + v + '" value="' + (existingAmount || '') + '" placeholder="Montant assuré">' +
+            '</div>';
+    });
+    container.innerHTML = html;
+    FINOX.setupAllMoneyInputs && FINOX.setupAllMoneyInputs();
+},
+
+_getMontantAssure(key) {
+    if (!this.currentAssurance || !this.currentAssurance.assures) return '';
+    const a = this.currentAssurance.assures.find(x => {
+        if (key === 'client' && x.type === 'client') return true;
+        if (key === 'conjoint' && x.type === 'conjoint') return true;
+        if (key.startsWith('enfant_') && x.type === 'enfant' && x.id === key.replace('enfant_', '')) return true;
+        if (key.startsWith('corpo_') && x.type === 'corpo_person' && x.nom === key.replace('corpo_', '')) return true;
+        return false;
+    });
+    return a && a.montant_couverture ? FINOX.formatNumber(a.montant_couverture) : '';
+},
+
+async save(silent = false) {
+    const id = document.getElementById('insId').value;
+    
+    const types = [];
+    document.querySelectorAll('.ins-type-chip.checked input').forEach(cb => types.push(cb.value));
+    if (types.length === 0) { FINOX.showNotification('⚠️ Choisir un type', 'error'); return; }
+    
+    let pt = 'client', pn = this.family.client ? this.family.client.full : '';
+    const pc = document.querySelector('#insPreneurChips input:checked');
+    if (pc) {
+        pt = pc.value;
+        if (this.family.isCorpo) {
+            // Corpo mode: value is the name directly
+            pn = pt;
+        } else {
+            if (pt === 'client') pn = this.family.client ? this.family.client.full : '';
+            else if (pt === 'conjoint') pn = this.family.conjoint ? this.family.conjoint.full : '';
+            else pn = (this.family.client ? this.family.client.full : '') + ' et ' + (this.family.conjoint ? this.family.conjoint.full : '');
+        }
+    }
+
+    const assures = [];
+    const typeContrat = (document.querySelectorAll('#insAssuresChips input:checked').length >= 2)
+        ? (document.querySelector('input[name="typeContrat"]:checked')?.value || 'premier_deces')
+        : null;
+    const isVieMultiple = typeContrat === 'vie_multiple';
+
+    document.querySelectorAll('#insAssuresChips input:checked').forEach(cb => {
+        const v = cb.value;
+        let entry = null;
+        if (v.startsWith('corpo_')) {
+            const name = v.replace('corpo_', '');
+            entry = { type:'corpo_person', nom: name, prenom: name.split(' ')[0] };
+        } else if (v === 'client' && this.family.client) entry = { type:'client', nom:this.family.client.full, prenom:this.family.client.prenom };
+        else if (v === 'conjoint' && this.family.conjoint) entry = { type:'conjoint', nom:this.family.conjoint.full, prenom:this.family.conjoint.prenom };
+        else if (v.startsWith('enfant_')) {
+            const eid = v.replace('enfant_', '');
+            const e = this.family.enfants.find(x => x.id === eid);
+            if (e) entry = { type:'enfant', id:eid, nom:e.full, prenom:e.prenom };
+        }
+        if (entry) {
+            // Ajouter montant individuel si vie multiple
+            if (isVieMultiple) {
+                const montantInput = document.querySelector('#insMontantsParAssure input[data-assure-key="' + v + '"]');
+                entry.montant_couverture = montantInput ? (FINOX.parseNumber(montantInput.value) || 0) : 0;
+            }
+            assures.push(entry);
+        }
+    });
+
+    // Calculer couverture totale et primes selon le type de contrat
+    let montantCouverture, primeMensuelle, primeAnnuelle;
+    if (isVieMultiple) {
+        // Couverture = somme des montants individuels
+        montantCouverture = assures.reduce((sum, a) => sum + (a.montant_couverture || 0), 0) || null;
+        primeMensuelle = FINOX.parseNumber(document.getElementById('insPrimeMoisMulti').value) || null;
+        primeAnnuelle = FINOX.parseNumber(document.getElementById('insPrimeAnMulti').value) || null;
+    } else {
+        montantCouverture = FINOX.parseNumber(document.getElementById('insCouverture').value) || null;
+        primeMensuelle = FINOX.parseNumber(document.getElementById('insPrimeMois').value) || null;
+        primeAnnuelle = FINOX.parseNumber(document.getElementById('insPrimeAn').value) || null;
+    }
+
+    const user = FINOX.getCurrentUser();
+    const d = {
+        client_id: FINOX.CLIENT_ID,
+        conseiller_id: user?.id || null,
+        organization_id: FINOX.ORG_ID,
+        type_produit: types[0],
+        types_produits: types,
+        assureur: document.getElementById('insAssureur').value === 'Autre' ? (document.getElementById('insAssureurAutre').value.trim() || 'Autre') : (document.getElementById('insAssureur').value || null),
+        statut: document.getElementById('insStatut').value,
+        numero_dossier: document.getElementById('insNumeroDossier').value || null,
+        numero_police: document.getElementById('insNumeroPolice').value || null,
+        preneur_type: pt,
+        preneur_nom: pn,
+        assures: assures,
+        assure_type: assures.length > 0 ? assures[0].type : 'client',
+        assure_nom: assures.length > 0 ? assures[0].nom : null,
+        type_contrat: typeContrat,
+        montant_couverture: montantCouverture,
+        prime_mensuelle: primeMensuelle,
+        prime_annuelle: primeAnnuelle,
+        date_en_vigueur: document.getElementById('insDateVigueur').value || null,
+        taux_commission: this._bonusRate || null,
+        commission_prevue: FINOX.parseNumber(document.getElementById('insCommPrevue').value) || null,
+        commission_recue: FINOX.parseNumber(document.getElementById('insCommRecue').value) || null,
+        notes: null
+    };
+    
+    try {
+        if (id) {
+            await FINOX.supabase.from('assurances_vendues').update(d).eq('id', id);
+        } else {
+            const {data} = await FINOX.supabase.from('assurances_vendues').insert(d).select().single();
+            if (data) {
+                // Store the new ID so subsequent saves are updates (not new inserts)
+                document.getElementById('insId').value = data.id;
+                this.currentAssurance = { ...d, id: data.id };
+                await FINOX.supabase.from('assurance_timeline').insert({
+                    assurance_id: data.id,
+                    type_event: 'note',
+                    titre: 'Dossier créé',
+                    description: 'Nouvelle assurance ajoutée',
+                    source: 'manuel'
+                });
+            }
+        }
+        // Invalidate pulse cache on insurance change
+        const pcid = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (pcid) { FINOX.invalidateCache('pulse_' + pcid); FINOX.invalidateCache('pulse_all'); }
+
+        if (silent) {
+            // Silent save: don't close modal, just notify briefly
+            FINOX.showNotification('💾 Sauvegardé', 'success');
+        } else {
+            this.closeModal();
+            await this.load();
+            FINOX.showNotification(id ? '✅ Modifié' : '✅ Ajouté', 'success');
+        }
+    } catch(e) {
+        if (!silent) FINOX.showNotification('❌ ' + e.message, 'error');
+    }
+},
+
+async confirmDelete() {
+    if (!this.currentAssurance) return;
+    if (await FINOX.confirm('Supprimer cette assurance et tous ses documents?')) {
+        this.deleteAssurance(this.currentAssurance.id);
+    }
+},
+
+async deleteAssurance(id) {
+    try {
+        for (const doc of this.documents) {
+            const fileName = doc.storage_path.replace('assurance-documents/', '');
+            await FINOX.supabase.storage.from('assurance-documents').remove([fileName]);
+        }
+        await FINOX.supabase.from('assurances_vendues').delete().eq('id', id);
+        // Invalidate pulse cache on insurance deletion
+        const dcid = FINOX.CLIENT_ID || FINOX.getClientId();
+        if (dcid) { FINOX.invalidateCache('pulse_' + dcid); FINOX.invalidateCache('pulse_all'); }
+        this.closeModal();
+        await this.load();
+        FINOX.showNotification('🗑️ Supprimée', 'success');
+    } catch(e) {
+        FINOX.showNotification('❌ ' + e.message, 'error');
+    }
+}
+};
+
+INS.init();
+
+// Setup type contrat radio listeners
+document.querySelectorAll('input[name="typeContrat"]').forEach(r => {
+    r.addEventListener('change', function() {
+        document.querySelectorAll('input[name="typeContrat"]').forEach(x => x.closest('label').classList.toggle('checked', x.checked));
+        INS.onTypeContratChange();
+    });
+});
+
+window.saveModuleData = async function() {
+    return { success: true };
+};
+</script>

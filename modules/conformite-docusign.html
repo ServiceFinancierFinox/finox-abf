@@ -1,0 +1,756 @@
+<!-- MODULE: Suivi DocuSign v1.0 -->
+
+<div class="docusign-audit-module">
+    <div class="module-header">
+        <div class="header-content">
+            <h1>✍️ Suivi des signatures DocuSign</h1>
+            <p class="header-subtitle">Suivez l'avancement de vos documents envoyés pour signature</p>
+        </div>
+        <button class="btn-refresh" onclick="loadDocuSignEnvelopes()" title="Rafraichir">🔄</button>
+    </div>
+
+    <!-- Stats rapides -->
+    <div class="docusign-stats" id="docusignStats">
+        <div class="stat-card stat-sent">
+            <div class="stat-number" id="statSent">-</div>
+            <div class="stat-label">Envoyés</div>
+        </div>
+        <div class="stat-card stat-viewed">
+            <div class="stat-number" id="statViewed">-</div>
+            <div class="stat-label">Consultés</div>
+        </div>
+        <div class="stat-card stat-signed">
+            <div class="stat-number" id="statSigned">-</div>
+            <div class="stat-label">Signés</div>
+        </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-number" id="statPending">-</div>
+            <div class="stat-label">En attente</div>
+        </div>
+    </div>
+
+    <!-- Liste des enveloppes -->
+    <div class="envelopes-list" id="envelopesList">
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <span>Chargement des documents...</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.docusign-audit-module {
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.docusign-audit-module .module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.docusign-audit-module .module-header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    margin: 0;
+}
+
+.docusign-audit-module .header-subtitle {
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.btn-refresh {
+    background: var(--bg-secondary, #1e293b);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+    background: var(--bg-tertiary, #334155);
+    transform: scale(1.05);
+}
+
+/* Stats */
+.docusign-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--bg-secondary, #1e293b);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-sent .stat-number { color: #3b82f6; }
+.stat-sent { border-bottom: 3px solid #3b82f6; }
+.stat-viewed .stat-number { color: #f59e0b; }
+.stat-viewed { border-bottom: 3px solid #f59e0b; }
+.stat-signed .stat-number { color: #10b981; }
+.stat-signed { border-bottom: 3px solid #10b981; }
+.stat-pending .stat-number { color: #f97316; }
+.stat-pending { border-bottom: 3px solid #f97316; }
+
+/* Envelope cards */
+.envelope-card {
+    background: var(--bg-secondary, #1e293b);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.envelope-card:hover {
+    border-color: var(--accent-color, #3b82f6);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.envelope-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+
+.envelope-header:hover {
+    background: var(--bg-tertiary, rgba(255,255,255,0.03));
+}
+
+.envelope-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.envelope-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.envelope-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.envelope-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.envelope-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-sent { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.status-viewed { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.status-signed { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.status-declined { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.status-voided { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+
+.envelope-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary, #94a3b8);
+    transition: transform 0.2s;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.envelope-card.expanded .envelope-chevron {
+    transform: rotate(180deg);
+}
+
+/* Expanded detail */
+.envelope-detail {
+    display: none;
+    border-top: 1px solid var(--border-color, #334155);
+    padding: 16px 20px;
+}
+
+.envelope-card.expanded .envelope-detail {
+    display: block;
+}
+
+/* Timeline audit */
+.audit-timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 16px;
+}
+
+.audit-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--border-color, #334155);
+}
+
+.audit-step {
+    position: relative;
+    padding: 8px 0;
+}
+
+.audit-step::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 14px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border-color, #334155);
+    border: 2px solid var(--bg-secondary, #1e293b);
+}
+
+.audit-step.completed::before {
+    background: #10b981;
+}
+
+.audit-step.active::before {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.audit-step.error::before {
+    background: #ef4444;
+}
+
+.audit-step-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 2px;
+}
+
+.audit-step-time {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.audit-step.pending .audit-step-title {
+    color: var(--text-secondary, #64748b);
+}
+
+/* Signers section */
+.signers-section {
+    margin-top: 12px;
+}
+
+.signers-section h4 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 8px;
+}
+
+.signer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-primary, #0f172a);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+}
+
+.signer-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.signer-info .icon {
+    font-size: 1rem;
+}
+
+.signer-name {
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+}
+
+.signer-email {
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.75rem;
+}
+
+.signer-status-badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Actions */
+.envelope-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color, #334155);
+}
+
+.btn-action {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color, #334155);
+    background: var(--bg-tertiary, #334155);
+    color: var(--text-primary, #f1f5f9);
+    transition: all 0.2s;
+}
+
+.btn-action:hover {
+    background: var(--accent-color, #3b82f6);
+    border-color: var(--accent-color, #3b82f6);
+    color: white;
+}
+
+.btn-action.btn-green { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399; }
+.btn-action.btn-green:hover { background: #10b981; color: white; }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.empty-state .icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.empty-state h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 0.85rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Loading */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 0.9rem;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color, #334155);
+    border-top-color: var(--accent-color, #3b82f6);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .docusign-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .envelope-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .envelope-meta {
+        flex-wrap: wrap;
+    }
+}
+</style>
+
+<script>
+(function() {
+    console.log('✍️ Module Suivi DocuSign v1.0 - Init');
+
+    const clientId = window.FINOX_CLIENT_ID || new URLSearchParams(window.location.search).get('client');
+    if (!clientId) {
+        document.getElementById('envelopesList').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Aucun client sélectionné</h3></div>';
+        return;
+    }
+
+    let envelopes = [];
+
+    async function loadDocuSignEnvelopes() {
+        const container = document.getElementById('envelopesList');
+        container.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><span>Chargement des documents...</span></div>';
+
+        try {
+            const sb = FINOX.supabase;
+            const { data, error } = await sb
+                .from('docusign_envelopes')
+                .select('*')
+                .eq('client_id', clientId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            envelopes = data || [];
+            renderStats(envelopes);
+            renderEnvelopes(envelopes);
+
+            // Update badge
+            const badge = document.getElementById('docusignBadge');
+            if (badge) {
+                const pending = envelopes.filter(e => e.status === 'sent' || e.status === 'viewed').length;
+                if (pending > 0) {
+                    badge.textContent = String(pending);
+                    badge.style.display = 'inline-flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        } catch (err) {
+            console.error('Error loading DocuSign envelopes:', err);
+            container.innerHTML = `<div class="empty-state"><div class="icon">❌</div><h3>Erreur de chargement</h3><p>${err.message}</p></div>`;
+        }
+    }
+
+    function renderStats(data) {
+        const stats = { sent: 0, viewed: 0, signed: 0, pending: 0 };
+        data.forEach(e => {
+            if (e.status === 'signed') stats.signed++;
+            else if (e.status === 'viewed') { stats.viewed++; stats.pending++; }
+            else if (e.status === 'sent') { stats.sent++; stats.pending++; }
+            else if (e.status === 'declined' || e.status === 'voided') { /* skip */ }
+        });
+        document.getElementById('statSent').textContent = stats.sent;
+        document.getElementById('statViewed').textContent = stats.viewed;
+        document.getElementById('statSigned').textContent = stats.signed;
+        document.getElementById('statPending').textContent = stats.pending;
+    }
+
+    function renderEnvelopes(data) {
+        const container = document.getElementById('envelopesList');
+
+        if (!data.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">✍️</div>
+                    <h3>Aucun document DocuSign</h3>
+                    <p>Les documents envoyés pour signature via DocuSign apparaitront ici avec leur statut en temps réel.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = data.map(envelope => {
+            const statusInfo = getStatusInfo(envelope.status);
+            const sentDate = envelope.sent_at ? new Date(envelope.sent_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            const signers = envelope.signers || [];
+            const signersText = signers.map(s => s.name).join(', ');
+
+            return `
+                <div class="envelope-card" id="env-${envelope.id}">
+                    <div class="envelope-header" onclick="toggleEnvelope('${envelope.id}')">
+                        <div class="envelope-info">
+                            <div class="envelope-title">${escapeHtml(envelope.document_title || 'Document')}</div>
+                            <div class="envelope-meta">
+                                <span>📅 ${sentDate}</span>
+                                <span>👤 ${escapeHtml(signersText || '-')}</span>
+                                ${envelope.preavis_numero ? `<span>📋 N° ${escapeHtml(envelope.preavis_numero)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="envelope-status ${statusInfo.class}">${statusInfo.icon} ${statusInfo.label}</div>
+                        <svg class="envelope-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div class="envelope-detail">
+                        ${renderAuditTimeline(envelope)}
+                        ${renderSigners(envelope)}
+                        ${renderActions(envelope)}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function getStatusInfo(status) {
+        const map = {
+            'sent': { label: 'Envoyé', icon: '📤', class: 'status-sent' },
+            'delivered': { label: 'Livré', icon: '📬', class: 'status-sent' },
+            'viewed': { label: 'Consulté', icon: '👁️', class: 'status-viewed' },
+            'signed': { label: 'Signé', icon: '✅', class: 'status-signed' },
+            'declined': { label: 'Refusé', icon: '❌', class: 'status-declined' },
+            'voided': { label: 'Annulé', icon: '🚫', class: 'status-voided' },
+        };
+        return map[status] || { label: status || 'Inconnu', icon: '❓', class: '' };
+    }
+
+    function renderAuditTimeline(envelope) {
+        const steps = [];
+        const status = envelope.status;
+
+        // Step 1: Sent
+        steps.push({
+            title: '📤 Document envoyé',
+            time: envelope.sent_at ? formatDateTime(envelope.sent_at) : null,
+            state: 'completed',
+        });
+
+        // Step 2: Viewed
+        if (status === 'viewed' || status === 'signed') {
+            steps.push({
+                title: '👁️ Document consulté',
+                time: envelope.viewed_at ? formatDateTime(envelope.viewed_at) : 'Date non disponible',
+                state: 'completed',
+            });
+        } else if (status === 'sent') {
+            steps.push({
+                title: '👁️ En attente de consultation',
+                time: null,
+                state: 'active',
+            });
+        }
+
+        // Step 3: Signed
+        if (status === 'signed') {
+            steps.push({
+                title: '✅ Document signé',
+                time: envelope.signed_at ? formatDateTime(envelope.signed_at) : 'Date non disponible',
+                state: 'completed',
+            });
+        } else if (status === 'declined') {
+            steps.push({
+                title: '❌ Signature refusée',
+                time: null,
+                state: 'error',
+            });
+        } else if (status === 'voided') {
+            steps.push({
+                title: '🚫 Document annulé',
+                time: envelope.voided_at ? formatDateTime(envelope.voided_at) : null,
+                state: 'error',
+            });
+        } else if (status !== 'signed') {
+            steps.push({
+                title: '✍️ En attente de signature',
+                time: null,
+                state: status === 'viewed' ? 'active' : 'pending',
+            });
+        }
+
+        // Step 4: Document filed (signed PDF in storage)
+        if (status === 'signed') {
+            if (envelope.signed_pdf_path) {
+                steps.push({
+                    title: '📁 Document classé dans le dossier',
+                    time: envelope.signed_at ? formatDateTime(envelope.signed_at) : null,
+                    state: 'completed',
+                });
+            } else {
+                steps.push({
+                    title: '📁 En attente de classement...',
+                    time: null,
+                    state: 'active',
+                });
+            }
+        }
+
+        // Add webhook events as extra detail
+        const webhookEvents = envelope.webhook_events || [];
+
+        return `
+            <div class="audit-timeline">
+                ${steps.map(s => `
+                    <div class="audit-step ${s.state}">
+                        <div class="audit-step-title">${s.title}</div>
+                        ${s.time ? `<div class="audit-step-time">${s.time}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            ${webhookEvents.length > 0 ? `
+                <details style="margin-top: 8px; font-size: 0.75rem; color: var(--text-secondary, #64748b);">
+                    <summary style="cursor: pointer; user-select: none;">📡 ${webhookEvents.length} événement(s) webhook</summary>
+                    <div style="margin-top: 6px; padding: 8px; background: var(--bg-primary, #0f172a); border-radius: 6px; max-height: 150px; overflow-y: auto;">
+                        ${webhookEvents.map(ev => `<div style="padding: 3px 0; border-bottom: 1px solid var(--border-color, #1e293b);">
+                            <strong>${escapeHtml(ev.event || ev.status || '-')}</strong> - ${ev.timestamp ? formatDateTime(ev.timestamp) : '-'}
+                        </div>`).join('')}
+                    </div>
+                </details>
+            ` : ''}`;
+    }
+
+    function renderSigners(envelope) {
+        const signers = envelope.signers || [];
+        if (!signers.length) return '';
+
+        const status = envelope.status;
+
+        return `
+            <div class="signers-section">
+                <h4>👥 Signataires</h4>
+                ${signers.map((signer, idx) => {
+                    let signerStatus = 'En attente';
+                    let signerClass = 'status-sent';
+                    let signerIcon = '⏳';
+
+                    // Simple logic: if envelope is signed, all signers signed
+                    // If viewed, at least one person opened it
+                    if (status === 'signed') {
+                        signerStatus = 'Signé';
+                        signerClass = 'status-signed';
+                        signerIcon = '✅';
+                    } else if (status === 'viewed') {
+                        signerStatus = 'Consulté';
+                        signerClass = 'status-viewed';
+                        signerIcon = '👁️';
+                    } else if (status === 'declined') {
+                        signerStatus = 'Refusé';
+                        signerClass = 'status-declined';
+                        signerIcon = '❌';
+                    }
+
+                    return `
+                        <div class="signer-row">
+                            <div class="signer-info">
+                                <span class="icon">${idx === signers.length - 1 && signers.length > 1 ? '🏢' : '👤'}</span>
+                                <div>
+                                    <div class="signer-name">${escapeHtml(signer.name || '-')}</div>
+                                    <div class="signer-email">${escapeHtml(signer.email || '-')}</div>
+                                </div>
+                            </div>
+                            <span class="signer-status-badge ${signerClass}">${signerIcon} ${signerStatus}</span>
+                        </div>`;
+                }).join('')}
+            </div>`;
+    }
+
+    function renderActions(envelope) {
+        const actions = [];
+
+        if (envelope.signed_pdf_path) {
+            actions.push(`<button class="btn-action btn-green" onclick="viewSignedDoc('${escapeHtml(envelope.signed_pdf_path)}')">📄 Voir le document signé</button>`);
+        }
+
+        if (envelope.envelope_id) {
+            actions.push(`<button class="btn-action" onclick="copyEnvelopeId('${escapeHtml(envelope.envelope_id)}')">📋 Copier ID</button>`);
+        }
+
+        if (!actions.length) return '';
+        return `<div class="envelope-actions">${actions.join('')}</div>`;
+    }
+
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('fr-CA', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch {
+            return dateStr;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Global functions
+    window.loadDocuSignEnvelopes = loadDocuSignEnvelopes;
+
+    window.toggleEnvelope = function(id) {
+        const card = document.getElementById(`env-${id}`);
+        if (card) card.classList.toggle('expanded');
+    };
+
+    window.viewSignedDoc = async function(path) {
+        try {
+            const sb = FINOX.supabase;
+            // Strip bucket prefix if present (legacy records may have it)
+            const cleanPath = path.replace(/^client-documents\//, '');
+            const { data, error } = await sb.storage
+                .from('client-documents')
+                .createSignedUrl(cleanPath, 300);
+            if (error) throw error;
+            window.open(data.signedUrl, '_blank');
+        } catch (err) {
+            console.error('Error opening signed doc:', err);
+            alert('Erreur lors de l\'ouverture du document: ' + err.message);
+        }
+    };
+
+    window.copyEnvelopeId = function(id) {
+        navigator.clipboard.writeText(id).then(() => {
+            FINOX.showToast?.('ID copié dans le presse-papier', 'success') ||
+            alert('ID copié: ' + id);
+        });
+    };
+
+    // Auto-load
+    requestAnimationFrame(() => {
+        loadDocuSignEnvelopes();
+    });
+
+    console.log('✅ Module Suivi DocuSign v1.0 chargé');
+})();
+</script>

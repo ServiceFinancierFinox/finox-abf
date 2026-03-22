@@ -1,0 +1,239 @@
+<!-- PROFIL INVESTISSEUR v3.0 - Questions officielles iA Groupe financier -->
+<style>
+.profil-page{display:grid;grid-template-columns:1fr 340px;gap:20px;height:calc(100vh - 120px)}
+.profil-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--border-color);margin-bottom:16px}
+.profil-header-left{display:flex;align-items:center;gap:12px}
+.profil-header-icon{width:44px;height:44px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.profil-header-text h1{font-size:22px;font-weight:700;margin:0}
+.profil-header-text p{font-size:12px;color:var(--text-muted);margin:0}
+.profil-save-btn{display:flex;align-items:center;gap:8px;padding:10px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border:none;border-radius:10px;color:#000;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s}
+.profil-save-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,162,39,.35)}
+.profil-tabs{display:flex;gap:8px;margin-bottom:12px}
+.profil-tab{flex:1;padding:10px 16px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;text-align:center;transition:all .2s}
+.profil-tab:hover{border-color:rgba(139,92,246,.3)}
+.profil-tab.active{border-color:#8b5cf6;background:rgba(139,92,246,.1)}
+.profil-tab-name{font-size:13px;font-weight:600}
+.profil-tab-score{font-size:11px;color:var(--text-muted);margin-top:2px}
+.profil-tab.active .profil-tab-score{color:#8b5cf6}
+.profil-main{display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.profil-questions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow-y:auto;padding-right:6px;max-height:calc(100vh - 240px)}
+.profil-questions::-webkit-scrollbar{width:5px}
+.profil-questions::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+.profil-q{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:14px;transition:all .2s}
+.profil-q:hover{border-color:rgba(139,92,246,.3)}
+.profil-q.answered{border-color:rgba(139,92,246,.5);background:rgba(139,92,246,.03)}
+.profil-q-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.profil-q-num{width:24px;height:24px;background:rgba(139,92,246,.2);color:#8b5cf6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.profil-q.answered .profil-q-num{background:#8b5cf6;color:#fff}
+.profil-q-text{font-size:11px;font-weight:500;line-height:1.4;flex:1}
+.profil-q-pts{font-size:10px;color:#8b5cf6;font-weight:600;background:rgba(139,92,246,.15);padding:2px 6px;border-radius:4px}
+.profil-slider{display:flex;flex-direction:column;gap:4px}
+.profil-slider-track{position:relative;height:28px;background:linear-gradient(90deg,#10b981 0%,#22c55e 25%,#eab308 50%,#f97316 75%,#ef4444 100%);border-radius:8px;cursor:pointer;overflow:hidden}
+.profil-slider-fill{position:absolute;top:0;left:0;height:100%;background:rgba(0,0,0,.4);border-radius:8px;transition:width .2s}
+.profil-slider-thumb{position:absolute;top:50%;transform:translateY(-50%);width:6px;height:20px;background:#fff;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.3);transition:left .2s;pointer-events:none}
+.profil-slider-labels{display:flex;justify-content:space-between;margin-top:4px}
+.profil-slider-label{font-size:8px;color:var(--text-muted);cursor:pointer;padding:2px 3px;border-radius:4px;transition:all .2s;text-align:center;flex:1}
+.profil-slider-label:hover{background:rgba(139,92,246,.1);color:var(--text-primary)}
+.profil-slider-label.active{color:#8b5cf6;font-weight:600}
+.profil-side{display:flex;flex-direction:column;gap:12px}
+.profil-result{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;flex-shrink:0}
+.profil-result-header{padding:20px;background:linear-gradient(135deg,rgba(139,92,246,.15),transparent);text-align:center;border-bottom:1px solid var(--border-color)}
+.profil-result-score{font-family:'Montserrat',sans-serif;font-size:52px;font-weight:700;color:#8b5cf6;line-height:1}
+.profil-result-max{font-size:13px;color:var(--text-muted);margin-top:4px}
+.profil-result-body{padding:16px}
+.profil-gauge{margin-bottom:16px}
+.profil-gauge-bar{height:14px;background:linear-gradient(90deg,#10b981 0%,#22c55e 20%,#84cc16 40%,#eab308 60%,#f97316 80%,#ef4444 100%);border-radius:7px;position:relative}
+.profil-gauge-marker{position:absolute;top:-3px;width:6px;height:20px;background:#fff;border-radius:3px;transform:translateX(-50%);box-shadow:0 2px 8px rgba(0,0,0,.4);transition:left .3s}
+.profil-gauge-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:8px;color:var(--text-muted)}
+.profil-type{padding:14px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:12px;text-align:center;margin-bottom:14px}
+.profil-type-name{font-size:18px;font-weight:700;color:#8b5cf6;margin-bottom:4px}
+.profil-type-desc{font-size:10px;color:var(--text-secondary);line-height:1.4}
+.profil-alloc{margin-bottom:14px}
+.profil-alloc-title{font-size:11px;color:var(--text-muted);margin-bottom:10px;text-align:center}
+.profil-alloc-item{margin-bottom:8px}
+.profil-alloc-header{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px}
+.profil-alloc-label{color:var(--text-secondary)}
+.profil-alloc-value{font-weight:600}
+.profil-alloc-bar{height:20px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;display:flex}
+.profil-alloc-fill{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;transition:width .4s}
+.profil-alloc-fill.revenu{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.profil-alloc-fill.cdn{background:linear-gradient(90deg,#10b981,#34d399)}
+.profil-alloc-fill.etr{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.profil-progress{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:14px}
+.profil-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.profil-progress-title{font-size:12px;font-weight:600}
+.profil-progress-count{font-size:12px;color:#8b5cf6;font-weight:600}
+.profil-progress-bar{height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.profil-progress-fill{height:100%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:4px;transition:width .3s}
+.profil-progress-dots{display:flex;justify-content:space-between;margin-top:8px}
+.profil-progress-dot{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);transition:all .2s}
+.profil-progress-dot.done{background:#8b5cf6;color:#fff}
+.profil-info{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:14px;flex:1}
+.profil-info-title{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.profil-info-text{font-size:10px;color:var(--text-secondary);line-height:1.5}
+@media(max-width:1100px){.profil-page{grid-template-columns:1fr;height:auto}.profil-questions{max-height:400px}.profil-side{flex-direction:row;flex-wrap:wrap}.profil-result,.profil-progress,.profil-info{flex:1;min-width:200px}}
+@media(max-width:700px){.profil-questions{grid-template-columns:1fr}}
+</style>
+
+<div class="profil-header">
+    <div class="profil-header-left">
+        <div class="profil-header-icon">📊</div>
+        <div class="profil-header-text"><h1>Profil Investisseur</h1><p>Questionnaire de tolérance au risque</p></div>
+    </div>
+    <button class="profil-save-btn" onclick="saveProfilInvestisseur()"><span>💾</span> Sauvegarder</button>
+</div>
+
+<div class="profil-tabs">
+    <div class="profil-tab active" id="tabClient" onclick="switchPerson('client')"><div class="profil-tab-name" id="tabClientName">Client</div><div class="profil-tab-score">Score: <span id="tabClientScore">0</span>/120</div></div>
+    <div class="profil-tab" id="tabConjoint" onclick="switchPerson('conjoint')" style="display:none;"><div class="profil-tab-name" id="tabConjointName">Conjoint</div><div class="profil-tab-score">Score: <span id="tabConjointScore">0</span>/120</div></div>
+</div>
+
+<div class="profil-page">
+    <div class="profil-main"><div class="profil-questions" id="questionsGrid"></div></div>
+    <div class="profil-side">
+        <div class="profil-result">
+            <div class="profil-result-header"><div class="profil-result-score" id="totalScore">0</div><div class="profil-result-max">/ 120 points</div></div>
+            <div class="profil-result-body">
+                <div class="profil-gauge"><div class="profil-gauge-bar"><div class="profil-gauge-marker" id="gaugeMarker" style="left:0%"></div></div><div class="profil-gauge-labels"><span>Prudent</span><span>Modéré</span><span>Équilibré</span><span>Croissance</span><span>Audacieux</span></div></div>
+                <div class="profil-type"><div class="profil-type-name" id="profilType">—</div><div class="profil-type-desc" id="profilDesc">Répondez aux 8 questions</div></div>
+                <div class="profil-alloc">
+                    <div class="profil-alloc-title">Répartition recommandée</div>
+                    <div class="profil-alloc-item"><div class="profil-alloc-header"><span class="profil-alloc-label">📘 Fonds de revenu</span><span class="profil-alloc-value" id="allocRevenu">50%</span></div><div class="profil-alloc-bar"><div class="profil-alloc-fill revenu" id="allocRevenuBar" style="width:50%">50%</div></div></div>
+                    <div class="profil-alloc-item"><div class="profil-alloc-header"><span class="profil-alloc-label">🍁 Actions canadiennes</span><span class="profil-alloc-value" id="allocCdn">30%</span></div><div class="profil-alloc-bar"><div class="profil-alloc-fill cdn" id="allocCdnBar" style="width:30%">30%</div></div></div>
+                    <div class="profil-alloc-item"><div class="profil-alloc-header"><span class="profil-alloc-label">🌍 Actions étrangères</span><span class="profil-alloc-value" id="allocEtr">20%</span></div><div class="profil-alloc-bar"><div class="profil-alloc-fill etr" id="allocEtrBar" style="width:20%">20%</div></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="profil-progress"><div class="profil-progress-header"><span class="profil-progress-title">📝 Progression</span><span class="profil-progress-count"><span id="answeredCount">0</span>/8</span></div><div class="profil-progress-bar"><div class="profil-progress-fill" id="progressFill" style="width:0%"></div></div><div class="profil-progress-dots" id="progressDots"></div></div>
+        <div class="profil-info"><div class="profil-info-title"><span>💡</span> À propos</div><div class="profil-info-text">Ce questionnaire évalue votre profil d'investisseur selon les critères standards de l'industrie. Le profil détermine la répartition optimale entre fonds de revenu et fonds d'actions pour votre portefeuille.</div></div>
+    </div>
+</div>
+
+<script>
+(async function() {
+    let client = null, currentPerson = 'client', answers = { client: {}, conjoint: {} };
+    
+    // 8 Questions officielles iA Groupe financier (points: 1, 2, 5, 10, 15)
+    const QUESTIONS = [
+        { id:'q1', text:'Quel âge avez-vous?', opts:['Plus de 70 ans','61 à 70 ans','51 à 60 ans','41 à 50 ans','18 à 40 ans'] },
+        { id:'q2', text:'Quand prévoyez-vous prendre votre retraite?', opts:['Moins de 3 ans','3 à 5 ans','6 à 12 ans','13 à 20 ans','Plus de 20 ans'] },
+        { id:'q3', text:'Quel est votre revenu annuel brut?', opts:['< 25 000 $','25-50 000 $','50-75 000 $','75-100 000 $','> 100 000 $'] },
+        { id:'q4', text:'Quelle est votre situation financière actuelle?', opts:['Très précaire','Plutôt précaire','Plutôt stable','Bonne','Très bonne'] },
+        { id:'q5', text:'Quel est votre principal objectif de placement?', opts:['Sécurité','Stabilité','Croissance modérée','Croissance significative','Croissance maximale'] },
+        { id:'q6', text:'Quelle baisse de vos placements pourriez-vous tolérer?', opts:['Aucune baisse','Moins de 5%','5% à 10%','10% à 20%','Plus de 20%'] },
+        { id:'q7', text:'Sur 10 000$ placé 1 an, quelle fourchette perte/gain acceptable?', opts:['-100$/+300$','-500$/+1000$','-1000$/+1500$','-1500$/+2000$','-2000$/+2500$'] },
+        { id:'q8', text:'Quel est votre niveau de connaissance des placements?', opts:['Faible','Limité','Modéré','Bon','Très bon'] }
+    ];
+    const PTS = [1, 2, 5, 10, 15];
+    
+    function renderQuestions() {
+        document.getElementById('questionsGrid').innerHTML = QUESTIONS.map((q, i) => `
+            <div class="profil-q" data-qid="${q.id}">
+                <div class="profil-q-header"><span class="profil-q-num">${i+1}</span><span class="profil-q-text">${q.text}</span><span class="profil-q-pts" id="pts${q.id}">0 pts</span></div>
+                <div class="profil-slider">
+                    <div class="profil-slider-track" onclick="handleSliderClick(event,'${q.id}')"><div class="profil-slider-fill" id="fill${q.id}"></div><div class="profil-slider-thumb" id="thumb${q.id}"></div></div>
+                    <div class="profil-slider-labels">${q.opts.map((o,j) => `<span class="profil-slider-label" data-qid="${q.id}" data-idx="${j}" onclick="selectOption('${q.id}',${j})">${o}</span>`).join('')}</div>
+                </div>
+            </div>`).join('');
+        document.getElementById('progressDots').innerHTML = QUESTIONS.map((_,i) => `<div class="profil-progress-dot" id="dot${i}">${i+1}</div>`).join('');
+    }
+    
+    window.handleSliderClick = function(e, qid) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const idx = Math.min(4, Math.max(0, Math.round((e.clientX - rect.left) / rect.width * 4)));
+        selectOption(qid, idx);
+    };
+    
+    window.selectOption = function(qid, idx) {
+        answers[currentPerson][qid] = { idx, pts: PTS[idx] };
+        document.getElementById('fill'+qid).style.width = (idx/4*100)+'%';
+        document.getElementById('thumb'+qid).style.left = (idx/4*100)+'%';
+        document.getElementById('pts'+qid).textContent = PTS[idx]+' pts';
+        document.querySelector(`.profil-q[data-qid="${qid}"]`)?.classList.add('answered');
+        document.querySelectorAll(`.profil-slider-label[data-qid="${qid}"]`).forEach((l,i) => l.classList.toggle('active', i===idx));
+        calculateScore();
+    };
+    
+    function calculateScore() {
+        let total = 0, answered = 0;
+        Object.values(answers[currentPerson]).forEach(a => { total += a.pts; answered++; });
+        document.getElementById('progressFill').style.width = (answered/8*100)+'%';
+        document.getElementById('answeredCount').textContent = answered;
+        QUESTIONS.forEach((q,i) => document.getElementById('dot'+i).classList.toggle('done', !!answers[currentPerson][q.id]));
+        document.getElementById('totalScore').textContent = total;
+        document.getElementById(currentPerson==='client'?'tabClientScore':'tabConjointScore').textContent = total;
+        document.getElementById('gaugeMarker').style.left = (total/120*100)+'%';
+        const p = getProfilInfo(total);
+        document.getElementById('profilType').textContent = p.type;
+        document.getElementById('profilDesc').textContent = p.desc;
+        document.getElementById('allocRevenu').textContent = p.revenu+'%';
+        document.getElementById('allocCdn').textContent = p.cdn+'%';
+        document.getElementById('allocEtr').textContent = p.etr+'%';
+        document.getElementById('allocRevenuBar').style.width = p.revenu+'%';
+        document.getElementById('allocRevenuBar').textContent = p.revenu+'%';
+        document.getElementById('allocCdnBar').style.width = p.cdn+'%';
+        document.getElementById('allocCdnBar').textContent = p.cdn+'%';
+        document.getElementById('allocEtrBar').style.width = p.etr+'%';
+        document.getElementById('allocEtrBar').textContent = p.etr+'%';
+    }
+    
+    function getProfilInfo(s) {
+        if (s<=24) return {type:'Prudent',desc:'Sécurité du capital. Source de revenu fiable, faible portion en actions.',revenu:80,cdn:10,etr:10};
+        if (s<=48) return {type:'Modéré',desc:'Croissance à long terme et revenu stable. Stabilité et équilibre.',revenu:65,cdn:20,etr:15};
+        if (s<=72) return {type:'Équilibré',desc:'Bon potentiel de croissance tout en minimisant le risque global.',revenu:50,cdn:30,etr:20};
+        if (s<=96) return {type:'Croissance',desc:'Forte croissance à long terme. Prêt à subir des fluctuations.',revenu:35,cdn:40,etr:25};
+        return {type:'Audacieux',desc:'Meilleur rendement à long terme. Prêt à subir de fortes fluctuations.',revenu:20,cdn:50,etr:30};
+    }
+    
+    window.switchPerson = function(person) {
+        currentPerson = person;
+        document.querySelectorAll('.profil-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(person==='client'?'tabClient':'tabConjoint').classList.add('active');
+        QUESTIONS.forEach(q => {
+            document.querySelector(`.profil-q[data-qid="${q.id}"]`)?.classList.remove('answered');
+            document.getElementById('fill'+q.id).style.width = '0%';
+            document.getElementById('thumb'+q.id).style.left = '0%';
+            document.getElementById('pts'+q.id).textContent = '0 pts';
+            document.querySelectorAll(`.profil-slider-label[data-qid="${q.id}"]`).forEach(l => l.classList.remove('active'));
+        });
+        Object.entries(answers[person]).forEach(([qid, a]) => {
+            document.getElementById('fill'+qid).style.width = (a.idx/4*100)+'%';
+            document.getElementById('thumb'+qid).style.left = (a.idx/4*100)+'%';
+            document.getElementById('pts'+qid).textContent = a.pts+' pts';
+            document.querySelector(`.profil-q[data-qid="${qid}"]`)?.classList.add('answered');
+            document.querySelectorAll(`.profil-slider-label[data-qid="${qid}"]`).forEach((l,i) => l.classList.toggle('active', i===a.idx));
+        });
+        calculateScore();
+    };
+    
+    window.saveProfilInvestisseur = async function() {
+        try {
+            let sC=0, sCo=0;
+            Object.values(answers.client).forEach(a => sC+=a.pts);
+            Object.values(answers.conjoint).forEach(a => sCo+=a.pts);
+            const pC=getProfilInfo(sC), pCo=getProfilInfo(sCo);
+            const data = {
+                profil_score_client:sC, profil_type_client:pC.type, profil_revenu_client:pC.revenu, profil_cdn_client:pC.cdn, profil_etr_client:pC.etr, profil_answers_client:answers.client,
+                profil_score_conjoint:sCo, profil_type_conjoint:pCo.type, profil_revenu_conjoint:pCo.revenu, profil_cdn_conjoint:pCo.cdn, profil_etr_conjoint:pCo.etr, profil_answers_conjoint:answers.conjoint
+            };
+            const {error} = await FINOX.supabase.from('clients').update({profil_investisseur_data:data}).eq('id',FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.showNotification('📊 Profil investisseur sauvegardé!','success');
+        } catch(err) { console.error(err); FINOX.showNotification('Erreur: '+err.message,'error'); }
+    };
+    
+    try {
+        client = await FINOX.loadClientData(true);
+        if (!client) return;
+        document.getElementById('tabClientName').textContent = client.first_name || 'Client';
+        if (client.has_conjoint) { document.getElementById('tabConjoint').style.display='block'; document.getElementById('tabConjointName').textContent = client.conjoint_first_name || 'Conjoint'; }
+        renderQuestions();
+        if (client?.profil_investisseur_data) {
+            if (client.profil_investisseur_data.profil_answers_client) answers.client = client.profil_investisseur_data.profil_answers_client;
+            if (client.profil_investisseur_data.profil_answers_conjoint) answers.conjoint = client.profil_investisseur_data.profil_answers_conjoint;
+            switchPerson('client');
+        }
+        console.log('✅ Profil Investisseur v3.0 chargé');
+    } catch(err) { console.error(err); }
+})();
+</script>

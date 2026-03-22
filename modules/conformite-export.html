@@ -1,0 +1,2835 @@
+<!-- MODULE: Export PDF & Signature Électronique v5.1 -->
+
+<div class="export-module">
+    <!-- Sélection des sections -->
+    <div class="sections-selection">
+        <div class="selection-header">
+            <h3>📋 Sections du rapport</h3>
+            <div class="selection-actions">
+                <button class="btn-small" onclick="selectAllSections(true)">✅ Tout</button>
+                <button class="btn-small" onclick="selectAllSections(false)">❌ Aucun</button>
+            </div>
+        </div>
+        
+        <div class="sections-grid">
+            <div class="section-group">
+                <div class="group-title">📄 Pages principales</div>
+                <label class="section-checkbox"><input type="checkbox" id="sec-cover" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🏠 Page couverture</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-summary" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">📊 Sommaire exécutif</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-family" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">👨‍👩‍👧‍👦 Profil familial</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-emploi" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">💼 Emploi & Revenus</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-bilan" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🏦 Bilan financier</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-objectifs" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🎯 Objectifs financiers</span></span></label>
+            </div>
+            
+            <div class="section-group">
+                <div class="group-title">🛡️ Analyse des besoins</div>
+                <label class="section-checkbox"><input type="checkbox" id="sec-vie" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">❤️ Besoins Vie</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-inv-mg" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🩼 Invalidité & MG & Impôts</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-assurances" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🛡️ Assurances en vigueur</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-recos" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">✅ Recommandations</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-signatures" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">✍️ Signatures</span></span></label>
+            </div>
+
+            <div class="section-group" id="retraiteExportGroup">
+                <div class="group-title">🏖️ Planification Retraite</div>
+                <label class="section-checkbox"><input type="checkbox" id="sec-ret-sommaire"><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">📊 Sommaire & KPIs</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-ret-projection"><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">📈 Projection actifs</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-ret-revenus"><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">💰 Revenus & Fiscalité</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-ret-succession"><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🏦 Succession</span></span></label>
+                <label class="section-checkbox"><input type="checkbox" id="sec-ret-plan-action"><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">🎯 Plan d'action</span></span></label>
+            </div>
+
+            <div class="section-group">
+                <div class="group-title">📜 Conformité</div>
+                <label class="section-checkbox"><input type="checkbox" id="sec-avis-divulgation" checked><span class="checkbox-custom"></span><span class="section-info"><span class="section-name">📜 Avis de Divulgation</span></span></label>
+            </div>
+
+            <div class="section-group">
+                <div class="group-title">📝 Lettres explicatives</div>
+                <div id="lettresCheckboxes"><div class="loading-lettres">Chargement...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="generate-section">
+        <div class="action-buttons">
+            <button class="btn btn-primary btn-large" onclick="generateProfessionalPDF()">
+                📄 Générer le PDF
+            </button>
+            <button class="btn btn-signature btn-large" onclick="sendForSignature()">
+                ✍️ Envoyer pour signature
+            </button>
+        </div>
+        <p class="generate-hint">PDF: Ctrl+P pour sauvegarder | Signature: Le client recevra un lien sécurisé</p>
+    </div>
+</div>
+
+<style>
+.export-module { max-width: 1000px; margin: 0 auto; }
+.module-header { background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary)); border: 1px solid var(--border-color); border-radius: 16px; padding: 32px; margin-bottom: 24px; text-align: center; }
+.module-header h1 { font-size: 28px; margin-bottom: 8px; }
+.header-subtitle { color: var(--text-secondary); font-size: 14px; }
+
+/* Sections Selection */
+.sections-selection { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+.selection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+.selection-header h3 { color: var(--gold); font-size: 16px; }
+.selection-actions { display: flex; gap: 10px; }
+.btn-small { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.btn-small:hover { border-color: var(--gold); color: var(--gold); }
+.sections-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+@media (max-width: 900px) { .sections-grid { grid-template-columns: 1fr; } }
+.section-group { display: flex; flex-direction: column; gap: 8px; }
+.group-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+.section-checkbox { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; }
+.section-checkbox:hover { border-color: var(--gold); background: rgba(232, 180, 77, 0.05); }
+.section-checkbox input { display: none; }
+.checkbox-custom { width: 20px; height: 20px; border: 2px solid var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-checkbox input:checked + .checkbox-custom { background: var(--gold); border-color: var(--gold); }
+.section-checkbox input:checked + .checkbox-custom::after { content: '✓'; color: #000; font-weight: bold; font-size: 12px; }
+.section-name { font-size: 13px; color: var(--text-primary); }
+.loading-lettres, .no-lettres { color: var(--text-muted); font-size: 12px; padding: 16px; text-align: center; }
+.lettre-checkbox { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; margin-bottom: 6px; }
+.lettre-checkbox:hover { border-color: var(--gold); }
+.lettre-checkbox input { display: none; }
+.lettre-checkbox input:checked + .checkbox-custom { background: var(--gold); border-color: var(--gold); }
+.lettre-checkbox input:checked + .checkbox-custom::after { content: '✓'; color: #000; font-weight: bold; font-size: 12px; }
+.lettre-title { font-size: 12px; color: var(--text-primary); }
+
+/* Action Buttons */
+.generate-section { text-align: center; padding: 24px; }
+.action-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.btn { padding: 14px 28px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--gold-glow); }
+.btn-signature { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+.btn-signature:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3); }
+.btn-large { padding: 18px 36px; font-size: 15px; }
+.generate-hint { margin-top: 16px; font-size: 12px; color: var(--text-muted); }
+</style>
+
+<script>
+console.log('📥 Module Export & Signature v5.0 - Init');
+
+const SIGNATURE_PAGE_URL = 'https://crm.finox.ca/modules/signature.html';
+const RINGCENTRAL_WORKER = 'https://crm.finox.ca/ringcentral';
+
+let clientData = null;
+let lettresHistorique = [];
+(async function init() {
+    clientData = await FINOX.loadClientData(true);
+    if (!clientData) return;
+    lettresHistorique = clientData.abf_data?.lettres_historique || [];
+    renderLettres();
+    loadSignatures();
+    // Hide retraite export section if not enabled
+    if (!clientData.abf_data?.retraite_enabled) {
+        const retGroup = document.getElementById('retraiteExportGroup');
+        if (retGroup) retGroup.style.display = 'none';
+    }
+})();
+
+window.saveModuleData = async function() {
+    if (!clientData) return { success: true };
+    const abfData = clientData.abf_data || {};
+
+    try {
+        const { error } = await FINOX.supabase
+            .from('clients')
+            .update({ abf_data: abfData, updated_at: new Date().toISOString() })
+            .eq('id', FINOX.CLIENT_ID);
+        if (error) throw error;
+        FINOX.updateClientDataCache({ abf_data: abfData });
+        return { success: true };
+    } catch (err) {
+        console.error('❌ Erreur sauvegarde export:', err);
+        return { success: false, error: err.message };
+    }
+};
+
+function renderLettres() {
+    const container = document.getElementById('lettresCheckboxes');
+    if (lettresHistorique.length === 0) {
+        container.innerHTML = '<div class="no-lettres">Aucune lettre sauvegardée</div>';
+        return;
+    }
+    container.innerHTML = lettresHistorique.map((l, i) => `
+        <label class="lettre-checkbox">
+            <input type="checkbox" data-lettre-id="${l.id}">
+            <span class="checkbox-custom"></span>
+            <span class="lettre-title">${i===0?'⭐ ':''}${l.titre || 'Lettre'}</span>
+        </label>
+    `).join('');
+}
+
+async function loadSignatures() {
+    try {
+        const { data, error } = await FINOX.supabase
+            .from('signature_requests')
+            .select('*')
+            .eq('client_id', FINOX.CLIENT_ID)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+        window.signaturesData = data || [];
+    } catch (error) {
+        console.error('Erreur chargement signatures:', error);
+    }
+}
+
+function getStatusLabel(status) {
+    const labels = { 'pending': '⏳ En attente', 'viewed': '👁️ Consulté', 'signed': '✅ Signé', 'expired': '⏰ Expiré', 'cancelled': '🚫 Annulé' };
+    return labels[status] || status;
+}
+
+window.cancelSignatureRequest = async function(id) {
+    if (!(await FINOX.confirm('Êtes-vous sûr de vouloir annuler cette demande de signature?\n\nCette action est irréversible.'))) return;
+
+    try {
+        // Supprimer de la base de données (pending ou viewed, pas signed)
+        const { error, count } = await FINOX.supabase
+            .from('signature_requests')
+            .delete()
+            .eq('id', id)
+            .in('status', ['pending', 'viewed']);
+
+        if (error) throw error;
+
+        FINOX.showNotification('✅ Demande annulée', 'success');
+
+        // Recharger la liste complète depuis la DB pour assurer la cohérence
+        await loadSignatures();
+
+    } catch (error) {
+        console.error('Erreur suppression signature:', error);
+        FINOX.showNotification('❌ Erreur: ' + error.message, 'error');
+    }
+};
+
+window.sendForSignature = async function() {
+    // Au moins un email/phone (client ou conjoint) requis
+    if (!clientData.email && !clientData.phone && !(clientData.has_conjoint && (clientData.conjoint_email || clientData.conjoint_phone))) {
+        FINOX.showNotification('❌ Aucune adresse courriel ou téléphone disponible!', 'error');
+        return;
+    }
+
+    // Vérifier les destinataires possibles
+    const clientPhone = (clientData.phone || '').replace(/\D/g, '');
+    const conjointPhone = (clientData.conjoint_phone || '').replace(/\D/g, '');
+    const clientAvailable = !!(clientData.email || clientData.phone);
+    const hasConjoint = clientData.has_conjoint && (clientData.conjoint_email || clientData.conjoint_phone);
+
+    // Valider les mots de passe (4 derniers chiffres du téléphone de chaque personne)
+    const clientLastFour = clientPhone.slice(-4);
+    const conjointLastFour = conjointPhone.slice(-4);
+
+    if (clientAvailable && clientLastFour.length !== 4) {
+        FINOX.showNotification('❌ Le client n\'a pas de numéro de téléphone valide (4 chiffres requis pour le mot de passe)', 'error');
+        return;
+    }
+    if (hasConjoint && conjointLastFour.length !== 4) {
+        FINOX.showNotification('❌ Le conjoint n\'a pas de numéro de téléphone valide (4 chiffres requis pour le mot de passe)', 'error');
+        return;
+    }
+
+    // Si conjoint existe, afficher le modal de choix de destinataire
+    let selectedRecipients;
+    if (hasConjoint && clientAvailable) {
+        selectedRecipients = await showRecipientChoiceModal(clientLastFour, conjointLastFour);
+        if (!selectedRecipients) return; // Annulé
+    } else if (hasConjoint) {
+        selectedRecipients = ['conjoint'];
+    } else {
+        selectedRecipients = ['client'];
+    }
+
+    // Construire la liste de destinataires
+    const recipients = [];
+    if (selectedRecipients.includes('client')) {
+        recipients.push({ type: 'client', name: `${clientData.first_name || ''} ${clientData.last_name || ''}`.trim() || 'Client', email: clientData.email, phone: clientData.phone, password: clientLastFour });
+    }
+    if (selectedRecipients.includes('conjoint')) {
+        recipients.push({ type: 'conjoint', name: `${clientData.conjoint_first_name || ''} ${clientData.conjoint_last_name || ''}`.trim() || 'Conjoint', email: clientData.conjoint_email, phone: clientData.conjoint_phone, password: conjointLastFour });
+    }
+
+    try {
+        FINOX.showNotification('⏳ Préparation...', 'success');
+
+        const sections = getSelectedSections();
+        sections.signatures = false;
+        const data = await loadAllData(sections);
+        const lettres = getSelectedLettres();
+        const conseiller = getConseillerInfo();
+        console.log('[Signature] Conseiller info:', conseiller);
+        let documentHTML;
+        try {
+            documentHTML = generateSignatureDocumentHTML(data, sections, lettres, conseiller);
+        } catch (genErr) {
+            console.error('[Signature] Erreur génération HTML:', genErr);
+            FINOX.showNotification('❌ Erreur génération du document: ' + genErr.message, 'error');
+            return;
+        }
+        console.log('[Signature] Document HTML généré, taille:', documentHTML?.length);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        // Generate SHA-256 hash of document for LCCJTI non-repudiation compliance
+        const documentHash = await generateSHA256Hash(documentHTML);
+        const { data: userData } = await FINOX.supabase.auth.getUser();
+
+        // Fetch Google Review URL from conseiller profile
+        let googleReviewUrl = null;
+        if (userData?.user?.id) {
+            const { data: prof } = await FINOX.supabase.from('profiles').select('google_review_url').eq('id', userData.user.id).single();
+            googleReviewUrl = prof?.google_review_url || null;
+        }
+
+        // Créer une demande par destinataire avec mot de passe INDIVIDUEL
+        const insertRows = recipients.map(r => ({
+            client_id: FINOX.CLIENT_ID,
+            conseiller_id: userData?.user?.id,
+            token: generateToken(),
+            password_hash: r.password,
+            document_html: documentHTML,
+            document_hash: documentHash,
+            hash_algorithm: 'SHA-256',
+            sections_included: sections,
+            client_name: `${clientData.first_name} ${clientData.last_name}`,
+            client_email: r.email || clientData.email,
+            recipient_type: r.type,
+            recipient_name: r.name,
+            recipient_email: r.email || null,
+            recipient_phone: r.phone || null,
+            google_review_url: googleReviewUrl,
+            status: 'pending',
+            expires_at: expiresAt.toISOString()
+        }));
+
+        const { data: inserted, error } = await FINOX.supabase
+            .from('signature_requests')
+            .insert(insertRows)
+            .select('token, recipient_type, recipient_name');
+
+        if (error) throw error;
+
+        // Afficher le modal avec les liens (un par destinataire, chacun avec son mot de passe)
+        showSignatureLinkModal(inserted, recipients);
+        loadSignatures();
+
+        const count = inserted.length;
+        FINOX.showNotification(`✅ ${count} demande${count > 1 ? 's' : ''} créée${count > 1 ? 's' : ''}!`, 'success');
+    } catch (error) {
+        console.error('Erreur:', error);
+        FINOX.showNotification('❌ Erreur: ' + error.message, 'error');
+    }
+};
+
+// Modal de choix de destinataire (client / conjoint / les deux)
+function showRecipientChoiceModal(clientPwd, conjointPwd) {
+    return new Promise((resolve) => {
+        const clientName = clientData.first_name || 'Client';
+        const conjointName = clientData.conjoint_first_name || 'Conjoint';
+
+        const modal = document.createElement('div');
+        modal.id = 'recipientChoiceModal';
+        modal.innerHTML = `
+            <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;">
+                <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:32px;max-width:480px;width:100%;">
+                    <div style="text-align:center;margin-bottom:24px;">
+                        <div style="font-size:40px;margin-bottom:12px;">✍️</div>
+                        <h2 style="color:var(--gold);margin-bottom:8px;font-size:18px;">Envoyer pour signature</h2>
+                        <p style="color:var(--text-secondary);font-size:13px;">À qui souhaitez-vous envoyer la demande?</p>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+                        <button id="rcChoice-client" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-secondary);border:2px solid var(--border-color);border-radius:12px;cursor:pointer;text-align:left;transition:all .2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border-color)'">
+                            <span style="font-size:24px;">👤</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;color:var(--text-primary);font-size:14px;">${FINOX.escapeHtml(clientName)} seulement</div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">🔐 Mot de passe: <span style="font-family:monospace;color:var(--gold);font-weight:700;">${clientPwd}</span> (4 derniers du tél. client)</div>
+                            </div>
+                        </button>
+
+                        <button id="rcChoice-conjoint" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-secondary);border:2px solid var(--border-color);border-radius:12px;cursor:pointer;text-align:left;transition:all .2s;" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border-color)'">
+                            <span style="font-size:24px;">👫</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;color:var(--text-primary);font-size:14px;">${FINOX.escapeHtml(conjointName)} seulement</div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">🔐 Mot de passe: <span style="font-family:monospace;color:var(--gold);font-weight:700;">${conjointPwd}</span> (4 derniers du tél. conjoint)</div>
+                            </div>
+                        </button>
+
+                        <button id="rcChoice-both" style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-secondary);border:2px solid rgba(34,197,94,.4);border-radius:12px;cursor:pointer;text-align:left;transition:all .2s;" onmouseenter="this.style.borderColor='#22c55e'" onmouseleave="this.style.borderColor='rgba(34,197,94,.4)'">
+                            <span style="font-size:24px;">👥</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;color:var(--text-primary);font-size:14px;">Les deux</div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Une demande séparée pour ${FINOX.escapeHtml(clientName)} et ${FINOX.escapeHtml(conjointName)}</div>
+                                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">🔐 Mots de passe différents pour chaque personne</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <button id="rcChoice-cancel" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);border-radius:10px;cursor:pointer;font-size:13px;">Annuler</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('#rcChoice-client').onclick = () => { modal.remove(); resolve(['client']); };
+        modal.querySelector('#rcChoice-conjoint').onclick = () => { modal.remove(); resolve(['conjoint']); };
+        modal.querySelector('#rcChoice-both').onclick = () => { modal.remove(); resolve(['client', 'conjoint']); };
+        modal.querySelector('#rcChoice-cancel').onclick = () => { modal.remove(); resolve(null); };
+    });
+}
+
+// Generate SHA-256 hash using Web Crypto API (LCCJTI compliance)
+async function generateSHA256Hash(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateToken() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) token += chars.charAt(Math.floor(Math.random() * chars.length));
+    return token;
+}
+
+function showSignatureLinkModal(requests, recipientsList) {
+    // requests = array of { token, recipient_type, recipient_name }
+    // recipientsList = array of { type, name, email, phone, password }
+    const multi = requests.length > 1;
+
+    // Construire les blocs par destinataire
+    const recipientBlocks = requests.map((req, idx) => {
+        const url = `${SIGNATURE_PAGE_URL}?token=${req.token}`;
+        const rType = req.recipient_type || 'client';
+        const rName = req.recipient_name || 'Client';
+        const icon = rType === 'conjoint' ? '👫' : '👤';
+        const email = rType === 'conjoint' ? clientData.conjoint_email : clientData.email;
+        const phone = rType === 'conjoint' ? clientData.conjoint_phone : clientData.phone;
+        // Mot de passe individuel pour chaque destinataire
+        const rInfo = recipientsList.find(r => r.type === rType);
+        const pwd = rInfo ? rInfo.password : '';
+
+        return `
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span style="font-size:16px;">${icon}</span>
+                    <span style="font-weight:600;color:var(--text-primary);font-size:13px;">${rName}</span>
+                    <span class="sig-recipient ${rType}">${rType === 'conjoint' ? 'Conjoint' : 'Client'}</span>
+                    <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">🔐 <span style="font-family:monospace;color:var(--gold);font-weight:700;letter-spacing:2px;">${pwd}</span></span>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <input type="text" value="${url}" readonly id="sigUrl${idx}" style="width:100%;padding:8px 10px;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:10px;" onclick="this.select()">
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button onclick="document.getElementById('sigUrl${idx}').select();document.execCommand('copy');FINOX.showNotification('✅ Lien copié pour ${rName}!','success')" style="flex:1;padding:8px 6px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:11px;">📋 Copier</button>
+                    ${email ? `<button onclick="openMailClient('${url}','${pwd}','${rType}')" style="flex:1;padding:8px 6px;background:transparent;border:1px solid var(--border-color);color:var(--text-primary);border-radius:8px;font-weight:500;cursor:pointer;font-size:11px;">📧 Courriel</button>` : ''}
+                    ${phone ? `<button class="sig-sms-btn" onclick="sendSignatureSms('${url}','${pwd}','${rType}',this)" style="flex:1;padding:8px 6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-weight:500;cursor:pointer;font-size:11px;">📱 Texto</button>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'signatureModal';
+
+    // Afficher les mots de passe différents si multi-destinataires
+    const passwordSection = multi ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+            ${recipientsList.map(r => `
+                <div style="background:var(--bg-secondary);padding:14px;border-radius:10px;text-align:center;">
+                    <label style="display:block;font-size:10px;color:var(--text-muted);margin-bottom:4px;">${r.type === 'conjoint' ? '👫 CONJOINT' : '👤 CLIENT'}</label>
+                    <div style="font-size:24px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:3px;">${r.password}</div>
+                    <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">4 derniers du tél.</div>
+                </div>
+            `).join('')}
+            <div style="background:var(--bg-secondary);padding:14px;border-radius:10px;text-align:center;">
+                <label style="display:block;font-size:10px;color:var(--text-muted);margin-bottom:4px;">EXPIRE DANS</label>
+                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">7</div>
+                <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">jours</div>
+            </div>
+        </div>
+    ` : `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;text-align:center;">
+                <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:6px;">MOT DE PASSE</label>
+                <div style="font-size:28px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:4px;">${recipientsList[0]?.password || ''}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">4 derniers chiffres du tél.</div>
+            </div>
+            <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;text-align:center;">
+                <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:6px;">EXPIRE DANS</label>
+                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">7</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">jours</div>
+            </div>
+        </div>
+    `;
+
+    modal.innerHTML = `
+        <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;">
+            <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:32px;max-width:550px;width:100%;max-height:90vh;overflow-y:auto;">
+                <div style="text-align:center;margin-bottom:24px;">
+                    <div style="font-size:48px;margin-bottom:12px;">✅</div>
+                    <h2 style="color:var(--gold);margin-bottom:8px;">${multi ? requests.length + ' demandes créées!' : 'Demande créée!'}</h2>
+                    <p style="color:var(--text-secondary);font-size:14px;">Envoyez le lien de signature${multi ? ' à chaque personne' : ''}</p>
+                </div>
+
+                ${passwordSection}
+                ${recipientBlocks}
+
+                <button onclick="document.getElementById('signatureModal').remove()" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);border-radius:10px;cursor:pointer;font-size:13px;margin-top:4px;">Fermer</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+window.copySignatureLink = function() {
+    const input = document.getElementById('signatureUrlInput');
+    input.select();
+    document.execCommand('copy');
+    FINOX.showNotification('✅ Lien copié!', 'success');
+};
+
+window.sendSignatureSms = async function(url, password, target, btn) {
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳...';
+
+    // Déterminer les destinataires
+    const recipients = [];
+    if (target === 'client' || target === 'both') {
+        if (clientData.phone) recipients.push({ phone: clientData.phone, name: clientData.first_name });
+    }
+    if (target === 'conjoint' || target === 'both') {
+        if (clientData.conjoint_phone) recipients.push({ phone: clientData.conjoint_phone, name: clientData.conjoint_first_name });
+    }
+
+    if (recipients.length === 0) {
+        FINOX.showNotification('❌ Aucun numéro de téléphone disponible', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        const user = FINOX.getCurrentUser();
+        if (!user?.id) throw new Error('Utilisateur non connecté');
+        const conseiller = getConseillerInfo();
+
+        for (const r of recipients) {
+            const smsText = `Bonjour ${r.name}, veuillez signer votre Analyse des Besoins Financiers:\n${url}\nMot de passe: ${password}\nCe lien expire dans 7 jours.\n— ${conseiller.firstName || ''} ${conseiller.lastName || ''}, FINOX`;
+
+            const response = await fetch(RINGCENTRAL_WORKER + '/sms/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: r.phone, text: smsText, user_id: user.id })
+            });
+            const data = await response.json();
+
+            if (data.error === 'RC_NOT_CONNECTED') {
+                FINOX.showNotification('⚠️ RingCentral non connecté. Allez dans Paramètres > Intégrations', 'warning');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+            if (data.error) throw new Error(data.error);
+
+            FINOX.addTimelineEntry('sms_outbound', `Lien de signature envoyé par texto à ${r.name}`, `SMS envoyé à ${r.phone} avec le lien de signature ABF`);
+        }
+
+        btn.innerHTML = '✅ Envoyé!';
+        btn.style.background = 'var(--gold)';
+        btn.style.color = '#000';
+        const names = recipients.map(r => r.name).join(' & ');
+        FINOX.showNotification(`✅ Texto envoyé à ${names}`, 'success');
+
+    } catch (error) {
+        console.error('Erreur envoi SMS signature:', error);
+        FINOX.showNotification('❌ ' + error.message, 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
+
+window.openMailClient = async function(url, password, target) {
+    target = target || 'client';
+    const conseiller = getConseillerInfo();
+
+    // Déterminer les destinataires
+    const emails = [];
+    const names = [];
+    if (target === 'client' || target === 'both') {
+        if (clientData.email) { emails.push(clientData.email); names.push(clientData.first_name || 'Client'); }
+    }
+    if (target === 'conjoint' || target === 'both') {
+        if (clientData.conjoint_email) { emails.push(clientData.conjoint_email); names.push(clientData.conjoint_first_name || 'Conjoint'); }
+    }
+
+    if (emails.length === 0) {
+        FINOX.showNotification('❌ Aucun courriel disponible pour ce contact', 'error');
+        return;
+    }
+
+    const greeting = names.join(' & ');
+    const subject = 'Signature de votre Analyse des Besoins Financiers';
+    const body = `Bonjour ${greeting},\n\nSuite à notre rencontre, veuillez trouver ci-dessous le lien pour signer votre Analyse des Besoins Financiers.\n\n🔗 Cliquez ici pour signer :\n${url}\n\n🔐 Mot de passe : ${password}\n(4 derniers chiffres de votre numéro de téléphone)\n\n⏰ Ce lien expire dans 7 jours.\n\nN'hésitez pas à me contacter si vous avez des questions.\n\nCordialement,`;
+    const signature = FINOX.getEmailSignature ? FINOX.getEmailSignature() : '';
+
+    // Envoyer directement via Gmail API
+    try {
+        const token = await getMsgGoogleToken();
+        if (!token) {
+            FINOX.showNotification('❌ Google non connecté', 'error');
+            return;
+        }
+
+        await GmailDirect.send({
+            token,
+            to: emails.join(','),
+            subject,
+            body,
+            signature
+        });
+
+        FINOX.showNotification('📧 Courriel envoyé à ' + greeting + '!', 'success');
+
+        // Ajouter à la timeline
+        FINOX.addTimelineEntry('email_outbound', `Lien de signature envoyé par courriel à ${greeting}`, `Email envoyé à ${emails.join(', ')} avec le lien de signature ABF`);
+    } catch (err) {
+        console.error('[Signature] Erreur envoi email:', err);
+        FINOX.showNotification('❌ Erreur envoi: ' + err.message, 'error');
+    }
+};
+
+window.selectAllSections = function(select) {
+    document.querySelectorAll('.sections-grid input[type="checkbox"]').forEach(cb => cb.checked = select);
+};
+
+// Helper: get conseiller info with profile fallback
+function getConseillerInfo() {
+    const settings = FINOX.getConseillerSettings() || {};
+    const profile = FINOX.getUserProfile?.() || {};
+    return {
+        firstName: settings.firstName || profile.first_name || '',
+        lastName: settings.lastName || profile.last_name || '',
+        email: settings.email || profile.email || '',
+        phone: settings.phone || profile.phone || '',
+        title: settings.title || profile.titre || 'Conseiller en sécurité financière',
+        certificateNumber: settings.certificateNumber || profile.certificate_number || profile.numero_amf || '',
+        amfNumber: settings.amfNumber || profile.numero_amf || '',
+    };
+}
+
+function getSelectedSections() {
+    return {
+        cover: document.getElementById('sec-cover')?.checked ?? true,
+        summary: document.getElementById('sec-summary')?.checked ?? true,
+        family: document.getElementById('sec-family')?.checked ?? true,
+        emploi: document.getElementById('sec-emploi')?.checked ?? true,
+        bilan: document.getElementById('sec-bilan')?.checked ?? true,
+        objectifs: document.getElementById('sec-objectifs')?.checked ?? true,
+        vie: document.getElementById('sec-vie')?.checked ?? true,
+        invMg: document.getElementById('sec-inv-mg')?.checked ?? true,
+        assurances: document.getElementById('sec-assurances')?.checked ?? true,
+        recos: document.getElementById('sec-recos')?.checked ?? true,
+        signatures: document.getElementById('sec-signatures')?.checked ?? true,
+        avisDivulgation: document.getElementById('sec-avis-divulgation')?.checked ?? true,
+        retSommaire: document.getElementById('sec-ret-sommaire')?.checked ?? false,
+        retProjection: document.getElementById('sec-ret-projection')?.checked ?? false,
+        retRevenus: document.getElementById('sec-ret-revenus')?.checked ?? false,
+        retSuccession: document.getElementById('sec-ret-succession')?.checked ?? false,
+        retPlanAction: document.getElementById('sec-ret-plan-action')?.checked ?? false,
+    };
+}
+
+function getSelectedLettres() {
+    const selected = [];
+    document.querySelectorAll('#lettresCheckboxes input:checked').forEach(cb => {
+        const l = lettresHistorique.find(x => x.id === cb.dataset.lettreId);
+        if (l) selected.push(l);
+    });
+    return selected;
+}
+
+// Built-in Avis de Divulgation HTML (used when no template configured)
+function getBuiltInAvisHTML() {
+    return `<div style="font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;max-width:800px;margin:0 auto;line-height:1.6;">
+    <div style="text-align:center;padding:24px 0;border-bottom:3px solid #1a3a5c;">
+        <h1 style="color:#1a3a5c;font-size:22px;margin:0;">Avis de Divulgation et de Consentement Client</h1>
+        <p style="color:#666;font-size:12px;margin-top:6px;">Ce document présente les informations essentielles concernant {{nom_cabinet}}, ses pratiques, la protection de vos renseignements personnels et vos droits en tant que client.</p>
+    </div>
+    <div style="margin-top:20px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">1. Identification du Cabinet</h2><p style="font-size:11px;"><strong>{{nom_cabinet}}</strong> — AMF #<strong>{{no_inscription_amf}}</strong><br>Siège social: <strong>{{adresse_cabinet}}</strong><br>Conseiller: <strong>{{nom_conseiller}}</strong> — Certificat #{{no_certificat}}<br>{{email_conseiller}} · {{tel_conseiller}}</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">2. Rôle du Conseiller</h2><p style="font-size:11px;">Chaque client se voit attribuer un conseiller en sécurité financière responsable qui évalue sa situation, conseille sur les solutions appropriées et effectue une Analyse des besoins financiers (ABF) complète.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">3. Assureurs Représentés</h2><p style="font-size:11px;">Cabinet indépendant et impartial. Partenaires: Assomption Vie, Beneva, BMO, Canada Vie, Desjardins, Empire Vie, Foresters, Humania, iA, Ivari, Manuvie, RBC, Sun Life, UV Assurance, L'Équitable.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">4. Rémunération</h2><p style="font-size:11px;"><strong>Aucuns frais de courtage directs.</strong> Rémunération via commissions de l'assureur incluses dans votre prime. Des rémunérations conditionnelles peuvent exister sans affecter l'indépendance des recommandations.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">5. Conflits d'Intérêts</h2><p style="font-size:11px;">Votre conseiller s'engage à placer vos intérêts avant les siens. Aucun conflit d'intérêts réel ou potentiel identifié à ce jour.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">6. Protection des Renseignements (Loi 25)</h2><p style="font-size:11px;">Vos renseignements sont protégés conformément à la Loi 25 du Québec. Vous disposez de droits d'accès, de rectification et de retrait de consentement. Responsable: Dany Michaud (service@finox.ca).</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">7. Communication aux Partenaires</h2><p style="font-size:11px;">Vos renseignements peuvent être communiqués aux assureurs partenaires, fournisseurs de services, professionnels affiliés et collaborateurs autorisés, sous accord de confidentialité.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">8. Référencement à des Professionnels</h2><p style="font-size:11px;">{{nom_cabinet}} peut vous référer à des professionnels affiliés (courtier hypothécaire, planificateur financier, etc.). Ce consentement est facultatif.</p></div>
+    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">9. Communications Électroniques (LCAP)</h2><p style="font-size:11px;">En signant, vous consentez à recevoir des communications électroniques de {{nom_cabinet}}. Vous pouvez vous désabonner en tout temps. Ce consentement est volontaire et distinct.</p></div>
+</div>`;
+}
+
+// Load compliance template for the current conseiller
+async function loadComplianceTemplate() {
+    try {
+        const user = FINOX.getCurrentUser();
+        if (!user) return;
+
+        // Check assignment first
+        const { data: assignment } = await FINOX.supabase
+            .from('compliance_template_assignments')
+            .select('template_id, compliance_templates(content_html, consent_checkboxes)')
+            .eq('conseiller_id', user.id)
+            .limit(1)
+            .maybeSingle();
+
+        if (assignment?.compliance_templates?.content_html) {
+            window._complianceTemplateHTML = assignment.compliance_templates.content_html;
+            window._complianceCheckboxes = assignment.compliance_templates.consent_checkboxes;
+            return;
+        }
+
+        // Fall back to default
+        const { data: defaultTpl } = await FINOX.supabase
+            .from('compliance_templates')
+            .select('content_html, consent_checkboxes')
+            .eq('is_default', true)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+
+        if (defaultTpl?.content_html) {
+            window._complianceTemplateHTML = defaultTpl.content_html;
+            window._complianceCheckboxes = defaultTpl.consent_checkboxes;
+        }
+    } catch (e) {
+        console.warn('[Compliance] Template load error:', e);
+    }
+}
+
+// Load compliance template on module init
+loadComplianceTemplate();
+
+async function loadAllData(sections) {
+    sections = sections || {};
+    const CLIENT = FINOX.CLIENT_ID;
+    const [enfantsRes, actifsRes, assurVigueurRes, assurVenduesRes, budgetRes] = await Promise.all([
+        FINOX.supabase.from('abf_enfants').select('*').eq('client_id', CLIENT).order('ordre'),
+        FINOX.supabase.from('abf_actifs').select('*').eq('client_id', CLIENT).order('ordre'),
+        FINOX.supabase.from('abf_assurances').select('*').eq('client_id', CLIENT).order('ordre'),
+        FINOX.supabase.from('assurances_vendues').select('*').eq('client_id', CLIENT),
+        FINOX.supabase.from('abf_budget').select('*').eq('client_id', CLIENT).order('ordre')
+    ]);
+    // Calculer le budget à partir des lignes individuelles
+    const budgetRows = budgetRes.data || [];
+    let budgetSummary = null;
+    if (budgetRows.length > 0) {
+        const toMonthly = (row) => {
+            const amt = parseFloat(row.amount) || 0;
+            if (row.frequency === 'annual' || row.frequency === 'annuel') return amt / 12;
+            if (row.frequency === 'biweekly' || row.frequency === 'aux_2_semaines') return amt * 26 / 12;
+            if (row.frequency === 'weekly' || row.frequency === 'hebdomadaire') return amt * 52 / 12;
+            return amt; // monthly par défaut
+        };
+        const revenus = budgetRows.filter(r => r.category === 'revenus').reduce((s, r) => s + toMonthly(r), 0);
+        const depCategories = ['habitation','transport','alimentation','dettes','assurances','loisirs'];
+        const depenses = budgetRows.filter(r => depCategories.includes(r.category)).reduce((s, r) => s + toMonthly(r), 0);
+        const epargne = budgetRows.filter(r => r.category === 'epargne').reduce((s, r) => s + toMonthly(r), 0);
+        budgetSummary = { revenus_total: revenus, depenses_total: depenses, epargne_total: epargne, surplus_deficit: revenus - depenses - epargne };
+    }
+
+    // ═══ RETRAITE: charger moteur + lancer simulation ═══
+    let retirement = null;
+    const saved = clientData.abf_data?.retraite;
+    const anyRetSection = sections.retSommaire || sections.retProjection || sections.retRevenus || sections.retSuccession || sections.retPlanAction;
+
+    if (saved && anyRetSection) {
+        try {
+            // Charger moteur si necessaire
+            if (!window.FINOX_DECAISSEMENT) {
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = 'shared/decaissement-engine.js';
+                    s.onload = resolve;
+                    s.onerror = () => reject(new Error('Engine load failed'));
+                    document.head.appendChild(s);
+                });
+            }
+            const ENGINE = window.FINOX_DECAISSEMENT;
+            const abfActifs = actifsRes.data || [];
+
+            // 1. Profile
+            const profile = ENGINE.getDefaultProfile(clientData);
+            profile.lifeExpectancy = saved.life_expectancy || 92;
+
+            // 2. Comptes depuis ABF actifs
+            const accounts = ENGINE.getDefaultAccounts(clientData, abfActifs);
+
+            // 3. Accumulation
+            const accum = ENGINE.getDefaultAccumulation(clientData, accounts);
+            if (saved.salary_growth) accum.salaryGrowthRate = saved.salary_growth;
+            if (saved.target_income) accum.targetRetirementIncome = saved.target_income;
+            if (saved.rrsp_contribution_room) accum.rrspContributionRoom = saved.rrsp_contribution_room;
+            if (saved.tfsa_contribution_room) accum.tfsaContributionRoom = saved.tfsa_contribution_room;
+
+            // 4. Pensions
+            const pens = ENGINE.getDefaultPensions(clientData);
+            if (saved.pensions) {
+                if (saved.pensions.qppStartAge) pens.qppStartAge = saved.pensions.qppStartAge;
+                if (saved.pensions.oasStartAge) pens.oasStartAge = saved.pensions.oasStartAge;
+                if (saved.pensions.qppAmountAt65) pens.qppAmountAt65 = saved.pensions.qppAmountAt65;
+                if (saved.pensions.oasAmountAt65) pens.oasAmountAt65 = saved.pensions.oasAmountAt65;
+                if (saved.pensions.hasEmployerPension) {
+                    pens.hasEmployerPension = true;
+                    pens.employerPensionType = saved.pensions.employerPensionType || 'prive';
+                    pens.employerPensionAmount = saved.pensions.employerPensionAmount || 0;
+                    pens.employerPensionStartAge = saved.pensions.employerPensionStartAge || 65;
+                    pens.employerPensionIndexed = saved.pensions.employerPensionIndexed || false;
+                    pens.employerPensionBridge = saved.pensions.employerPensionBridge || false;
+                    pens.employerPensionBridgeAmount = saved.pensions.employerPensionBridgeAmount || 0;
+                }
+            }
+
+            // 5. Options
+            const opts = ENGINE.getDefaultOptions();
+            opts.inflationRate = saved.inflation_rate || 2.0;
+            opts.withdrawalStrategy = saved.withdrawal_strategy || 'proportional';
+            opts.targetIncome = saved.target_income || 50000;
+            if (saved.expense_phases) {
+                opts.expensePhases = { ...opts.expensePhases, ...saved.expense_phases };
+                if (!saved.expense_phases.slowgoEnd && saved.expense_phases.gogoEnd) {
+                    opts.expensePhases.slowgoEnd = saved.expense_phases.gogoEnd + 10;
+                }
+            }
+            if (saved.pension_splitting) {
+                opts.pensionSplitting = true;
+                opts.spouseIncome = saved.spouse_income || 0;
+                opts.spouseAge = saved.spouse_age || 0;
+            }
+            if (saved.retirement_returns) opts.retirementReturns = saved.retirement_returns;
+            if (saved.insurance) {
+                opts.insuranceAnnualPremium = (saved.insurance.monthly_premium || 0) * 12;
+                opts.insuranceDeathBenefit = saved.insurance.death_benefit || 0;
+                opts.insuranceStartAge = saved.insurance.start_age || profile.retirementAge;
+            }
+
+            // 6. Simulation
+            const projData = ENGINE.generateProjectionData(
+                profile.currentAge, profile.retirementAge, profile.lifeExpectancy,
+                saved.scenario || 'base', accounts, pens, accum, saved.lifeEvents || [], opts
+            );
+
+            // 7. KPIs
+            const retData = projData.filter(d => d.phase === 'decaissement');
+            const lastYear = projData[projData.length - 1];
+            const retYear = projData.find(d => d.phase === 'decaissement');
+            const kpis = {
+                peakTotal: Math.max(...projData.map(d => d.total)),
+                retirementAssets: retYear ? retYear.total : 0,
+                firstNetIncome: retYear ? retYear.netIncome : 0,
+                avgNetIncome: retData.length > 0 ? Math.round(retData.reduce((s, d) => s + d.netIncome, 0) / retData.length) : 0,
+                totalTax: retData.reduce((s, d) => s + (d.totalTax || 0), 0),
+                totalCredits: retData.reduce((s, d) => s + (d.totalCredits || 0), 0),
+                finalAssets: lastYear ? lastYear.total : 0,
+                estateTax: lastYear ? (lastYear.estateTax || 0) : 0,
+                avgMarginalRate: retData.length > 0 ? (retData.reduce((s, d) => s + (d.marginalRate || 0), 0) / retData.length).toFixed(1) : '0',
+            };
+
+            // 8. Succession (conditionnel)
+            let succResult = null;
+            if (sections.retSuccession && opts.insuranceAnnualPremium > 0) {
+                try {
+                    succResult = ENGINE.runSuccessionComparison(
+                        { type: pens.maritalStatus || 'single', currentAge: profile.currentAge, retirementAge: profile.retirementAge, lifeExpectancy: profile.lifeExpectancy },
+                        saved.scenario || 'base', accounts, pens, accum, saved.lifeEvents || [], opts, function(){}
+                    );
+                } catch(e) { console.warn('Succession calc failed:', e); }
+            }
+
+            // 9. Analyse d'ecart & Plan d'action (conditionnel)
+            let gapResult = null;
+            if (sections.retPlanAction && ENGINE.analyzeRetirementGap) {
+                try {
+                    const gapProfile = { currentAge: profile.currentAge, retirementAge: profile.retirementAge, lifeExpectancy: profile.lifeExpectancy };
+                    gapResult = ENGINE.analyzeRetirementGap(gapProfile, saved.scenario || 'base', accounts, pens, accum, saved.lifeEvents || [], opts);
+                } catch(e) { console.warn('Gap analysis failed:', e); }
+            }
+
+            retirement = {
+                projectionData: projData,
+                kpis,
+                succResult,
+                gapResult,
+                savedParams: saved,
+                profile,
+                accounts,
+                accumulation: accum,
+                options: opts,
+                pensions: pens,
+            };
+        } catch (e) {
+            console.warn('⚠️ Retraite engine load/calc failed:', e);
+        }
+    }
+
+    return {
+        client: clientData,
+        enfants: enfantsRes.data || [],
+        actifs: actifsRes.data || [],
+        assurancesVigueur: assurVigueurRes.data || [],
+        assurancesVendues: assurVenduesRes.data || [],
+        budget: budgetSummary,
+        retirement
+    };
+}
+
+window.generateProfessionalPDF = async function() {
+    try {
+        FINOX.showNotification('⏳ Génération...', 'success');
+        const sections = getSelectedSections();
+        const data = await loadAllData(sections);
+        const lettres = getSelectedLettres();
+        const conseiller = getConseillerInfo();
+        const html = generateSignatureDocumentHTML(data, sections, lettres, conseiller);
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+        FINOX.showNotification('✅ Rapport généré!', 'success');
+    } catch (error) {
+        console.error(error);
+        FINOX.showNotification('❌ Erreur: ' + error.message, 'error');
+    }
+};
+
+function generateSignatureDocumentHTML(data, sections, lettres, conseiller) {
+    const { client, enfants, actifs, assurancesVigueur, assurancesVendues, budget, retirement } = data;
+    const today = new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Helpers retraite (utilises dans sommaire exec + pages retraite)
+    const fmtRShort = (n) => {
+        if (!n && n !== 0) return '-';
+        if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1).replace('.0','') + ' M$';
+        if (Math.abs(n) >= 1000) return Math.round(n / 1000) + ' k$';
+        return Math.round(n) + '$';
+    };
+    const fmtR = (n) => new Intl.NumberFormat('fr-CA', {style:'currency', currency:'CAD', minimumFractionDigits:0, maximumFractionDigits:0}).format(n || 0);
+    const clientAge = calculateAge(client.date_of_birth);
+    const conjointAge = client.has_conjoint ? calculateAge(client.conjoint_dob) : null;
+    const revenuFamilial = (client.revenu_emploi || 0) + (client.revenu_autre || 0) + (client.revenu_emploi_conjoint || 0) + (client.revenu_autre_conjoint || 0);
+    const assurancesVenduesEnVigueur = assurancesVendues.filter(a => a.statut === 'en_vigueur');
+    const totalPrimesVendues = assurancesVenduesEnVigueur.reduce((s, a) => s + (a.prime_mensuelle || 0), 0);
+    const totalPrimesVigueur = assurancesVigueur.reduce((s, a) => s + (parseFloat(a.prime_mensuelle) || 0), 0);
+
+    // Calculs besoins
+    const besoinVieClient = calculateBesoinVie(client, 'client');
+    const besoinVieConjoint = client.has_conjoint ? calculateBesoinVie(client, 'conjoint') : 0;
+    const invClient = (client.revenu_emploi || 0) / 12 * (client.inv_pct_revenu_client || 70) / 100;
+    const invConjoint = client.has_conjoint ? (client.revenu_emploi_conjoint || 0) / 12 * (client.inv_pct_revenu_conjoint || 70) / 100 : 0;
+    const mgClient = (client.revenu_emploi || 0) / 12 * getNiveauMGMois(client.mg_niveau_client || 'confort');
+    const mgConjoint = client.has_conjoint ? (client.revenu_emploi_conjoint || 0) / 12 * getNiveauMGMois(client.mg_niveau_conjoint || 'confort') : 0;
+
+    // Styles CSS complets
+    const styles = `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        :root { --gold: #C9A227; --dark: #1a1a2e; --gray: #6b7280; --light-gray: #f8f9fa; --border: #e5e7eb; --success: #22c55e; --danger: #ef4444; --blue: #3b82f6; --page-w: 816px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; font-size: 10pt; line-height: 1.5; color: #333; background: #e0e0e0; }
+
+        /* ═══ FORMAT PAGE LETTRE ═══ */
+        .cover-page, .content-page, .lettre-section {
+            width: var(--page-w); max-width: 100%; margin: 0 auto; background: #fff;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.12);
+        }
+
+        /* Cover Page */
+        .cover-page { min-height: 1056px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%); color: #fff; padding: 60px 50px; page-break-after: always; }
+        .cover-logo img { max-width: 220px; margin-bottom: 50px; }
+        .cover-title { font-size: 15px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 20px; color: #888; }
+        .cover-client { font-size: 32px; font-weight: 700; color: var(--gold); margin-bottom: 10px; }
+        .cover-conjoint { font-size: 18px; color: #aaa; margin-bottom: 50px; }
+        .cover-date { font-size: 13px; color: #666; margin-bottom: 60px; }
+        .cover-conseiller { font-size: 11px; color: #555; line-height: 1.7; }
+
+        /* Content Pages */
+        .content-page { padding: 40px 50px 60px; min-height: 1056px; position: relative; page-break-after: always; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 2px solid var(--gold); margin-bottom: 25px; }
+        .page-header img { height: 30px; }
+        .page-info { text-align: right; font-size: 9px; color: var(--gray); }
+
+        /* Sections */
+        .section { margin-bottom: 25px; page-break-inside: avoid; }
+        .section-title { font-size: 13px; font-weight: 700; color: var(--dark); padding: 10px 16px; background: linear-gradient(90deg, var(--light-gray), transparent); border-left: 4px solid var(--gold); margin-bottom: 15px; }
+        .section-subtitle { font-size: 10px; font-weight: 600; color: var(--gray); margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+
+        /* Info Grid */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+        .info-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 9px; }
+        .info-label { color: var(--gray); }
+        .info-value { font-weight: 500; text-align: right; }
+        .info-value.gold { color: var(--gold); font-weight: 600; }
+        .info-value.success { color: var(--success); }
+        .info-value.danger { color: var(--danger); }
+
+        /* Summary Cards */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+        .summary-card { background: var(--light-gray); border-radius: 8px; padding: 12px 8px; text-align: center; }
+        .summary-label { font-size: 7px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .summary-value { font-size: 16px; font-weight: 700; color: var(--dark); }
+        .summary-value.gold { color: var(--gold); }
+        .summary-value.success { color: var(--success); }
+        .summary-value.danger { color: var(--danger); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 8px; }
+        th { background: var(--dark); color: #fff; padding: 7px 8px; text-align: left; font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+        tr:nth-child(even) { background: #fafafa; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .currency { color: var(--gold); font-weight: 600; }
+
+        /* Besoins Box */
+        .besoin-box { background: var(--light-gray); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+        .besoin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .besoin-name { font-weight: 600; font-size: 11px; }
+        .besoin-total { font-size: 18px; font-weight: 700; color: var(--gold); }
+        .besoin-detail { font-size: 8px; color: var(--gray); display: flex; justify-content: space-between; padding: 2px 0; }
+
+        /* Recommandations */
+        .reco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+        .reco-card { background: var(--light-gray); border-radius: 8px; padding: 12px; }
+        .reco-card.acceptee { border-left: 4px solid var(--success); }
+        .reco-card.refusee { border-left: 4px solid var(--danger); }
+        .reco-card.reporter { border-left: 4px solid var(--blue); }
+        .reco-type { font-size: 7px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+        .reco-person { font-size: 11px; font-weight: 600; margin: 3px 0; }
+        .reco-decision { font-size: 9px; font-weight: 600; margin: 4px 0; }
+        .reco-decision.acceptee { color: var(--success); }
+        .reco-decision.refusee { color: var(--danger); }
+        .reco-decision.reporter { color: var(--blue); }
+        .reco-montant { font-size: 14px; font-weight: 700; color: var(--gold); }
+
+        /* Lettre */
+        .lettre-section { page-break-before: always; padding: 50px; min-height: 1056px; }
+        .lettre-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--gold); }
+        .lettre-title { font-size: 16px; font-weight: 600; color: var(--dark); }
+        .lettre-date { font-size: 10px; color: var(--gray); margin-top: 8px; }
+        .lettre-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+
+        /* ═══ RETRAITE ═══ */
+        .ret-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 18px; }
+        .ret-kpi { background: var(--light-gray); border-radius: 8px; padding: 10px 6px; text-align: center; border-top: 3px solid var(--gray); }
+        .ret-kpi-label { font-size: 7px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .ret-kpi-value { font-size: 15px; font-weight: 700; color: var(--dark); }
+        .ret-kpi.gold { border-top-color: var(--gold); }
+        .ret-kpi.success { border-top-color: var(--success); }
+        .ret-kpi.blue { border-top-color: var(--blue); }
+        .ret-kpi.danger { border-top-color: var(--danger); }
+
+        .ret-chart { display: flex; align-items: flex-end; gap: 1px; height: 180px; padding: 0; border-bottom: 1px solid var(--border); position: relative; }
+        .ret-chart-sm { height: 120px; }
+        .ret-bar-group { display: flex; flex-direction: column; justify-content: flex-end; flex: 1; height: 100%; position: relative; }
+        .ret-bar { min-height: 0; width: 100%; }
+        .ret-bar-label { font-size: 6px; text-align: center; color: #999; margin-top: 2px; position: absolute; bottom: -14px; left: 0; right: 0; }
+        .ret-chart-legend { display: flex; gap: 12px; justify-content: center; margin-top: 16px; font-size: 7px; color: var(--gray); flex-wrap: wrap; }
+        .ret-legend-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 3px; }
+        .ret-chart-title { font-size: 9px; font-weight: 600; color: var(--dark); margin-bottom: 6px; margin-top: 16px; }
+        .ret-chart-wrap { margin-bottom: 10px; padding-bottom: 16px; }
+        .ret-retire-line { position: absolute; border-left: 2px dashed var(--gold); height: 100%; top: 0; z-index: 1; opacity: 0.6; }
+        .ret-retire-tag { position: absolute; top: -12px; font-size: 6px; color: var(--gold); font-weight: 600; white-space: nowrap; transform: translateX(-50%); }
+
+        .ret-hyp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 16px; }
+        .ret-hyp-item { background: var(--light-gray); padding: 6px 8px; border-radius: 6px; font-size: 8px; border-left: 3px solid var(--gold); }
+        .ret-hyp-label { color: var(--gray); font-size: 7px; }
+        .ret-hyp-value { font-weight: 600; color: var(--dark); }
+
+        .ret-succ-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+        .ret-succ-col { background: var(--light-gray); border-radius: 8px; padding: 14px 10px; text-align: center; }
+        .ret-succ-col.winner { border: 2px solid var(--gold); background: #fffef5; }
+        .ret-succ-title { font-size: 9px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+        .ret-succ-value { font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+        .ret-succ-label { font-size: 7px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+        .ret-succ-detail { font-size: 8px; color: var(--gray); margin-top: 4px; }
+
+        .ret-fiscal-box { background: var(--light-gray); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+        .ret-fiscal-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 9px; border-bottom: 1px solid #eee; }
+        .ret-fiscal-row:last-child { border-bottom: none; font-weight: 600; }
+
+        .ret-marginal-tag { font-size: 5px; color: var(--gray); text-align: center; position: absolute; top: -10px; left: 0; right: 0; }
+
+        /* Footer */
+        .page-footer { position: absolute; bottom: 20px; left: 50px; right: 50px; display: flex; justify-content: space-between; font-size: 8px; color: #999; border-top: 1px solid var(--border); padding-top: 8px; }
+
+        /* ═══ MOBILE ═══ */
+        @media (max-width: 850px) {
+            body { background: #fff; }
+            :root { --page-w: 100%; }
+            .cover-page, .content-page, .lettre-section { box-shadow: none; min-height: auto; }
+            .cover-page { padding: 40px 20px; }
+            .cover-client { font-size: 24px; }
+            .cover-conjoint { font-size: 16px; }
+            .content-page { padding: 20px 16px 50px; }
+            .lettre-section { padding: 20px 16px; }
+            .page-footer { left: 16px; right: 16px; bottom: 12px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .reco-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ═══ PRINT ═══ */
+        @media print {
+            body { background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .cover-page, .content-page, .lettre-section { box-shadow: none; width: 100%; margin: 0; }
+            .cover-page, .content-page { page-break-after: always; }
+            .no-break { page-break-inside: avoid; }
+            .print-bar { display: none !important; }
+        }
+    `;
+
+    // ═══════════════════════════════════════════════════════════════
+    // GÉNÉRATION DES SECTIONS
+    // ═══════════════════════════════════════════════════════════════
+    
+    // Page Couverture
+    const coverPage = sections.cover ? `
+        <div class="cover-page">
+            <div class="cover-logo"><img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX"></div>
+            <div class="cover-title">Analyse des Besoins Financiers</div>
+            <div class="cover-client">${client.first_name} ${client.last_name}</div>
+            ${client.has_conjoint ? `<div class="cover-conjoint">& ${client.conjoint_first_name} ${client.conjoint_last_name}</div>` : '<div style="height:30px;"></div>'}
+            <div class="cover-date">${today}</div>
+            <div class="cover-conseiller">
+                Préparé par ${conseiller.firstName || ''} ${conseiller.lastName || ''}<br>
+                ${conseiller.title || 'Conseiller en sécurité financière'}<br>
+                ${conseiller.phone || ''} | ${conseiller.email || ''}
+            </div>
+        </div>
+    ` : '';
+
+    // Sommaire Exécutif
+    const summaryPage = sections.summary ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">📊 Sommaire Exécutif</div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">Revenu Familial</div>
+                        <div class="summary-value gold">${formatMoney(revenuFamilial)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Valeur Nette</div>
+                        <div class="summary-value ${(client.valeur_nette || 0) >= 0 ? 'success' : 'danger'}">${formatMoney(client.valeur_nette || 0)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Polices Existantes</div>
+                        <div class="summary-value">${assurancesVigueur.length}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Primes Mensuelles</div>
+                        <div class="summary-value">${formatMoney(totalPrimesVigueur + totalPrimesVendues)}/m</div>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">Besoin Vie Client</div>
+                        <div class="summary-value gold">${formatMoney(besoinVieClient)}</div>
+                    </div>
+                    ${client.has_conjoint ? `
+                    <div class="summary-card">
+                        <div class="summary-label">Besoin Vie Conjoint</div>
+                        <div class="summary-value gold">${formatMoney(besoinVieConjoint)}</div>
+                    </div>` : ''}
+                    <div class="summary-card">
+                        <div class="summary-label">Besoin Invalidité</div>
+                        <div class="summary-value gold">${formatMoney(invClient + invConjoint)}/m</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Enfants à charge</div>
+                        <div class="summary-value">${enfants.length}</div>
+                    </div>
+                </div>
+                ${retirement ? `
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-label">🏖️ Retraite à</div>
+                        <div class="summary-value gold">${retirement.profile.retirementAge} ans</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Patrimoine max.</div>
+                        <div class="summary-value success">${fmtRShort(retirement.kpis.peakTotal)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Revenu net retraite</div>
+                        <div class="summary-value gold">${fmtRShort(retirement.kpis.avgNetIncome)}/an</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Impôt successoral</div>
+                        <div class="summary-value ${retirement.kpis.estateTax > 0 ? 'danger' : 'success'}">${fmtRShort(retirement.kpis.estateTax)}</div>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    const abfData = client.abf_data || {};
+
+    // Profil Familial
+    const familyPage = sections.family ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">👨‍👩‍👧‍👦 Profil Familial</div>
+                
+                <div class="section-subtitle">Client Principal</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Nom complet</span><span class="info-value">${client.first_name} ${client.last_name}</span></div>
+                    <div class="info-row"><span class="info-label">Sexe</span><span class="info-value">${client.sex || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Date de naissance</span><span class="info-value">${formatDateShort(client.date_of_birth)} (${clientAge} ans)</span></div>
+                    <div class="info-row"><span class="info-label">État civil</span><span class="info-value">${formatEtatCivil(client.etat_civil)}</span></div>
+                    <div class="info-row"><span class="info-label">Statut fumeur</span><span class="info-value">${client.smoker ? 'Fumeur' : 'Non-fumeur'}</span></div>
+                    <div class="info-row"><span class="info-label">Testament</span><span class="info-value">${formatTestament(client.testament)}</span></div>
+                    <div class="info-row"><span class="info-label">Téléphone</span><span class="info-value">${client.phone || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Courriel</span><span class="info-value">${client.email || '-'}</span></div>
+                </div>
+
+                <div class="section-subtitle">Coordonnées</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Adresse</span><span class="info-value">${client.address || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Ville</span><span class="info-value">${client.city || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Province</span><span class="info-value">${client.province || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Code postal</span><span class="info-value">${client.postal_code || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Logement</span><span class="info-value">${client.statut_logement || '-'}</span></div>
+                </div>
+
+                ${client.has_conjoint ? `
+                <div class="section-subtitle">Conjoint(e)</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Nom complet</span><span class="info-value">${client.conjoint_first_name} ${client.conjoint_last_name}</span></div>
+                    <div class="info-row"><span class="info-label">Sexe</span><span class="info-value">${client.conjoint_sex || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Date de naissance</span><span class="info-value">${formatDateShort(client.conjoint_dob)} (${conjointAge} ans)</span></div>
+                    <div class="info-row"><span class="info-label">État civil</span><span class="info-value">${formatEtatCivil(client.conjoint_etat_civil)}</span></div>
+                    <div class="info-row"><span class="info-label">Statut fumeur</span><span class="info-value">${client.conjoint_smoker ? 'Fumeur' : 'Non-fumeur'}</span></div>
+                    <div class="info-row"><span class="info-label">Testament</span><span class="info-value">${formatTestament(client.conjoint_testament)}</span></div>
+                    <div class="info-row"><span class="info-label">Téléphone</span><span class="info-value">${client.conjoint_phone || '-'}</span></div>
+                    <div class="info-row"><span class="info-label">Courriel</span><span class="info-value">${client.conjoint_email || '-'}</span></div>
+                </div>
+                ` : ''}
+
+                ${enfants.length > 0 ? `
+                <div class="section-subtitle">Enfants (${enfants.length})</div>
+                <table>
+                    <thead>
+                        <tr><th>Prénom</th><th>Nom</th><th>Sexe</th><th>Date de naissance</th><th>Âge</th><th>À charge</th></tr>
+                    </thead>
+                    <tbody>
+                        ${enfants.map(e => `
+                            <tr>
+                                <td>${e.prenom || '-'}</td>
+                                <td>${e.nom || '-'}</td>
+                                <td class="text-center">${e.sexe || '-'}</td>
+                                <td>${formatDateShort(e.date_naissance)}</td>
+                                <td class="text-center">${calculateAge(e.date_naissance)} ans</td>
+                                <td class="text-center">${e.a_charge ? '✓' : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ` : '<p style="color:var(--gray);font-size:10px;margin-top:10px;">Aucun enfant à charge</p>'}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Emploi & Revenus
+    const emploiPage = sections.emploi ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">💼 Emploi & Revenus</div>
+                
+                ${(() => {
+                    const ec = abfData.emploi_client;
+                    const emplois = ec?.emplois || [];
+                    const autres = ec?.autres_revenus || [];
+                    const typeLabels = {TRAVAILLEUR_AUTONOME:'Travailleur autonome',SANS_EMPLOI:'Sans emploi',ETUDIANT:'Étudiant(e)',RETRAITE:'Retraité(e)'};
+                    const showType = ec?.type_emploi && ec.type_emploi !== 'EMPLOYE';
+                    return `
+                    <div class="section-subtitle">${client.first_name} ${client.last_name}${showType ? ' — ' + (typeLabels[ec.type_emploi] || ec.type_emploi) : ''}</div>
+                    ${emplois.length > 1 ? `
+                    <table>
+                        <thead><tr><th>Titre</th><th>Employeur</th><th class="text-right">Revenu brut</th></tr></thead>
+                        <tbody>
+                            ${emplois.map(e => `<tr><td>${e.titre || '-'}</td><td>${e.employeur || '-'}</td><td class="text-right currency">${formatMoney(e.revenuAnnuel || e.revenu || 0)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>` : `
+                    <div class="info-grid">
+                        <div class="info-row"><span class="info-label">Titre d'emploi</span><span class="info-value">${client.titre_emploi || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">Employeur</span><span class="info-value">${client.employeur || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">Revenu d'emploi (brut)</span><span class="info-value gold">${formatMoney(client.revenu_emploi || 0)}</span></div>
+                        <div class="info-row"><span class="info-label">Autres revenus (brut)</span><span class="info-value">${formatMoney(client.revenu_autre || 0)}</span></div>
+                    </div>`}
+                    ${autres.length > 0 ? `
+                    <div style="margin-top:6px;">
+                        ${autres.map(ar => `<div style="font-size:8px;padding:3px 8px;background:var(--light-gray);border-radius:4px;margin-bottom:2px;display:flex;justify-content:space-between;">
+                            <span>${ar.type || 'Autre revenu'}${ar.imposable === false ? ' (non-imposable)' : ''}</span>
+                            <span class="currency">${formatMoney(ar.montantAnnuel || ar.montant || 0)}</span>
+                        </div>`).join('')}
+                    </div>` : ''}
+                    ${ec?.revenu_net ? `<div style="font-size:8px;margin-top:4px;color:var(--gray);">Revenu net estimé: ${formatMoney(ec.revenu_net)} (${formatMoney(ec.revenu_mensuel_net || 0)}/mois)${ec.age_retraite ? ' | Retraite prévue à ' + ec.age_retraite + ' ans' : ''}</div>` : ''}
+                    `;
+                })()}
+
+                ${client.has_conjoint ? (() => {
+                    const ec = abfData.emploi_conjoint;
+                    const emplois = ec?.emplois || [];
+                    const autres = ec?.autres_revenus || [];
+                    const typeLabels = {TRAVAILLEUR_AUTONOME:'Travailleur autonome',SANS_EMPLOI:'Sans emploi',ETUDIANT:'Étudiant(e)',RETRAITE:'Retraité(e)'};
+                    const showType = ec?.type_emploi && ec.type_emploi !== 'EMPLOYE';
+                    return `
+                    <div class="section-subtitle">${client.conjoint_first_name} ${client.conjoint_last_name}${showType ? ' — ' + (typeLabels[ec.type_emploi] || ec.type_emploi) : ''}</div>
+                    ${emplois.length > 1 ? `
+                    <table>
+                        <thead><tr><th>Titre</th><th>Employeur</th><th class="text-right">Revenu brut</th></tr></thead>
+                        <tbody>
+                            ${emplois.map(e => `<tr><td>${e.titre || '-'}</td><td>${e.employeur || '-'}</td><td class="text-right currency">${formatMoney(e.revenuAnnuel || e.revenu || 0)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>` : `
+                    <div class="info-grid">
+                        <div class="info-row"><span class="info-label">Titre d'emploi</span><span class="info-value">${client.titre_emploi_conjoint || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">Employeur</span><span class="info-value">${client.employeur_conjoint || '-'}</span></div>
+                        <div class="info-row"><span class="info-label">Revenu d'emploi (brut)</span><span class="info-value gold">${formatMoney(client.revenu_emploi_conjoint || 0)}</span></div>
+                        <div class="info-row"><span class="info-label">Autres revenus (brut)</span><span class="info-value">${formatMoney(client.revenu_autre_conjoint || 0)}</span></div>
+                    </div>`}
+                    ${autres.length > 0 ? `
+                    <div style="margin-top:6px;">
+                        ${autres.map(ar => `<div style="font-size:8px;padding:3px 8px;background:var(--light-gray);border-radius:4px;margin-bottom:2px;display:flex;justify-content:space-between;">
+                            <span>${ar.type || 'Autre revenu'}${ar.imposable === false ? ' (non-imposable)' : ''}</span>
+                            <span class="currency">${formatMoney(ar.montantAnnuel || ar.montant || 0)}</span>
+                        </div>`).join('')}
+                    </div>` : ''}
+                    ${ec?.revenu_net ? `<div style="font-size:8px;margin-top:4px;color:var(--gray);">Revenu net estimé: ${formatMoney(ec.revenu_net)} (${formatMoney(ec.revenu_mensuel_net || 0)}/mois)</div>` : ''}
+                    `;
+                })() : ''}
+                
+                <div class="section-subtitle">Sommaire des Revenus</div>
+                <div class="summary-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="summary-card">
+                        <div class="summary-label">Revenu Client</div>
+                        <div class="summary-value gold">${formatMoney((client.revenu_emploi || 0) + (client.revenu_autre || 0))}</div>
+                    </div>
+                    ${client.has_conjoint ? `
+                    <div class="summary-card">
+                        <div class="summary-label">Revenu Conjoint</div>
+                        <div class="summary-value gold">${formatMoney((client.revenu_emploi_conjoint || 0) + (client.revenu_autre_conjoint || 0))}</div>
+                    </div>
+                    ` : ''}
+                    <div class="summary-card">
+                        <div class="summary-label">Revenu Familial Total</div>
+                        <div class="summary-value gold">${formatMoney(revenuFamilial)}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Bilan Financier
+    const bilanPage = sections.bilan ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🏦 Bilan Financier</div>
+                
+                <div class="summary-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="summary-card">
+                        <div class="summary-label">Total Actifs</div>
+                        <div class="summary-value success">${formatMoney(client.total_actifs || 0)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total Passifs</div>
+                        <div class="summary-value danger">${formatMoney(client.total_passifs || 0)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Valeur Nette</div>
+                        <div class="summary-value ${(client.valeur_nette || 0) >= 0 ? 'gold' : 'danger'}">${formatMoney(client.valeur_nette || 0)}</div>
+                    </div>
+                </div>
+                
+                ${actifs.length > 0 ? `
+                <div class="section-subtitle">Détail des Actifs & Passifs</div>
+                <table>
+                    <thead>
+                        <tr><th>Type</th><th>Description</th><th>Propriétaire</th><th class="text-right">Valeur</th><th class="text-right">Passif</th><th class="text-right">Paiement/mois</th><th class="text-right">Cotisation/mois</th><th class="text-center">Décès</th></tr>
+                    </thead>
+                    <tbody>
+                        ${actifs.map(a => {
+                            const passif = parseFloat(a.valeur_passif) || 0;
+                            const paiement = parseFloat(a.paiement_mensuel) || 0;
+                            const cotisation = (parseFloat(a.contribution_mensuelle) || 0) + (parseFloat(a.contribution_employeur) || 0);
+                            return `
+                            <tr>
+                                <td>${a.type || '-'}</td>
+                                <td>${a.description || '-'}</td>
+                                <td>${a.proprietaire || '-'}</td>
+                                <td class="text-right currency">${formatMoney(a.valeur || 0)}</td>
+                                <td class="text-right" style="color:var(--danger);">${passif > 0 ? formatMoney(passif) : '-'}</td>
+                                <td class="text-right">${paiement > 0 ? formatMoney(paiement) : '-'}</td>
+                                <td class="text-right">${cotisation > 0 ? formatMoney(cotisation) : '-'}</td>
+                                <td class="text-center">${a.garder_au_deces ? '✓' : '-'}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ` : '<p style="color:var(--gray);font-size:10px;margin-top:10px;">Aucun actif enregistré</p>'}
+
+                ${(abfData.actifs_a_faire && abfData.actifs_a_faire.length > 0) ? `
+                <div class="section-subtitle">Portrait Financier — À Prévoir (${abfData.actifs_a_faire.length})</div>
+                <table>
+                    <thead>
+                        <tr><th>Type</th><th>Propriétaire</th><th class="text-right">Cotisation/mois</th><th class="text-right">Rendement</th><th class="text-right">Horizon</th></tr>
+                    </thead>
+                    <tbody>
+                        ${abfData.actifs_a_faire.map(af => `
+                            <tr>
+                                <td>${af.icon || '📦'} ${af.type || '-'}</td>
+                                <td>${af.owner || '-'}</td>
+                                <td class="text-right currency">${af.contribution ? formatMoney(af.contribution) : '-'}</td>
+                                <td class="text-right">${af.rendement ? af.rendement + '%' : '-'}</td>
+                                <td class="text-right">${af.horizon ? af.horizon + ' ans' : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ` : ''}
+                
+                ${budget ? `
+                <div class="section-subtitle">Budget Mensuel</div>
+                <div class="info-grid">
+                    <div class="info-row"><span class="info-label">Revenus mensuels</span><span class="info-value success">${formatMoney((budget.revenus_total || 0))}</span></div>
+                    <div class="info-row"><span class="info-label">Dépenses mensuelles</span><span class="info-value danger">${formatMoney((budget.depenses_total || 0))}</span></div>
+                    <div class="info-row"><span class="info-label">Épargne mensuelle</span><span class="info-value gold">${formatMoney((budget.epargne_total || 0))}</span></div>
+                    <div class="info-row"><span class="info-label">Surplus/Déficit</span><span class="info-value ${(budget.surplus_deficit || 0) >= 0 ? 'success' : 'danger'}">${formatMoney(budget.surplus_deficit || 0)}</span></div>
+                </div>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Objectifs Financiers
+    const objectifs = abfData.objectifs || {};
+    const objLabels = {
+        dettes_deces: 'Couvrir mes dettes en cas de décès',
+        frais_funeraires: 'Prévoir les frais funéraires',
+        enfants_maladie: 'Protéger mes enfants',
+        enrichir_patrimoine: 'Enrichir mon patrimoine',
+        revenu_maladie: 'Maintenir mon revenu en cas de maladie',
+        niveau_vie: 'Assurer le niveau de vie familial',
+        impots_deces: 'Couvrir les impôts au décès',
+        frais_bancaires: 'Réduire mes frais bancaires',
+        budget: 'Établir un budget',
+        gerer_dettes: 'Gérer mes dettes',
+        epargne_mensuelle: 'Épargne mensuelle automatique',
+        payer_moins_impot: 'Payer moins d\'impôts',
+        testament: 'Testament / Planification successorale',
+        pre_arrangements: 'Pré-arrangements funéraires',
+        epargne_retraite: 'Épargner pour la retraite',
+        etudes_enfants: 'Épargner pour les études des enfants',
+        assurances_complementaires: 'Réviser mes assurances complémentaires',
+        assurance_collective: 'Réviser mon assurance collective',
+        point_assurances: 'Faire le point sur mes assurances',
+        protections_prets: 'Réviser mes protections de prêts',
+        regime_epargne_travail: 'Régime d\'épargne au travail'
+    };
+    const objCategories = {
+        'Protection': ['dettes_deces','frais_funeraires','enfants_maladie','enrichir_patrimoine','revenu_maladie','niveau_vie','impots_deces'],
+        'Optimisation': ['frais_bancaires','budget','gerer_dettes','epargne_mensuelle','payer_moins_impot'],
+        'Planification': ['testament','pre_arrangements','epargne_retraite','etudes_enfants'],
+        'Révision': ['assurances_complementaires','assurance_collective','point_assurances','protections_prets','regime_epargne_travail']
+    };
+    const hasObjectifs = Object.keys(objectifs).some(k => objectifs[k]);
+    const objectifsPage = sections.objectifs ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🎯 Objectifs Financiers</div>
+                ${hasObjectifs ? Object.entries(objCategories).map(([cat, keys]) => {
+                    const selected = keys.filter(k => objectifs[k]);
+                    if (selected.length === 0) return '';
+                    return `<div class="section-subtitle">${cat}</div>
+                    <div style="display:grid;gap:4px;">
+                        ${selected.map(k => `<div style="font-size:10px;padding:5px 8px;background:var(--light-gray);border-radius:6px;border-left:3px solid var(--gold);">✓ ${objLabels[k] || k}</div>`).join('')}
+                    </div>`;
+                }).join('') : '<p style="color:var(--gray);font-size:10px;">Aucun objectif défini</p>'}
+                ${objectifs.Objectifs_personnalises ? `
+                <div class="section-subtitle">Objectifs personnalisés</div>
+                <div style="background:var(--light-gray);padding:12px;border-radius:8px;font-size:10px;white-space:pre-wrap;">${objectifs.Objectifs_personnalises}</div>
+                ` : ''}
+
+                ${abfData.opportunites_notes ? `
+                <div class="section-subtitle">Notes & Recommandations du Conseiller</div>
+                <div style="background:var(--light-gray);padding:12px;border-radius:8px;font-size:10px;white-space:pre-wrap;line-height:1.7;">${abfData.opportunites_notes}</div>
+                ` : ''}
+
+                ${(abfData.projets_epargne && abfData.projets_epargne.length > 0) ? `
+                <div class="section-subtitle">Projets d'Épargne (${abfData.projets_epargne.length})</div>
+                <table>
+                    <thead>
+                        <tr><th>Type</th><th>Propriétaire</th><th class="text-right">Objectif</th><th class="text-right">Cotisation/mois</th><th class="text-right">Horizon</th><th class="text-right">Rendement</th><th>Compte</th></tr>
+                    </thead>
+                    <tbody>
+                        ${abfData.projets_epargne.map(p => {
+                            const typeLabels = {EDUCATION:'Études enfants',MAISON:'Achat maison',AUTO:'Achat véhicule',VOYAGE:'Voyage',FONDS_URGENCE:'Fonds d\'urgence',AUTRE:'Autre'};
+                            const acctLabels = {CELI:'CELI',REER:'REER',NON_ENREGISTRE:'Non-enregistré',REEE:'REEE'};
+                            return `<tr>
+                                <td>${typeLabels[p.type] || p.type || '-'}</td>
+                                <td>${p.owner || '-'}</td>
+                                <td class="text-right currency">${p.targetAmount ? formatMoney(p.targetAmount) : '-'}</td>
+                                <td class="text-right">${p.monthlyAmount ? formatMoney(p.monthlyAmount) : '-'}</td>
+                                <td class="text-right">${p.horizon ? p.horizon + ' ans' : '-'}</td>
+                                <td class="text-right">${p.rate ? p.rate + '%' : '-'}</td>
+                                <td>${acctLabels[p.account] || p.account || '-'}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ` : ''}
+
+                ${client.date_renouv_hypotheque || client.date_assurance_auto || client.date_assurance_habitation ? `
+                <div class="section-subtitle">Dates de Renouvellement</div>
+                <div class="info-grid">
+                    ${client.date_renouv_hypotheque ? `<div class="info-row"><span class="info-label">Hypothèque</span><span class="info-value">${formatDateShort(client.date_renouv_hypotheque)}</span></div>` : ''}
+                    ${client.date_assurance_auto ? `<div class="info-row"><span class="info-label">Assurance auto</span><span class="info-value">${formatDateShort(client.date_assurance_auto)}</span></div>` : ''}
+                    ${client.date_assurance_habitation ? `<div class="info-row"><span class="info-label">Assurance habitation</span><span class="info-value">${formatDateShort(client.date_assurance_habitation)}</span></div>` : ''}
+                </div>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Besoins Vie
+    const viePage = sections.vie ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">❤️ Analyse des Besoins en Assurance Vie</div>
+                
+                <div class="besoin-box">
+                    <div class="besoin-header">
+                        <div class="besoin-name">👤 ${client.first_name} ${client.last_name}</div>
+                        <div class="besoin-total">${formatMoney(besoinVieClient)}</div>
+                    </div>
+                    <div class="besoin-detail"><span>Remplacement de revenu (${client.vie_pct_revenu_client || 0}% × ${client.vie_annees_revenu_client || 0} ans)</span><span>${formatMoney((client.revenu_emploi || 0) * (client.vie_pct_revenu_client || 0) / 100 * (client.vie_annees_revenu_client || 0))}</span></div>
+                    <div class="besoin-detail"><span>Frais funérailles</span><span>${formatMoney(client.vie_frais_funerailles_client || 0)}</span></div>
+                    <div class="besoin-detail"><span>Héritage souhaité</span><span>${formatMoney(client.vie_heritage_client || 0)}</span></div>
+                </div>
+                
+                ${client.has_conjoint ? `
+                <div class="besoin-box">
+                    <div class="besoin-header">
+                        <div class="besoin-name">👤 ${client.conjoint_first_name} ${client.conjoint_last_name}</div>
+                        <div class="besoin-total">${formatMoney(besoinVieConjoint)}</div>
+                    </div>
+                    <div class="besoin-detail"><span>Remplacement de revenu (${client.vie_pct_revenu_conjoint || 0}% × ${client.vie_annees_revenu_conjoint || 0} ans)</span><span>${formatMoney((client.revenu_emploi_conjoint || 0) * (client.vie_pct_revenu_conjoint || 0) / 100 * (client.vie_annees_revenu_conjoint || 0))}</span></div>
+                    <div class="besoin-detail"><span>Frais funérailles</span><span>${formatMoney(client.vie_frais_funerailles_conjoint || 0)}</span></div>
+                    <div class="besoin-detail"><span>Héritage souhaité</span><span>${formatMoney(client.vie_heritage_conjoint || 0)}</span></div>
+                </div>
+                ` : ''}
+
+                ${enfants.filter(e => e.protection_vie_active).length > 0 ? `
+                <div class="section-subtitle">Protection Vie — Enfants</div>
+                <table>
+                    <thead>
+                        <tr><th>Enfant</th><th>Âge</th><th class="text-right">Frais funérailles</th><th class="text-right">Héritage</th><th class="text-right">Total</th></tr>
+                    </thead>
+                    <tbody>
+                        ${enfants.filter(e => e.protection_vie_active).map(e => {
+                            const funerailles = parseFloat(e.frais_funerailles) || 0;
+                            const heritage = parseFloat(e.heritage) || 0;
+                            return `<tr>
+                                <td>${e.prenom || ''} ${e.nom || ''}</td>
+                                <td>${calculateAge(e.date_naissance)} ans</td>
+                                <td class="text-right">${formatMoney(funerailles)}</td>
+                                <td class="text-right">${formatMoney(heritage)}</td>
+                                <td class="text-right currency">${formatMoney(funerailles + heritage)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ` : ''}
+
+                ${enfants.filter(e => e.protection_mg_active).length > 0 ? `
+                <div class="section-subtitle">Protection Maladie Grave — Enfants</div>
+                <table>
+                    <thead>
+                        <tr><th>Enfant</th><th>Âge</th><th>Niveau</th><th class="text-right">Besoin MG</th></tr>
+                    </thead>
+                    <tbody>
+                        ${enfants.filter(e => e.protection_mg_active).map(e => `
+                            <tr>
+                                <td>${e.prenom || ''} ${e.nom || ''}</td>
+                                <td>${calculateAge(e.date_naissance)} ans</td>
+                                <td style="text-transform:capitalize;">${e.niveau_mg || 'confort'}</td>
+                                <td class="text-right currency">${formatMoney(parseFloat(e.besoin_mg) || 0)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Invalidité & MG
+    const invMgPage = sections.invMg ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🩼 Invalidité & Maladie Grave</div>
+                
+                <div class="section-subtitle">Besoins en Assurance Invalidité</div>
+                <table>
+                    <thead>
+                        <tr><th>Assuré</th><th>Revenu annuel</th><th>% couverture</th><th class="text-right">Besoin mensuel</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${client.first_name} ${client.last_name}</td>
+                            <td>${formatMoney(client.revenu_emploi || 0)}</td>
+                            <td class="text-center">${client.inv_pct_revenu_client || 70}%</td>
+                            <td class="text-right currency">${formatMoney(invClient)}/mois</td>
+                        </tr>
+                        ${client.has_conjoint ? `
+                        <tr>
+                            <td>${client.conjoint_first_name} ${client.conjoint_last_name}</td>
+                            <td>${formatMoney(client.revenu_emploi_conjoint || 0)}</td>
+                            <td class="text-center">${client.inv_pct_revenu_conjoint || 70}%</td>
+                            <td class="text-right currency">${formatMoney(invConjoint)}/mois</td>
+                        </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+                
+                <div class="section-subtitle">Besoins en Maladie Grave</div>
+                <table>
+                    <thead>
+                        <tr><th>Assuré</th><th>Niveau de protection</th><th>Mois de revenu</th><th class="text-right">Besoin</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${client.first_name} ${client.last_name}</td>
+                            <td style="text-transform:capitalize;">${client.mg_niveau_client || 'confort'}</td>
+                            <td class="text-center">${getNiveauMGMois(client.mg_niveau_client || 'confort')} mois</td>
+                            <td class="text-right currency">${formatMoney(mgClient)}</td>
+                        </tr>
+                        ${client.has_conjoint ? `
+                        <tr>
+                            <td>${client.conjoint_first_name} ${client.conjoint_last_name}</td>
+                            <td style="text-transform:capitalize;">${client.mg_niveau_conjoint || 'confort'}</td>
+                            <td class="text-center">${getNiveauMGMois(client.mg_niveau_conjoint || 'confort')} mois</td>
+                            <td class="text-right currency">${formatMoney(mgConjoint)}</td>
+                        </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+
+                ${(abfData.impots_client?.active || abfData.impots_conjoint?.active) ? `
+                <div class="section-subtitle">Impôts au Décès (estimation)</div>
+                <table>
+                    <thead>
+                        <tr><th>Personne</th><th class="text-right">PBR</th><th class="text-right">JVM</th><th class="text-right">Gain imposable</th><th class="text-right">Taux marginal</th><th class="text-right">Impôt estimé</th></tr>
+                    </thead>
+                    <tbody>
+                        ${abfData.impots_client?.active ? (() => {
+                            const ic = abfData.impots_client;
+                            const gain = (parseFloat(ic.jvm) || 0) - (parseFloat(ic.pbr) || 0);
+                            return `<tr>
+                                <td>${client.first_name} ${client.last_name}</td>
+                                <td class="text-right">${formatMoney(ic.pbr || 0)}</td>
+                                <td class="text-right">${formatMoney(ic.jvm || 0)}</td>
+                                <td class="text-right">${formatMoney(gain > 0 ? gain : 0)}</td>
+                                <td class="text-right">${ic.taux || 0}%</td>
+                                <td class="text-right currency">${formatMoney(ic.impot_estime || 0)}</td>
+                            </tr>`;
+                        })() : ''}
+                        ${abfData.impots_conjoint?.active && client.has_conjoint ? (() => {
+                            const ic = abfData.impots_conjoint;
+                            const gain = (parseFloat(ic.jvm) || 0) - (parseFloat(ic.pbr) || 0);
+                            return `<tr>
+                                <td>${client.conjoint_first_name} ${client.conjoint_last_name}</td>
+                                <td class="text-right">${formatMoney(ic.pbr || 0)}</td>
+                                <td class="text-right">${formatMoney(ic.jvm || 0)}</td>
+                                <td class="text-right">${formatMoney(gain > 0 ? gain : 0)}</td>
+                                <td class="text-right">${ic.taux || 0}%</td>
+                                <td class="text-right currency">${formatMoney(ic.impot_estime || 0)}</td>
+                            </tr>`;
+                        })() : ''}
+                    </tbody>
+                </table>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Assurances en vigueur
+    const assurancesPage = sections.assurances ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🛡️ Assurances en Vigueur</div>
+                
+                ${assurancesVigueur.length > 0 ? `
+                <div class="section-subtitle">Polices Existantes (${assurancesVigueur.length})</div>
+                <table>
+                    <thead>
+                        <tr><th>Assureur</th><th>Type</th><th>Assuré</th><th class="text-right">Capital</th><th class="text-right">Prime/mois</th></tr>
+                    </thead>
+                    <tbody>
+                        ${assurancesVigueur.map(a => `
+                            <tr>
+                                <td>${a.compagnie || '-'}</td>
+                                <td>${a.type || '-'}</td>
+                                <td>${a.assure || '-'}</td>
+                                <td class="text-right currency">${formatMoney(parseFloat(a.montant_couverture) || 0)}</td>
+                                <td class="text-right">${formatMoney(parseFloat(a.prime_mensuelle) || 0)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr style="background:var(--light-gray);font-weight:600;">
+                            <td colspan="4" class="text-right">Total primes mensuelles:</td>
+                            <td class="text-right currency">${formatMoney(totalPrimesVigueur)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                ` : '<p style="color:var(--gray);font-size:10px;margin-top:10px;">Aucune assurance en vigueur</p>'}
+                
+                ${assurancesVenduesEnVigueur.length > 0 ? `
+                <div class="section-subtitle">Nouvelles Polices Souscrites (${assurancesVenduesEnVigueur.length})</div>
+                <table>
+                    <thead>
+                        <tr><th>Assureur</th><th>Produit</th><th>Assuré</th><th class="text-right">Capital</th><th class="text-right">Prime/mois</th></tr>
+                    </thead>
+                    <tbody>
+                        ${assurancesVenduesEnVigueur.map(a => `
+                            <tr>
+                                <td>${a.assureur || '-'}</td>
+                                <td>${a.produit || '-'}</td>
+                                <td>${a.assure || '-'}</td>
+                                <td class="text-right currency">${formatMoney(a.capital || 0)}</td>
+                                <td class="text-right">${formatMoney(a.prime_mensuelle || 0)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr style="background:var(--light-gray);font-weight:600;">
+                            <td colspan="4" class="text-right">Total primes mensuelles:</td>
+                            <td class="text-right currency">${formatMoney(totalPrimesVendues)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                ` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // ═══ RECOMMANDATIONS DÉTAILLÉES v2.0 ═══
+    const getRecoClass = (d) => { if (!d) return ''; const dl = (d||'').toLowerCase(); if (dl.includes('accept')) return 'acceptee'; if (dl.includes('refus')) return 'refusee'; return 'reporter'; };
+    const recos = abfData.recommandations || {};
+    const formatRecoDecision = (d) => { const m = {"J'accepte":'Acceptée',"Je refuse":'Refusée',"À faire":'À faire',"A faire":'À faire','N/A':'N/A'}; return m[d] || d || 'Non défini'; };
+    const formatRecoRaison = (r) => { const m = {'pas_interesse':'Pas intéressé(e)','montant_superieur':'Montant supérieur suggéré','montant_inferieur':'Montant inférieur','montant_different':'Montant différent'}; return m[r] || r || ''; };
+    const formatRecoDelai = (d) => { const m = {'prochaine_rencontre':'Prochaine rencontre','quelques_mois':'Dans quelques mois','budget_permet':'Quand le budget le permet'}; return m[d] || d || ''; };
+
+    // Besoins calcules depuis abfData (memes sources que conformite-recommandations)
+    const getNumVal = (v) => { if (!v) return 0; const n = typeof v === 'string' ? parseFloat(v.replace(/[^0-9.-]/g, '')) : Number(v); return isNaN(n) ? 0 : n; };
+    const besoins = {
+        client: {
+            vie: getNumVal(abfData.vie_client?.besoin_calcule),
+            maladie: getNumVal(abfData.mg_besoin_client),
+            invalidite: getNumVal(abfData.inv_client?.besoin_calcule),
+            pret: 0, epargne: 0
+        },
+        conjoint: {
+            vie: getNumVal(abfData.vie_conjoint?.besoin_calcule),
+            maladie: getNumVal(abfData.mg_besoin_conjoint),
+            invalidite: getNumVal(abfData.inv_conjoint?.besoin_calcule),
+            pret: 0, epargne: 0
+        }
+    };
+    // Calculer besoins pret/epargne depuis actifs
+    (actifs || []).forEach(a => {
+        const prop = (a.proprietaire || '').toLowerCase();
+        const cliName = (client.first_name + ' ' + client.last_name).toLowerCase();
+        const conjName = ((client.conjoint_first_name || '') + ' ' + (client.conjoint_last_name || '')).toLowerCase().trim();
+        if (a.paiement_mensuel > 0) {
+            if (prop === cliName || prop === 'client' || prop === 'les deux') besoins.client.pret += a.paiement_mensuel;
+            if (prop === conjName || prop === 'conjoint' || prop === 'les deux') besoins.conjoint.pret += a.paiement_mensuel;
+        }
+        if (a.type !== 'RRPD') {
+            const contrib = (a.contribution_mensuelle || 0) + (a.contribution_employeur || 0);
+            if (contrib > 0) {
+                if (prop === cliName || prop === 'client') besoins.client.epargne += contrib;
+                else if (prop === conjName || prop === 'conjoint') besoins.conjoint.epargne += contrib;
+                else if (prop === 'les deux') { besoins.client.epargne += contrib / 2; besoins.conjoint.epargne += contrib / 2; }
+            }
+        }
+    });
+
+    function buildRecoTable(personKey, personName) {
+        const types = [
+            { key: 'vie', label: 'Assurance Vie', suffix: '' },
+            { key: 'maladie', label: 'Maladie Grave', suffix: '' },
+            { key: 'invalidite', label: 'Invalidité', suffix: '/mois' },
+            { key: 'pret', label: 'Protection Prêt', suffix: '/mois' },
+            { key: 'epargne', label: 'Épargne', suffix: '/mois' }
+        ];
+        const personRecos = recos[personKey] || {};
+        const personBesoins = besoins[personKey] || {};
+        const rows = types.map(t => {
+            const r = personRecos[t.key] || {};
+            if (!r.decision || r.decision === 'N/A') return '';
+            const cls = getRecoClass(r.decision);
+            const besoinVal = t.key === 'epargne' ? personBesoins.epargne : personBesoins[t.key];
+            const besoinStr = besoinVal > 0 ? formatMoney(besoinVal) + t.suffix : '-';
+
+            // Montant retenu/choisi
+            let montantRetenu = '-';
+            if (t.key === 'epargne' && r.montant_mensuel) {
+                montantRetenu = formatMoney(r.montant_mensuel) + '/mois';
+            } else if (r.montant) {
+                montantRetenu = formatMoney(r.montant) + t.suffix;
+            }
+
+            // Decision badge
+            const decisionLabel = formatRecoDecision(r.decision);
+            const badgeColor = cls === 'acceptee' ? '#22c55e' : cls === 'refusee' ? '#ef4444' : '#3b82f6';
+            const badgeBg = cls === 'acceptee' ? 'rgba(34,197,94,0.1)' : cls === 'refusee' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)';
+
+            // Details (raison, compagnie, delai)
+            let detailParts = [];
+            if (r.decision === 'Je refuse' && r.raison) detailParts.push(formatRecoRaison(r.raison));
+            if ((r.decision === 'À faire' || r.decision === 'A faire') && r.delai) detailParts.push('Délai: ' + formatRecoDelai(r.delai));
+            if (r.compagnie) detailParts.push('Compagnie: ' + r.compagnie);
+            const detailStr = detailParts.length > 0 ? `<div style="font-size:7px;color:#888;margin-top:2px;">${detailParts.join(' | ')}</div>` : '';
+
+            return `<tr>
+                <td style="font-weight:600;">${t.label}</td>
+                <td class="text-right">${besoinStr}</td>
+                <td class="text-center"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:8px;font-weight:600;color:${badgeColor};background:${badgeBg};">${decisionLabel}</span></td>
+                <td class="text-right currency">${montantRetenu}</td>
+                <td>${r.compagnie || '-'}${detailStr}</td>
+            </tr>`;
+        }).filter(Boolean).join('');
+
+        if (!rows) return '';
+
+        return `
+            <div style="margin-bottom:16px;">
+                <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#1a1a2e;">${personName}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type de besoin</th>
+                            <th class="text-right">Besoin calculé</th>
+                            <th class="text-center">Décision</th>
+                            <th class="text-right">Montant retenu</th>
+                            <th>Compagnie / Détail</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    // Textes de conformite (declarations signees)
+    function buildConformiteTexts(personKey, prenom) {
+        const types = [
+            { key: 'vie', label: 'assurance vie', suffix: '' },
+            { key: 'maladie', label: 'maladie grave', suffix: '' },
+            { key: 'invalidite', label: 'invalidité', suffix: '/mois' },
+            { key: 'pret', label: 'protection prêt', suffix: '/mois' },
+            { key: 'epargne', label: 'épargne', suffix: '/mois' }
+        ];
+        const personRecos = recos[personKey] || {};
+        const personBesoins = besoins[personKey] || {};
+        const texts = types.map(t => {
+            const r = personRecos[t.key] || {};
+            if (!r.decision || r.decision === 'N/A') return '';
+            const besoinVal = t.key === 'epargne' ? personBesoins.epargne : personBesoins[t.key];
+            const besoinStr = besoinVal > 0 ? formatMoney(besoinVal) + t.suffix : '';
+            let text = '';
+
+            if (r.decision === "J'accepte") {
+                if (t.key === 'epargne' && r.montant_mensuel) {
+                    text = besoinStr
+                        ? `<strong>Déclaration de ${prenom}:</strong> Mon conseiller m'a présenté une analyse de besoins financiers avec une recommandation d'épargne de <strong>${besoinStr}</strong>. J'accepte cette recommandation avec un prélèvement mensuel de <strong>${formatMoney(r.montant_mensuel)}/mois</strong>.`
+                        : `<strong>Déclaration de ${prenom}:</strong> J'accepte la recommandation d'épargne de mon conseiller avec un prélèvement mensuel de <strong>${formatMoney(r.montant_mensuel)}/mois</strong>.`;
+                } else if (r.montant && besoinStr) {
+                    text = `<strong>Déclaration de ${prenom}:</strong> Mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${t.label} de <strong>${besoinStr}</strong>. J'accepte cette recommandation avec un montant de couverture retenu de <strong>${formatMoney(r.montant)}${t.suffix}</strong>.`;
+                } else if (besoinStr) {
+                    text = `<strong>Déclaration de ${prenom}:</strong> J'accepte la recommandation de mon conseiller pour une couverture en ${t.label} de <strong>${besoinStr}</strong>.`;
+                }
+                if (r.compagnie) text += ` Compagnie: <strong>${r.compagnie}</strong>.`;
+            } else if (r.decision === 'Je refuse') {
+                if (r.raison === 'pas_interesse') {
+                    text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${t.label} de <strong>${besoinStr || 'N/A'}</strong>. Après avoir pris connaissance de cette recommandation, je choisis de ne pas donner suite. Je comprends les implications de cette décision.`;
+                } else if (r.raison === 'montant_superieur') {
+                    const montantChoisi = r.montant ? formatMoney(r.montant) + t.suffix : '[à préciser]';
+                    text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${t.label} de <strong>${besoinStr || 'N/A'}</strong>. Après réflexion, je choisis de souscrire à une protection de <strong>${montantChoisi}</strong>, soit un montant supérieur à la recommandation.`;
+                    if (r.compagnie) text += ` Compagnie: <strong>${r.compagnie}</strong>.`;
+                } else if (r.raison === 'montant_inferieur') {
+                    const montantChoisi = r.montant ? formatMoney(r.montant) + t.suffix : '[à préciser]';
+                    text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers indiquant un besoin en ${t.label} de <strong>${besoinStr || 'N/A'}</strong>. Après réflexion, je choisis de souscrire à une protection de <strong>${montantChoisi}</strong>, soit un montant inférieur à la recommandation. Je comprends que cette couverture partielle ne répond pas entièrement à mes besoins identifiés.`;
+                    if (r.compagnie) text += ` Compagnie: <strong>${r.compagnie}</strong>.`;
+                } else if (r.raison === 'montant_different' && t.key === 'epargne') {
+                    const mensuel = r.montant_mensuel ? formatMoney(r.montant_mensuel) + '/mois' : '[à préciser]';
+                    text = `<strong>Déclaration de ${prenom}:</strong> Je reconnais que mon conseiller m'a présenté une analyse de besoins financiers avec une recommandation d'épargne de <strong>${besoinStr || 'N/A'}</strong>. Après réflexion, je choisis d'épargner <strong>${mensuel}</strong> en prélèvement automatique.`;
+                }
+            } else if (r.decision === 'À faire' || r.decision === 'A faire') {
+                text = `<strong>Déclaration de ${prenom}:</strong> Je souhaite donner suite à la recommandation en ${t.label} de <strong>${besoinStr || 'N/A'}</strong>.`;
+                if (r.delai) text += ` Délai: <strong>${formatRecoDelai(r.delai)}</strong>.`;
+            }
+
+            if (!text) return '';
+            const cls = getRecoClass(r.decision);
+            const borderColor = cls === 'acceptee' ? '#22c55e' : cls === 'refusee' ? '#ef4444' : '#3b82f6';
+            return `<div style="border-left:3px solid ${borderColor};padding:8px 12px;margin-bottom:8px;background:#fafafa;border-radius:0 6px 6px 0;font-size:9px;line-height:1.6;">${text}</div>`;
+        }).filter(Boolean).join('');
+        return texts;
+    }
+
+    const hasDetailedRecos = recos.client && Object.values(recos.client).some(r => r && r.decision && r.decision !== 'N/A');
+    const recosPage = sections.recos ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">Recommandations</div>
+
+                ${hasDetailedRecos ? `
+                <!-- Tableau recapitulatif -->
+                ${buildRecoTable('client', client.first_name + ' ' + client.last_name)}
+
+                ${client.has_conjoint && recos.conjoint ? buildRecoTable('conjoint', client.conjoint_first_name + ' ' + client.conjoint_last_name) : ''}
+
+                ${enfants.length > 0 && recos.enfants ? enfants.map((e, i) => {
+                    const enfantKey = 'enfant' + i;
+                    const enfantRecoData = recos.enfants[enfantKey] || {};
+                    if (Object.keys(enfantRecoData).length === 0) return '';
+                    recos['_enfant_tmp'] = enfantRecoData;
+                    besoins['_enfant_tmp'] = { vie: getNumVal(e.vie_besoin_calcule), maladie: getNumVal(e.mg_besoin_calcule), invalidite: 0, pret: 0, epargne: 0 };
+                    const table = buildRecoTable('_enfant_tmp', (e.prenom || '') + ' ' + (e.nom || '') + ' (enfant)');
+                    delete recos['_enfant_tmp'];
+                    delete besoins['_enfant_tmp'];
+                    return table;
+                }).filter(Boolean).join('') : ''}
+
+                <!-- Declarations de conformite -->
+                <div style="margin-top:20px;padding-top:14px;border-top:1px solid #ddd;">
+                    <div style="font-size:10px;font-weight:700;margin-bottom:10px;color:#1a1a2e;">Déclarations de conformité</div>
+                    ${buildConformiteTexts('client', client.first_name)}
+                    ${client.has_conjoint && recos.conjoint ? buildConformiteTexts('conjoint', client.conjoint_first_name) : ''}
+                </div>
+                ` : `
+                <p style="color:var(--gray);font-size:10px;margin-top:10px;">Aucune recommandation definie</p>
+                `}
+
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Lettres explicatives
+    const lettresPages = lettres && lettres.length > 0 ? lettres.map(l => `
+        <div class="lettre-section">
+            <div class="lettre-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX" style="height:40px;margin-bottom:15px;">
+                <div class="lettre-title">${l.titre || 'Lettre explicative'}</div>
+                <div class="lettre-date">${formatDateShort(l.date_creation) || today}</div>
+            </div>
+            <div class="lettre-content">${l.contenu || ''}</div>
+            <div style="margin-top:50px;text-align:right;font-size:11px;">
+                <p>${conseiller.firstName || ''} ${conseiller.lastName || ''}</p>
+                <p style="color:var(--gray);">${conseiller.title || 'Conseiller en sécurité financière'}</p>
+            </div>
+        </div>
+    `).join('') : '';
+
+    // ═══════════════════════════════════════════════════════════════
+    // PAGES RETRAITE (v5.0)
+    // ═══════════════════════════════════════════════════════════════
+
+    // 6a. Sommaire Retraite & KPIs
+    const retSommairePage = sections.retSommaire && retirement ? (() => {
+        const k = retirement.kpis;
+        const p = retirement.profile;
+        const s = retirement.savedParams;
+        const pens = retirement.pensions;
+        const opts = retirement.options;
+
+        const stratLabels = {'proportional':'Proportionnel','rrsp_first':'REER en premier','tfsa_first':'CELI en premier','taxable_first':'Non-enr en premier','tax_efficient':'Fiscalement optimal'};
+
+        return `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🏖️ Planification Retraite — Sommaire</div>
+
+                <div class="section-subtitle">Hypothèses de projection</div>
+                <div class="ret-hyp-grid">
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Âge retraite</div><div class="ret-hyp-value">${p.retirementAge} ans</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Espérance de vie</div><div class="ret-hyp-value">${p.lifeExpectancy} ans</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Revenu cible</div><div class="ret-hyp-value">${fmtR(opts.targetIncome)}/an</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Inflation</div><div class="ret-hyp-value">${opts.inflationRate || 2}%</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Stratégie retrait</div><div class="ret-hyp-value">${stratLabels[opts.withdrawalStrategy] || opts.withdrawalStrategy}</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Statut</div><div class="ret-hyp-value">${pens.maritalStatus === 'couple' ? 'Couple' : 'Célibataire'}</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">RRQ</div><div class="ret-hyp-value">${fmtR(pens.qppAmountAt65 * 12)}/an dès ${pens.qppStartAge} ans</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">SV</div><div class="ret-hyp-value">${fmtR(pens.oasAmountAt65 * 12)}/an dès ${pens.oasStartAge} ans</div></div>
+                    ${pens.hasEmployerPension ? `<div class="ret-hyp-item"><div class="ret-hyp-label">Pension employeur</div><div class="ret-hyp-value">${fmtR(pens.employerPensionAmount * 12)}/an dès ${pens.employerPensionStartAge} ans</div></div>` : ''}
+                    ${(retirement.accumulation?.rrspContributionRoom > 0 || retirement.accumulation?.tfsaContributionRoom > 0) ? `
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Droits REER</div><div class="ret-hyp-value">${fmtR(retirement.accumulation.rrspContributionRoom || 0)}</div></div>
+                    <div class="ret-hyp-item"><div class="ret-hyp-label">Droits CELI</div><div class="ret-hyp-value">${fmtR(retirement.accumulation.tfsaContributionRoom || 0)}</div></div>` : ''}
+                </div>
+
+                <div class="section-subtitle">Indicateurs Clés</div>
+                <div class="ret-kpi-grid">
+                    <div class="ret-kpi gold"><div class="ret-kpi-label">Patrimoine maximal</div><div class="ret-kpi-value" style="color:var(--gold);">${fmtRShort(k.peakTotal)}</div></div>
+                    <div class="ret-kpi success"><div class="ret-kpi-label">Actifs à la retraite</div><div class="ret-kpi-value" style="color:var(--success);">${fmtRShort(k.retirementAssets)}</div></div>
+                    <div class="ret-kpi blue"><div class="ret-kpi-label">1er revenu net</div><div class="ret-kpi-value" style="color:var(--blue);">${fmtRShort(k.firstNetIncome)}</div></div>
+                    <div class="ret-kpi gold"><div class="ret-kpi-label">Revenu net moyen</div><div class="ret-kpi-value" style="color:var(--gold);">${fmtRShort(k.avgNetIncome)}</div></div>
+                </div>
+                <div class="ret-kpi-grid">
+                    <div class="ret-kpi danger"><div class="ret-kpi-label">Impôts totaux (retraite)</div><div class="ret-kpi-value" style="color:var(--danger);">${fmtRShort(k.totalTax)}</div></div>
+                    <div class="ret-kpi success"><div class="ret-kpi-label">Crédits totaux</div><div class="ret-kpi-value" style="color:var(--success);">${fmtRShort(k.totalCredits)}</div></div>
+                    <div class="ret-kpi blue"><div class="ret-kpi-label">Actifs finals (${p.lifeExpectancy} ans)</div><div class="ret-kpi-value" style="color:var(--blue);">${fmtRShort(k.finalAssets)}</div></div>
+                    <div class="ret-kpi danger"><div class="ret-kpi-label">Impôt successoral</div><div class="ret-kpi-value" style="color:var(--danger);">${fmtRShort(k.estateTax)}</div></div>
+                </div>
+
+                ${opts.pensionSplitting ? `
+                <div style="margin-top:10px;font-size:8px;color:var(--gray);background:var(--light-gray);padding:6px 10px;border-radius:6px;">
+                    ⚙️ Fractionnement du revenu de pension activé | Revenu conjoint: ${fmtR(opts.spouseIncome)} | Âge conjoint: ${opts.spouseAge} ans
+                </div>` : ''}
+                ${opts.insuranceAnnualPremium > 0 ? `
+                <div style="margin-top:6px;font-size:8px;color:var(--gray);background:var(--light-gray);padding:6px 10px;border-radius:6px;">
+                    🛡️ Assurance vie: ${fmtR(opts.insuranceAnnualPremium)}/an dès ${opts.insuranceStartAge || p.retirementAge} ans | Capital-décès: ${fmtR(opts.insuranceDeathBenefit)}
+                </div>` : ''}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Planification Retraite</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // 6b. Projection des Actifs
+    const retProjectionPage = sections.retProjection && retirement ? (() => {
+        const data = retirement.projectionData;
+        const p = retirement.profile;
+        if (!data || data.length === 0) return '';
+
+        // Echantillonner tous les 2 ans pour le graphique
+        const sampled = data.filter((d, i) => i % 2 === 0 || i === data.length - 1);
+        const maxTotal = Math.max(...data.map(d => d.total), 1);
+
+        // Ligne de retraite
+        const retIdx = sampled.findIndex(d => d.phase === 'decaissement');
+        const retPct = retIdx >= 0 ? ((retIdx / sampled.length) * 100).toFixed(1) : -1;
+
+        const barsHTML = sampled.map(d => {
+            const rrspH = Math.round(((d.rrsp || 0) / maxTotal) * 175);
+            const tfsaH = Math.round(((d.tfsa || 0) / maxTotal) * 175);
+            const taxH = Math.round(((d.taxable || 0) / maxTotal) * 175);
+            const criH = Math.round((((d.cri || 0) + (d.frv || 0)) / maxTotal) * 175);
+            const showLabel = d.age % 5 === 0 || d === sampled[sampled.length - 1];
+            return `<div class="ret-bar-group">
+                <div class="ret-bar" style="height:${criH}px;background:#f59e0b;border-radius:1px 1px 0 0;"></div>
+                <div class="ret-bar" style="height:${taxH}px;background:#a855f7;"></div>
+                <div class="ret-bar" style="height:${tfsaH}px;background:#22c55e;"></div>
+                <div class="ret-bar" style="height:${rrspH}px;background:#3b82f6;border-radius:0 0 1px 1px;"></div>
+                ${showLabel ? `<div class="ret-bar-label">${d.age}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        // Table condensee tous les 5 ans
+        const tblRows = data.filter((d, i) => d.age % 5 === 0 || i === 0 || i === data.length - 1);
+        const tableHTML = tblRows.map(d => {
+            const phase = d.phase === 'accumulation' ? '<span style="color:var(--blue);">Accum.</span>' : '<span style="color:var(--gold);">Décais.</span>';
+            return `<tr>
+                <td class="text-center">${d.age}</td>
+                <td class="text-center">${phase}</td>
+                <td class="text-right">${fmtRShort(d.rrsp)}</td>
+                <td class="text-right">${fmtRShort(d.tfsa)}</td>
+                <td class="text-right">${fmtRShort(d.taxable)}</td>
+                <td class="text-right">${fmtRShort((d.cri || 0) + (d.frv || 0))}</td>
+                <td class="text-right" style="font-weight:600;">${fmtRShort(d.total)}</td>
+                <td class="text-right">${d.phase === 'decaissement' ? fmtRShort(d.netIncome) : '-'}</td>
+                <td class="text-right" style="color:var(--danger);">${d.phase === 'decaissement' ? fmtRShort(d.totalTax) : '-'}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">📈 Projection des Actifs</div>
+                <div class="ret-chart-title">Évolution du patrimoine par type de compte</div>
+                <div class="ret-chart-wrap">
+                    <div class="ret-chart" style="position:relative;">
+                        ${retPct >= 0 ? `<div class="ret-retire-line" style="left:${retPct}%;"><div class="ret-retire-tag">Retraite →</div></div>` : ''}
+                        ${barsHTML}
+                    </div>
+                    <div class="ret-chart-legend">
+                        <span><span class="ret-legend-dot" style="background:#3b82f6;"></span>REER/FERR</span>
+                        <span><span class="ret-legend-dot" style="background:#22c55e;"></span>CELI</span>
+                        <span><span class="ret-legend-dot" style="background:#a855f7;"></span>Non-enregistré</span>
+                        <span><span class="ret-legend-dot" style="background:#f59e0b;"></span>CRI/FRV</span>
+                    </div>
+                </div>
+
+                <div class="section-subtitle">Tableau de projection (par tranche de 5 ans)</div>
+                <table>
+                    <thead><tr>
+                        <th class="text-center">Âge</th><th class="text-center">Phase</th>
+                        <th class="text-right">REER</th><th class="text-right">CELI</th>
+                        <th class="text-right">Non-enr.</th><th class="text-right">CRI/FRV</th>
+                        <th class="text-right">Total</th><th class="text-right">Rev. net</th>
+                        <th class="text-right">Impôts</th>
+                    </tr></thead>
+                    <tbody>${tableHTML}</tbody>
+                </table>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Planification Retraite</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // 6c. Revenus & Fiscalité
+    const retRevenusPage = sections.retRevenus && retirement ? (() => {
+        const data = retirement.projectionData;
+        if (!data || data.length === 0) return '';
+        const retData = data.filter(d => d.phase === 'decaissement');
+        if (retData.length === 0) return '';
+
+        // Echantillonner tous les 2 ans pour graphique revenus
+        const sampledRev = retData.filter((d, i) => i % 2 === 0 || i === retData.length - 1);
+        const maxIncome = Math.max(...retData.map(d => (d.qpp || 0) + (d.oas || 0) + (d.employerPension || 0) + (d.withdrawal || 0)), 1);
+
+        const revBarsHTML = sampledRev.map(d => {
+            const qppH = Math.round(((d.qpp || 0) * 12 / maxIncome) * 155);
+            const oasH = Math.round(((d.oas || 0) * 12 / maxIncome) * 155);
+            const pensH = Math.round(((d.employerPension || 0) * 12 / maxIncome) * 155);
+            const wdH = Math.round(((d.withdrawal || 0) / maxIncome) * 155);
+            const showLabel = d.age % 5 === 0 || d === sampledRev[sampledRev.length - 1];
+            return `<div class="ret-bar-group">
+                <div class="ret-bar" style="height:${wdH}px;background:#a855f7;border-radius:1px 1px 0 0;"></div>
+                <div class="ret-bar" style="height:${pensH}px;background:#f59e0b;"></div>
+                <div class="ret-bar" style="height:${oasH}px;background:#22c55e;"></div>
+                <div class="ret-bar" style="height:${qppH}px;background:#3b82f6;border-radius:0 0 1px 1px;"></div>
+                ${showLabel ? `<div class="ret-bar-label">${d.age}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        // Graphique impots
+        const maxTax = Math.max(...retData.map(d => (d.fedTax || 0) + (d.qcTax || 0) + (d.oasClawback || 0)), 1);
+        const taxBarsHTML = sampledRev.map(d => {
+            const fedH = Math.round(((d.fedTax || 0) / maxTax) * 115);
+            const qcH = Math.round(((d.qcTax || 0) / maxTax) * 115);
+            const oasH = Math.round(((d.oasClawback || 0) / maxTax) * 115);
+            const showLabel = d.age % 5 === 0 || d === sampledRev[sampledRev.length - 1];
+            return `<div class="ret-bar-group" style="position:relative;">
+                <div class="ret-marginal-tag">${d.marginalRate || 0}%</div>
+                <div class="ret-bar" style="height:${oasH}px;background:#f59e0b;border-radius:1px 1px 0 0;"></div>
+                <div class="ret-bar" style="height:${qcH}px;background:#ef4444;"></div>
+                <div class="ret-bar" style="height:${fedH}px;background:#3b82f6;border-radius:0 0 1px 1px;"></div>
+                ${showLabel ? `<div class="ret-bar-label">${d.age}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        // Resume fiscal
+        const k = retirement.kpis;
+        const avgEffRate = retData.length > 0 ? ((k.totalTax / retData.reduce((s,d) => s + (d.grossIncome || 0), 0)) * 100).toFixed(1) : '0';
+
+        return `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">💰 Revenus & Fiscalité à la Retraite</div>
+
+                <div class="ret-chart-title">Composition des revenus annuels</div>
+                <div class="ret-chart-wrap">
+                    <div class="ret-chart" style="height:160px;">
+                        ${revBarsHTML}
+                    </div>
+                    <div class="ret-chart-legend">
+                        <span><span class="ret-legend-dot" style="background:#3b82f6;"></span>RRQ/RPC</span>
+                        <span><span class="ret-legend-dot" style="background:#22c55e;"></span>Sécurité vieillesse</span>
+                        <span><span class="ret-legend-dot" style="background:#f59e0b;"></span>Pension employeur</span>
+                        <span><span class="ret-legend-dot" style="background:#a855f7;"></span>Retraits comptes</span>
+                    </div>
+                </div>
+
+                <div class="ret-chart-title">Impôts par palier</div>
+                <div class="ret-chart-wrap">
+                    <div class="ret-chart ret-chart-sm">
+                        ${taxBarsHTML}
+                    </div>
+                    <div class="ret-chart-legend">
+                        <span><span class="ret-legend-dot" style="background:#3b82f6;"></span>Fédéral</span>
+                        <span><span class="ret-legend-dot" style="background:#ef4444;"></span>Québec</span>
+                        <span><span class="ret-legend-dot" style="background:#f59e0b;"></span>Récup. SV</span>
+                    </div>
+                </div>
+
+                <div class="section-subtitle">Résumé Fiscal</div>
+                <div class="ret-fiscal-box">
+                    <div class="ret-fiscal-row"><span>Impôts totaux (période retraite)</span><span style="color:var(--danger);">${fmtR(k.totalTax)}</span></div>
+                    <div class="ret-fiscal-row"><span>Crédits d'impôt totaux</span><span style="color:var(--success);">${fmtR(k.totalCredits)}</span></div>
+                    <div class="ret-fiscal-row"><span>Taux effectif moyen</span><span>${avgEffRate}%</span></div>
+                    <div class="ret-fiscal-row"><span>Taux marginal moyen</span><span>${k.avgMarginalRate}%</span></div>
+                    <div class="ret-fiscal-row"><span style="font-weight:600;">Revenu net annuel moyen</span><span style="color:var(--gold);font-weight:600;">${fmtR(k.avgNetIncome)}</span></div>
+                </div>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Planification Retraite</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // 6d. Succession
+    const retSuccessionPage = sections.retSuccession && retirement?.succResult ? (() => {
+        const succ = retirement.succResult;
+        const opts = retirement.options;
+        const p = retirement.profile;
+
+        const baseNet = succ.base.estate.netEstate || 0;
+        const optNet = succ.optimized.estate.netEstate || 0;
+        const insNet = succ.insurance.estate.netEstate || 0;
+        const vals = [baseNet, optNet, insNet];
+        const best = Math.max(...vals);
+        const bestIdx = vals.indexOf(best);
+        const labels = ['Base', 'Optimisé', 'Assurance'];
+
+        const insEst = succ.insurance.estate;
+        const insParams = succ.insurance.params;
+
+        return `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🏦 Comparaison Succession</div>
+                <div style="text-align:center;margin-bottom:16px;font-size:11px;font-weight:600;color:var(--gold);">
+                    🏆 Scénario gagnant: ${labels[bestIdx]} — ${fmtR(best)} patrimoine net
+                </div>
+
+                <div class="ret-succ-grid">
+                    <div class="ret-succ-col ${bestIdx === 0 ? 'winner' : ''}">
+                        <div class="ret-succ-title">📊 Base</div>
+                        <div class="ret-succ-value">${fmtRShort(baseNet)}</div>
+                        <div class="ret-succ-label">Patrimoine net</div>
+                        <div class="ret-succ-detail">
+                            Actifs: ${fmtRShort(succ.base.estate.totalAssets)}<br>
+                            Impôt: <span style="color:var(--danger);">${fmtRShort(succ.base.estate.estateTax)}</span>
+                        </div>
+                    </div>
+                    <div class="ret-succ-col ${bestIdx === 1 ? 'winner' : ''}">
+                        <div class="ret-succ-title">⚡ Optimisé</div>
+                        <div class="ret-succ-value">${fmtRShort(optNet)}</div>
+                        <div class="ret-succ-label">Patrimoine net</div>
+                        <div class="ret-succ-detail">
+                            Actifs: ${fmtRShort(succ.optimized.estate.totalAssets)}<br>
+                            Impôt: <span style="color:var(--danger);">${fmtRShort(succ.optimized.estate.estateTax)}</span>
+                        </div>
+                    </div>
+                    <div class="ret-succ-col ${bestIdx === 2 ? 'winner' : ''}">
+                        <div class="ret-succ-title">🛡️ Assurance</div>
+                        <div class="ret-succ-value">${fmtRShort(insNet)}</div>
+                        <div class="ret-succ-label">Patrimoine net</div>
+                        <div class="ret-succ-detail">
+                            Actifs: ${fmtRShort(insEst.totalAssets)}<br>
+                            Impôt: <span style="color:var(--danger);">${fmtRShort(insEst.estateTax)}</span><br>
+                            Capital-décès: <span style="color:var(--success);">${fmtRShort(insEst.deathBenefit)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${insParams ? `
+                <div style="background:var(--light-gray);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:8px;color:var(--gray);">
+                    <strong>🛡️ Détail assurance:</strong>
+                    Prime ${fmtR(insParams.annualPremium)}/an dès ${insEst.premiumStartAge || opts.insuranceStartAge || p.retirementAge} ans
+                    | Durée: ${insEst.premiumYears || 0} ans (${insEst.premiumStartAge || 0}-${insEst.premiumEndAge || 0} ans)
+                    | Total primes: ${fmtR(insEst.totalPremiumsPaid || 0)}
+                    | Capital-décès: ${fmtR(insParams.deathBenefit)}
+                </div>` : ''}
+
+                <div style="margin-top:16px;font-size:8px;color:var(--gray);text-align:center;">
+                    Comparaison effectuée pour un${retirement.pensions?.maritalStatus === 'couple' ? ' couple' : ' célibataire'},
+                    retraite à ${p.retirementAge} ans, espérance de vie ${p.lifeExpectancy} ans.
+                    Base = stratégie actuelle | Optimisé = meilleure stratégie de retrait | Assurance = avec police vie entière.
+                </div>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Planification Retraite</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // 6e. Plan d'action retraite
+    const retPlanActionPage = sections.retPlanAction && retirement?.gapResult ? (() => {
+        const gap = retirement.gapResult;
+        const p = retirement.profile;
+
+        // Metriques d'ecart
+        const targetIncome = gap.targetIncome || 0;
+        const projectedIncome = gap.projectedIncome || 0;
+        const gapAmount = gap.gap || 0;
+        const coveragePct = gap.coveragePercent || 0;
+
+        // Plan d'action
+        const plan = gap.actionPlan;
+        const hasActionPlan = plan && plan.steps && plan.steps.length > 0;
+
+        // Step icons
+        const stepIcons = { rrsp: '🔵', tfsa: '🟢', taxable: '🟣' };
+        const stepLabels = { rrsp: 'REER', tfsa: 'CELI', taxable: 'Non-enregistré' };
+        const stepColors = { rrsp: '#3b82f6', tfsa: '#22c55e', taxable: '#a855f7' };
+
+        return `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">🎯 Analyse d'Écart & Plan d'Action</div>
+
+                <div class="ret-kpi-grid">
+                    <div class="ret-kpi gold"><div class="ret-kpi-label">Revenu cible</div><div class="ret-kpi-value" style="color:var(--gold);">${fmtRShort(targetIncome)}/an</div></div>
+                    <div class="ret-kpi ${gapAmount <= 0 ? 'success' : 'blue'}"><div class="ret-kpi-label">Revenu projeté</div><div class="ret-kpi-value" style="color:${gapAmount <= 0 ? 'var(--success)' : 'var(--blue)'};">${fmtRShort(projectedIncome)}/an</div></div>
+                    <div class="ret-kpi ${gapAmount <= 0 ? 'success' : 'danger'}"><div class="ret-kpi-label">${gapAmount <= 0 ? 'Surplus' : 'Écart'}</div><div class="ret-kpi-value" style="color:${gapAmount <= 0 ? 'var(--success)' : 'var(--danger)'};">${fmtRShort(Math.abs(gapAmount))}/an</div></div>
+                    <div class="ret-kpi ${coveragePct >= 100 ? 'success' : 'danger'}"><div class="ret-kpi-label">Couverture</div><div class="ret-kpi-value" style="color:${coveragePct >= 100 ? 'var(--success)' : 'var(--danger)'};">${Math.round(coveragePct)}%</div></div>
+                </div>
+
+                ${hasActionPlan ? `
+                <div class="section-subtitle" style="margin-top:16px;">Plan d'action recommandé</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:8px;">
+                    ${plan.steps.map(step => `
+                    <div style="background:var(--light-gray);border-radius:10px;padding:12px;text-align:center;border-top:3px solid ${stepColors[step.account] || '#666'};">
+                        <div style="font-size:16px;margin-bottom:4px;">${stepIcons[step.account] || '💰'}</div>
+                        <div style="font-size:8px;font-weight:600;text-transform:uppercase;color:var(--gray);margin-bottom:4px;">Cotisation ${stepLabels[step.account] || step.account}</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text);">${fmtRShort(Math.round(step.totalAnnual / 12))}<span style="font-size:10px;font-weight:400;">/mois</span></div>
+                        <div style="font-size:8px;color:var(--gray);margin-top:4px;">+${fmtRShort(Math.round(step.increaseAnnual / 12))}/mois vs actuel</div>
+                        <div style="font-size:7px;color:var(--gray);margin-top:2px;">${step.roomInfo || ''}</div>
+                    </div>`).join('')}
+                </div>
+
+                ${plan.taxRefund ? `
+                <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border-radius:10px;padding:12px 16px;margin-top:10px;display:flex;align-items:center;gap:12px;">
+                    <div style="font-size:20px;">💰</div>
+                    <div>
+                        <div style="font-size:9px;font-weight:600;">Remboursement d'impôt estimé</div>
+                        <div style="font-size:16px;font-weight:700;">${fmtR(Math.round(plan.taxRefund.amount))}/an</div>
+                        <div style="font-size:8px;opacity:0.8;">Suggestion: Réinvestir dans votre ${plan.taxRefund.suggestion || 'CELI'}</div>
+                    </div>
+                </div>` : ''}
+
+                <div style="background:var(--light-gray);border-radius:10px;padding:10px 16px;margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:9px;font-weight:600;">Coût net mensuel</div>
+                    <div style="font-size:16px;font-weight:700;color:var(--gold);">${fmtRShort(Math.round((plan.netCost || 0) / 12))}/mois</div>
+                </div>
+
+                <div style="background:${plan.success ? '#f0fdf4' : '#fef3c7'};border-left:4px solid ${plan.success ? '#22c55e' : '#f59e0b'};border-radius:0 8px 8px 0;padding:10px 14px;margin-top:10px;">
+                    <div style="font-size:9px;font-weight:600;color:${plan.success ? '#16a34a' : '#d97706'};">
+                        ${plan.success ? '✅ Objectif de revenu atteint' : '⚠️ Objectif partiellement atteint'}
+                    </div>
+                    <div style="font-size:8px;color:var(--gray);margin-top:2px;">
+                        Revenu projeté: ${fmtR(Math.round(plan.resultingIncome || projectedIncome))}/an
+                        ${plan.optimizerUsed ? ` | ${plan.optimizerDesc || 'Stratégie optimisée'}` : ''}
+                    </div>
+                </div>
+                ` : `
+                <div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;padding:12px 14px;margin-top:14px;">
+                    <div style="font-size:10px;font-weight:600;color:#16a34a;">✅ Aucun ajustement nécessaire</div>
+                    <div style="font-size:8px;color:var(--gray);margin-top:2px;">Votre épargne actuelle vous permet d'atteindre votre objectif de revenu à la retraite.</div>
+                </div>
+                `}
+
+                <div style="margin-top:14px;font-size:7px;color:var(--gray);text-align:center;line-height:1.5;">
+                    Les montants sont des estimations basées sur les hypothèses de projection. Les résultats réels peuvent varier selon les rendements obtenus et les changements réglementaires.
+                    Ce plan ne constitue pas un conseil fiscal ou juridique.
+                </div>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Planification Retraite</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // Page Avis de Divulgation (rendered from compliance_templates)
+    const avisDivulgationPage = sections.avisDivulgation ? (() => {
+        // Get certificate number from profile as fallback
+        const profile = typeof FINOX !== 'undefined' ? FINOX.getUserProfile?.() : null;
+        const certNum = conseiller.certificateNumber || conseiller.amfNumber || profile?.certificate_number || profile?.numero_amf || '';
+
+        // Replace {{variables}} in the template HTML
+        const vars = {
+            '{{nom_cabinet}}': 'Services Financiers Finox inc.',
+            '{{adresse_cabinet}}': '3235, avenue de la Gare, Mascouche (QC)',
+            '{{no_inscription_amf}}': '609440',
+            '{{nom_conseiller}}': `${conseiller.firstName || ''} ${conseiller.lastName || ''}`.trim(),
+            '{{no_certificat}}': certNum,
+            '{{titre_conseiller}}': conseiller.title || 'Conseiller en sécurité financière',
+            '{{email_conseiller}}': conseiller.email || '',
+            '{{tel_conseiller}}': conseiller.phone || '438-258-7666',
+            '{{nom_client}}': `${client.first_name || ''} ${client.last_name || ''}`.trim(),
+            '{{date_signature}}': today,
+            '{{nom_collaborateur}}': '',
+            '{{no_certificat_collab}}': '',
+        };
+
+        // Use stored template or built-in default
+        let html = window._complianceTemplateHTML || getBuiltInAvisHTML();
+        Object.entries(vars).forEach(([k, v]) => { html = html.replace(new RegExp(k.replace(/[{}]/g, '\\$&'), 'g'), v); });
+
+        const checkboxes = window._complianceCheckboxes || [
+            { id: 'lu_compris', label: "J'ai lu et compris l'Avis de Divulgation et de Consentement", required: true },
+            { id: 'consentement_referencement', label: "Je consens au référencement à des professionnels affiliés (Section 8)", required: false },
+            { id: 'consentement_communications', label: "Je consens aux communications électroniques (Section 9 - LCAP)", required: false },
+            { id: 'consentement_enregistrement', label: "Je consens à l'enregistrement des communications", required: false }
+        ];
+
+        // Store checkboxes for signature.html to pick up (no checkboxes rendered in the Avis itself)
+        window._avisConsentCheckboxes = checkboxes;
+
+        return `
+        <div class="content-page" style="page-break-before:always;">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div style="max-width:100%;overflow-x:hidden;">
+                ${html}
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Avis de Divulgation</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>`;
+    })() : '';
+
+    // Page de signatures
+    const signaturesPage = sections.signatures ? `
+        <div class="content-page">
+            <div class="page-header">
+                <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+                <div class="page-info">${client.first_name} ${client.last_name}<br>${today}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">✍️ Attestation et Signatures</div>
+                <p style="margin:20px 0;line-height:1.8;font-size:10px;">
+                    Je soussigné(e) atteste avoir pris connaissance de l'ensemble des informations contenues dans ce document
+                    et confirme que les renseignements fournis sont exacts et complets à ma connaissance. Je reconnais avoir été informé(e)
+                    des recommandations de mon conseiller et avoir pris les décisions indiquées ci-dessus de manière libre et éclairée.
+                </p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;">
+                    <div style="text-align:center;">
+                        <div style="border-bottom:2px solid #333;height:60px;margin-bottom:10px;"></div>
+                        <div style="font-weight:600;font-size:11px;">${client.first_name} ${client.last_name}</div>
+                        <div style="font-size:10px;color:var(--gray);">Client</div>
+                    </div>
+                    ${client.has_conjoint ? `
+                    <div style="text-align:center;">
+                        <div style="border-bottom:2px solid #333;height:60px;margin-bottom:10px;"></div>
+                        <div style="font-weight:600;font-size:11px;">${client.conjoint_first_name} ${client.conjoint_last_name}</div>
+                        <div style="font-size:10px;color:var(--gray);">Conjoint(e)</div>
+                    </div>
+                    ` : '<div></div>'}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;">
+                    <div style="text-align:center;">
+                        <div style="border-bottom:2px solid #333;height:60px;margin-bottom:10px;"></div>
+                        <div style="font-weight:600;font-size:11px;">${conseiller.firstName || ''} ${conseiller.lastName || ''}</div>
+                        <div style="font-size:10px;color:var(--gray);">${conseiller.title || 'Conseiller en sécurité financière'}</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="border-bottom:2px solid #333;height:60px;margin-bottom:10px;"></div>
+                        <div style="font-weight:600;font-size:11px;">Date</div>
+                        <div style="font-size:10px;color:var(--gray);">${today}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer">
+                <span>FINOX Services Financiers - Analyse des Besoins Financiers</span>
+                <span>Document confidentiel</span>
+            </div>
+        </div>
+    ` : '';
+
+    // Assemblage final
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABF - ${client.first_name} ${client.last_name}</title>
+    <style>${styles}
+    .print-bar { position:fixed;top:0;left:0;right:0;background:#C9A227;color:#000;padding:12px 20px;text-align:center;font-weight:600;z-index:1000;font-family:Inter,sans-serif;font-size:14px; }
+    .print-bar button { background:#1a1a2e;color:#fff;border:none;padding:8px 20px;border-radius:6px;margin-left:15px;cursor:pointer;font-weight:600; }
+    @media print { .print-bar { display:none !important; } }
+    </style>
+</head>
+<body>
+    <div class="print-bar">📄 Ctrl+P pour sauvegarder en PDF <button onclick="window.print()">🖨️ Imprimer</button></div>
+    ${coverPage}
+    ${summaryPage}
+    ${familyPage}
+    ${emploiPage}
+    ${bilanPage}
+    ${objectifsPage}
+    ${viePage}
+    ${invMgPage}
+    ${assurancesPage}
+    ${recosPage}
+    ${retSommairePage}
+    ${retProjectionPage}
+    ${retRevenusPage}
+    ${retSuccessionPage}
+    ${retPlanActionPage}
+    ${avisDivulgationPage}
+    ${signaturesPage}
+    ${lettresPages}
+</body>
+</html>`;
+}
+
+function formatDateShort(d) { if (!d) return '-'; return (FINOX.parseLocalDate ? FINOX.parseLocalDate(d) : new Date(d)).toLocaleDateString('fr-CA'); }
+
+function generateReportHTML(data, sections, lettres, conseiller) {
+    const { client, enfants, actifs, assurancesVigueur, assurancesVendues } = data;
+    const today = new Date().toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+    const clientAge = calculateAge(client.date_of_birth);
+    const conjointAge = client.has_conjoint ? calculateAge(client.conjoint_dob) : null;
+    const revenuFamilial = (client.revenu_emploi || 0) + (client.revenu_autre || 0) + (client.revenu_emploi_conjoint || 0) + (client.revenu_autre_conjoint || 0);
+    const assurancesVenduesEnVigueur = assurancesVendues.filter(a => a.statut === 'en_vigueur');
+    const totalPrimes = assurancesVenduesEnVigueur.reduce((s, a) => s + (a.prime_mensuelle || 0), 0);
+
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>ABF - ${client.first_name} ${client.last_name}</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');:root{--gold:#C9A227;--dark:#1a1a2e;--gray:#4a4a5a;--light-gray:#f8f9fa;--border:#e0e0e0;--success:#22c55e;--danger:#ef4444;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Inter',sans-serif;font-size:11pt;line-height:1.6;color:#333;background:#fff;}.cover-page{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,#0a0a0a,#1a1a2e);color:#fff;padding:60px;page-break-after:always;}.cover-logo img{max-width:280px;margin-bottom:60px;}.cover-title{font-size:28px;font-weight:300;margin-bottom:16px;}.cover-client{font-size:42px;font-weight:700;color:var(--gold);margin-bottom:8px;}.cover-conjoint{font-size:24px;color:#aaa;margin-bottom:60px;}.cover-date{font-size:14px;color:#666;}.cover-footer{position:absolute;bottom:40px;font-size:11px;color:#555;}.content-page{padding:50px 60px;min-height:100vh;position:relative;}.page-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:2px solid var(--gold);margin-bottom:30px;}.page-logo img{height:40px;}.page-client{font-size:12px;color:var(--gray);text-align:right;}.page-footer{position:absolute;bottom:30px;left:60px;right:60px;display:flex;justify-content:space-between;font-size:10px;color:#999;border-top:1px solid var(--border);padding-top:15px;}.section{margin-bottom:35px;page-break-inside:avoid;}.section-title{font-size:18px;font-weight:700;color:var(--dark);margin-bottom:20px;padding:12px 20px;background:linear-gradient(90deg,var(--light-gray),transparent);border-left:4px solid var(--gold);}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:30px;}.summary-card{background:var(--light-gray);border-radius:12px;padding:20px;text-align:center;}.summary-card-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}.summary-card-value{font-size:24px;font-weight:700;color:var(--dark);}.summary-card-value.gold{color:var(--gold);}.summary-card-value.success{color:var(--success);}.signature-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:40px;}.signature-box{text-align:center;}.signature-line{border-bottom:2px solid var(--dark);height:60px;margin-bottom:10px;}.signature-name{font-weight:600;margin-bottom:4px;}.signature-role{font-size:11px;color:var(--gray);}.page-break{page-break-before:always;}@media print{body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}.no-print{display:none!important;}@page{margin:0.5in;}}.print-bar{position:fixed;top:0;left:0;right:0;background:var(--gold);color:#000;padding:15px 20px;text-align:center;font-weight:600;z-index:1000;}.print-bar button{background:var(--dark);color:#fff;border:none;padding:8px 20px;border-radius:6px;margin-left:20px;cursor:pointer;}</style></head><body>
+<div class="print-bar no-print">Ctrl+P pour sauvegarder en PDF <button onclick="window.print()">Imprimer</button></div>
+${sections.cover ? `<div class="cover-page"><div class="cover-logo"><img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX"></div><div class="cover-title">Analyse des Besoins Financiers</div><div class="cover-client">${client.first_name} ${client.last_name}</div>${client.has_conjoint ? `<div class="cover-conjoint">& ${client.conjoint_first_name} ${client.conjoint_last_name}</div>` : ''}<div class="cover-date">${today}</div><div class="cover-footer">Document confidentiel - ${conseiller.firstName || ''} ${conseiller.lastName || ''}</div></div>` : ''}
+${sections.summary ? `<div class="content-page"><div class="page-header"><div class="page-logo"><img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX"></div><div class="page-client">${client.first_name} ${client.last_name}<br>${today}</div></div><div class="section"><div class="section-title">Sommaire Executif</div><div class="summary-grid"><div class="summary-card"><div class="summary-card-label">Revenu Familial</div><div class="summary-card-value gold">${formatMoney(revenuFamilial)}</div></div><div class="summary-card"><div class="summary-card-label">Valeur Nette</div><div class="summary-card-value success">${formatMoney(client.valeur_nette || 0)}</div></div><div class="summary-card"><div class="summary-card-label">Primes Mensuelles</div><div class="summary-card-value">${formatMoney(totalPrimes)}/mois</div></div></div></div><div class="page-footer"><span>FINOX - Analyse des Besoins Financiers</span><span>Confidentiel</span></div></div>` : ''}
+${sections.signatures ? `<div class="content-page page-break"><div class="page-header"><div class="page-logo"><img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX"></div><div class="page-client">${client.first_name} ${client.last_name}<br>${today}</div></div><div class="section"><div class="section-title">Attestation et Signatures</div><p style="margin:20px 0;line-height:1.8;">Je soussigne(e) atteste avoir pris connaissance de l'ensemble des informations contenues dans ce document et confirme que les renseignements fournis sont exacts et complets a ma connaissance.</p><div class="signature-grid"><div class="signature-box"><div class="signature-line"></div><div class="signature-name">${client.first_name} ${client.last_name}</div><div class="signature-role">Client</div></div>${client.has_conjoint ? `<div class="signature-box"><div class="signature-line"></div><div class="signature-name">${client.conjoint_first_name} ${client.conjoint_last_name}</div><div class="signature-role">Conjoint(e)</div></div>` : ''}</div><div class="signature-grid" style="margin-top:40px;"><div class="signature-box"><div class="signature-line"></div><div class="signature-name">${conseiller.firstName || ''} ${conseiller.lastName || ''}</div><div class="signature-role">Conseiller</div></div><div class="signature-box"><div class="signature-line"></div><div class="signature-name">Date</div><div class="signature-role">${today}</div></div></div></div><div class="page-footer"><span>FINOX - Analyse des Besoins Financiers</span><span>Confidentiel</span></div></div>` : ''}
+</body></html>`;
+}
+
+function formatMoney(a) { if(!a && a !== 0) return '-'; return new Intl.NumberFormat('fr-CA', {style:'currency', currency:'CAD', minimumFractionDigits:0, maximumFractionDigits:0}).format(a); }
+function _pld(d) { if (!d) return null; if (d instanceof Date) return d; const s = String(d); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const [y,m,dy] = s.split('-').map(Number); return new Date(y,m-1,dy); } return new Date(s); }
+function formatDate(d) { if(!d) return '-'; return _pld(d).toLocaleDateString('fr-CA'); }
+function formatDateTime(d) { if(!d) return '-'; return _pld(d).toLocaleString('fr-CA', { dateStyle: 'short', timeStyle: 'short' }); }
+function calculateAge(d) { if(!d) return null; const t = new Date(), b = _pld(d); let a = t.getFullYear() - b.getFullYear(); if(t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--; return a; }
+function getNiveauMGMois(n) { const m = {'minimum': 6, 'confort': 9, 'tranquillite': 12, 'serenite': 24, 'repit': 3}; return m[n] || 12; }
+function formatEtatCivil(v) { const m = {'celibataire':'Célibataire','marie':'Marié(e)','conjoint_fait':'Conjoint(e) de fait','separe':'Séparé(e)','divorce':'Divorcé(e)','veuf':'Veuf/Veuve'}; return m[v] || v || '-'; }
+function formatTestament(v) { const m = {'aucun':'Aucun','olographe':'Olographe','notarie':'Notarié','notarie_a_reviser':'Notarié (à réviser)'}; return m[v] || v || '-'; }
+function calculateBesoinVie(c, t) { if(t === 'client') { const r = c.revenu_emploi || 0, p = c.vie_pct_revenu_client || 0, a = c.vie_annees_revenu_client || 0, f = c.vie_frais_funerailles_client || 0, h = c.vie_heritage_client || 0; return Math.max(0, r * (p/100) * a + f + h); } else { const r = c.revenu_emploi_conjoint || 0, p = c.vie_pct_revenu_conjoint || 0, a = c.vie_annees_revenu_conjoint || 0, f = c.vie_frais_funerailles_conjoint || 0, h = c.vie_heritage_conjoint || 0; return Math.max(0, r * (p/100) * a + f + h); } }
+
+// ═══════════════════════════════════════════════════════════════
+// VOIR LES DÉTAILS DE SIGNATURE & PREUVE D'AUDIT
+// ═══════════════════════════════════════════════════════════════
+
+window.viewSignatureDetails = function(index) {
+    const sig = window.signaturesData[index];
+    if (!sig) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'auditModal';
+    modal.innerHTML = `
+        <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;overflow-y:auto;">
+            <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:32px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                    <h2 style="color:var(--gold);">📋 Preuve de Signature</h2>
+                    <button onclick="document.getElementById('auditModal').remove()" style="background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;">✕</button>
+                </div>
+                
+                <!-- Info Signataire -->
+                <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;margin-bottom:16px;">
+                    <h3 style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">${sig.recipient_type === 'conjoint' ? '👫' : '👤'} SIGNATAIRE</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+                        <div><span style="color:var(--text-muted);">Destinataire:</span> <strong>${sig.recipient_name || sig.client_name || '-'}</strong> <span class="sig-recipient ${sig.recipient_type || 'client'}">${(sig.recipient_type || 'client') === 'conjoint' ? 'Conjoint' : 'Client'}</span></div>
+                        <div><span style="color:var(--text-muted);">Dossier:</span> <strong>${sig.client_name || '-'}</strong></div>
+                        <div><span style="color:var(--text-muted);">Email:</span> <strong>${sig.recipient_email || sig.client_email || '-'}</strong></div>
+                    </div>
+                </div>
+                
+                <!-- Consentements -->
+                <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;margin-bottom:16px;">
+                    <h3 style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ CONSENTEMENTS</h3>
+                    <div style="display:grid;gap:8px;font-size:13px;">
+                        <div>${sig.consent_read_document ? '✅' : '❌'} A lu et compris le document</div>
+                        <div>${sig.consent_info_accurate ? '✅' : '❌'} Informations exactes et complètes</div>
+                        <div>${sig.consent_contact ? '✅' : '❌'} Accepte d'être contacté</div>
+                        <div>${sig.consent_electronic_signature ? '✅' : '❌'} Accepte la signature électronique</div>
+                    </div>
+                </div>
+                
+                <!-- Signature -->
+                <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;margin-bottom:16px;">
+                    <h3 style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✍️ SIGNATURE</h3>
+                    <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;">
+                        ${sig.signature_type === 'drawn' 
+                            ? `<img src="${sig.signature_data}" style="max-width:100%;max-height:150px;" alt="Signature">`
+                            : `<div style="font-family:'Brush Script MT',cursive;font-size:32px;color:#000;">${sig.signature_data}</div>`
+                        }
+                    </div>
+                    <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">Type: ${sig.signature_type === 'drawn' ? 'Dessinée' : 'Tapée'}</div>
+                </div>
+                
+                <!-- Audit Trail -->
+                <div style="background:var(--bg-secondary);padding:16px;border-radius:10px;margin-bottom:24px;">
+                    <h3 style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">🔒 PISTE D'AUDIT</h3>
+                    <div style="display:grid;gap:8px;font-size:12px;">
+                        <div><span style="color:var(--text-muted);">Date de signature:</span> <strong>${formatDateTime(sig.signed_at)}</strong></div>
+                        <div><span style="color:var(--text-muted);">Adresse IP:</span> <strong>${sig.client_ip || 'Non capturée'}</strong></div>
+                        <div><span style="color:var(--text-muted);">Token unique:</span> <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;font-size:11px;">${sig.token}</code></div>
+                        <div><span style="color:var(--text-muted);">Navigateur:</span> <span style="font-size:11px;word-break:break-all;">${sig.user_agent || '-'}</span></div>
+                        <div><span style="color:var(--text-muted);">Consulté:</span> ${sig.view_count || 0} fois (première: ${formatDateTime(sig.viewed_at)})</div>
+                        <div><span style="color:var(--text-muted);">Créé le:</span> ${formatDateTime(sig.created_at)}</div>
+                        <div><span style="color:var(--text-muted);">Expirait le:</span> ${formatDate(sig.expires_at)}</div>
+                    </div>
+                </div>
+                
+                <!-- Boutons -->
+                <div style="display:flex;gap:12px;">
+                    <button onclick="generateAuditPDF(${index})" style="flex:1;padding:14px;background:var(--gold);color:#000;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">
+                        📄 Télécharger la preuve PDF
+                    </button>
+                    <button onclick="viewSignedDocument(${index})" style="flex:1;padding:14px;background:transparent;border:1px solid var(--border-color);color:var(--text-primary);border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">
+                        📋 Voir le document signé
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+window.generateAuditPDF = function(index) {
+    const sig = window.signaturesData[index];
+    if (!sig) return;
+    
+    const conseiller = getConseillerInfo();
+    
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Preuve de Signature - ${sig.client_name}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; font-size: 11pt; line-height: 1.6; color: #333; padding: 40px; }
+        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #C9A227; }
+        .header img { height: 50px; margin-bottom: 12px; }
+        .header h1 { font-size: 24px; color: #1a1a2e; }
+        .header p { color: #666; font-size: 12px; margin-top: 8px; }
+        .section { margin-bottom: 24px; }
+        .section-title { font-size: 14px; font-weight: 600; color: #1a1a2e; padding: 10px 16px; background: #f3f4f6; border-left: 4px solid #C9A227; margin-bottom: 12px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; padding: 0 16px; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 11px; }
+        .info-label { color: #666; }
+        .info-value { font-weight: 500; }
+        .consent-item { display: flex; align-items: center; gap: 8px; padding: 6px 16px; font-size: 11px; }
+        .consent-yes { color: #22c55e; }
+        .consent-no { color: #ef4444; }
+        .signature-box { text-align: center; padding: 20px; background: #fff; border: 2px solid #C9A227; border-radius: 8px; margin: 16px; }
+        .signature-box img { max-width: 300px; max-height: 100px; }
+        .signature-typed { font-family: 'Brush Script MT', cursive; font-size: 36px; color: #000; }
+        .audit-box { background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px; font-size: 10px; }
+        .audit-row { display: flex; gap: 8px; margin-bottom: 6px; }
+        .audit-label { color: #666; min-width: 120px; }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 10px; color: #666; }
+        .legal { background: #fffbeb; border: 1px solid #fcd34d; padding: 12px 16px; border-radius: 8px; margin-top: 24px; font-size: 10px; }
+        @media print { body { padding: 20px; } }
+        .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #C9A227; color: #000; padding: 12px; text-align: center; font-weight: 600; }
+        .print-bar button { background: #1a1a2e; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; margin-left: 12px; cursor: pointer; }
+        @media print { .print-bar { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="print-bar">Ctrl+P pour sauvegarder en PDF <button onclick="window.print()">Imprimer</button></div>
+    
+    <div class="header">
+        <img src="https://www.finox.ca/FIN%20X-1.png" alt="FINOX">
+        <h1>Certificat de Signature Électronique</h1>
+        <p>Document généré le ${new Date().toLocaleString('fr-CA')}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">${(sig.recipient_type || 'client') === 'conjoint' ? '👫' : '👤'} Informations du Signataire</div>
+        <div class="info-grid">
+            <div class="info-row"><span class="info-label">Signataire</span><span class="info-value">${sig.recipient_name || sig.client_name || '-'} (${(sig.recipient_type || 'client') === 'conjoint' ? 'Conjoint' : 'Client'})</span></div>
+            <div class="info-row"><span class="info-label">Dossier client</span><span class="info-value">${sig.client_name || '-'}</span></div>
+            <div class="info-row"><span class="info-label">Courriel</span><span class="info-value">${sig.recipient_email || sig.client_email || '-'}</span></div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">✅ Consentements Accordés</div>
+        <div class="consent-item"><span class="${sig.consent_read_document ? 'consent-yes' : 'consent-no'}">${sig.consent_read_document ? '✓' : '✗'}</span> A lu et compris l'intégralité du document</div>
+        <div class="consent-item"><span class="${sig.consent_info_accurate ? 'consent-yes' : 'consent-no'}">${sig.consent_info_accurate ? '✓' : '✗'}</span> Confirme que les informations sont exactes et complètes</div>
+        <div class="consent-item"><span class="${sig.consent_contact ? 'consent-yes' : 'consent-no'}">${sig.consent_contact ? '✓' : '✗'}</span> Accepte d'être contacté par le conseiller</div>
+        <div class="consent-item"><span class="${sig.consent_electronic_signature ? 'consent-yes' : 'consent-no'}">${sig.consent_electronic_signature ? '✓' : '✗'}</span> Accepte la valeur légale de la signature électronique</div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">✍️ Signature</div>
+        <div class="signature-box">
+            ${sig.signature_type === 'drawn' 
+                ? `<img src="${sig.signature_data}" alt="Signature">`
+                : `<div class="signature-typed">${sig.signature_data}</div>`
+            }
+        </div>
+        <p style="text-align:center;font-size:10px;color:#666;">Type de signature: ${sig.signature_type === 'drawn' ? 'Dessinée manuellement' : 'Tapée au clavier'}</p>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">🔒 Piste d'Audit</div>
+        <div class="audit-box">
+            <div class="audit-row"><span class="audit-label">Date de signature:</span><strong>${new Date(sig.signed_at).toLocaleString('fr-CA')}</strong></div>
+            <div class="audit-row"><span class="audit-label">Adresse IP:</span><strong>${sig.client_ip || 'Non capturée'}</strong></div>
+            <div class="audit-row"><span class="audit-label">Token unique:</span><code>${sig.token}</code></div>
+            <div class="audit-row"><span class="audit-label">Document consulté:</span>${sig.view_count || 0} fois</div>
+            <div class="audit-row"><span class="audit-label">Première consultation:</span>${sig.viewed_at ? new Date(sig.viewed_at).toLocaleString('fr-CA') : '-'}</div>
+            <div class="audit-row"><span class="audit-label">Demande créée le:</span>${new Date(sig.created_at).toLocaleString('fr-CA')}</div>
+            <div class="audit-row"><span class="audit-label">Navigateur:</span><span style="word-break:break-all;">${sig.user_agent || '-'}</span></div>
+        </div>
+    </div>
+    
+    <div class="legal">
+        <strong>⚖️ Validité Légale</strong><br>
+        Cette signature électronique a été apposée conformément à la Loi concernant le cadre juridique des technologies de l'information du Québec (LCCJTI). 
+        Le signataire a expressément consenti à ce que sa signature électronique ait la même valeur légale qu'une signature manuscrite.
+    </div>
+    
+    <div class="footer">
+        <p><strong>FINOX Services Financiers</strong></p>
+        <p>Conseiller: ${conseiller.firstName || ''} ${conseiller.lastName || ''} | ${conseiller.email || ''} | ${conseiller.phone || ''}</p>
+        <p style="margin-top:8px;">Document confidentiel - Conserver pour vos dossiers</p>
+    </div>
+</body>
+</html>`;
+    
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    FINOX.showNotification('✅ Preuve d\'audit générée!', 'success');
+};
+
+window.viewSignedDocument = function(index) {
+    const sig = window.signaturesData[index];
+    if (!sig || !sig.document_html) {
+        FINOX.showNotification('❌ Document non disponible', 'error');
+        return;
+    }
+    
+    // Injecter la signature dans le document
+    const signatureHtml = sig.signature_type === 'drawn' 
+        ? `<img src="${sig.signature_data}" style="max-height:80px;">`
+        : `<span style="font-family:'Brush Script MT',cursive;font-size:28px;">${sig.signature_data}</span>`;
+    
+    const docWithSignature = sig.document_html.replace('</body>', `
+        <div style="page-break-before:always;padding:40px;text-align:center;">
+            <h2 style="color:#C9A227;margin-bottom:20px;">✅ Document Signé Électroniquement</h2>
+            <div style="border:2px solid #C9A227;padding:20px;border-radius:8px;display:inline-block;background:#fff;">
+                ${signatureHtml}
+            </div>
+            <p style="margin-top:12px;font-size:12px;color:#666;">Signé le ${new Date(sig.signed_at).toLocaleString('fr-CA')}</p>
+        </div>
+    </body>`);
+    
+    const win = window.open('', '_blank');
+    win.document.write(docWithSignature);
+    win.document.close();
+};
+
+console.log('✅ Module Export & Signature v5.0 chargé');
+</script>

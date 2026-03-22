@@ -1,0 +1,742 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-ADRESSE
+     Adresse de résidence et dates importantes
+     CORRIGÉ - Mapping SQL correct (colonnes directes)
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ─── Renewal Cards Grid ─── */
+.renewal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.renewal-card {
+    background: var(--bg-secondary, #2b2b2b);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.renewal-card:hover { border-color: var(--gold); }
+.renewal-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.renewal-card-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+}
+.renewal-card-icon.gold { background: linear-gradient(135deg, rgba(232,180,77,0.2), rgba(232,180,77,0.08)); }
+.renewal-card-icon.blue { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.08)); }
+.renewal-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.renewal-card-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.renewal-card input[type="date"] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: var(--bg-primary, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+}
+.renewal-card input[type="date"]:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(232,180,77,0.2);
+    outline: none;
+}
+.renewal-reminder-select {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+    background: var(--bg-primary, #1a1a1a);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    cursor: pointer;
+}
+.renewal-reminder-select:focus { border-color: var(--gold); outline: none; }
+.renewal-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+    margin-top: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    min-height: 28px;
+}
+.renewal-status.linked {
+    color: #10b981;
+    background: rgba(16,185,129,0.08);
+}
+.renewal-status.pending {
+    color: var(--gold);
+    background: rgba(232,180,77,0.08);
+}
+
+/* Address Card */
+.card {
+    background: var(--finox-gray, #2b2b2b);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold);
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon { width: 20px; height: 20px; }
+
+.address-combined-card { padding: 0 !important; overflow: hidden; }
+
+.address-combined-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.08), transparent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Housing Chips */
+.housing-status-inline { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.housing-chip { cursor: pointer; }
+.housing-chip input[type="radio"] { display: none; }
+
+.housing-chip .chip-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.housing-chip:hover .chip-content { border-color: var(--gold); }
+
+.housing-chip input:checked + .chip-content {
+    background: rgba(232, 180, 77, 0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+    font-weight: 500;
+}
+
+/* Address Search */
+.address-search-row {
+    padding: 16px 24px;
+    background: var(--finox-dark, #1a1a1a);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.address-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 100px 1fr 120px 120px;
+    gap: 16px;
+    padding: 24px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; }
+
+.form-group input {
+    padding: 12px 14px;
+    font-size: 14px;
+    background: var(--finox-light-gray, #3a3a3a);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.form-group input:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+/* Navigation */
+.nav-btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.nav-btn-next {
+    background: linear-gradient(135deg, var(--gold), #d4a03d);
+    border: none;
+    color: #000;
+}
+
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.nav-btn-save:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+    transition: all 0.3s;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.nav-section-indicator { 
+    display: flex;
+    align-items: center;
+    font-size: 12px; 
+    color: var(--text-muted); 
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .renewal-grid { grid-template-columns: 1fr; }
+    .address-fields-grid { grid-template-columns: 1fr 70px; }
+    .address-combined-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+
+
+<!-- DATES DE RENOUVELLEMENT — liées aux opportunités -->
+<div class="card">
+    <h3 class="card-title">
+        <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        Dates de Renouvellement
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:auto;">⚡ Crée automatiquement une opportunité</span>
+    </h3>
+    <div class="renewal-grid">
+        <!-- Hypothèque -->
+        <div class="renewal-card" id="hypothequeItem">
+            <div class="renewal-card-header">
+                <div class="renewal-card-icon gold">🏦</div>
+                <div>
+                    <div class="renewal-card-title">Hypothèque</div>
+                    <div class="renewal-card-sub">Renouvellement prêt</div>
+                </div>
+            </div>
+            <input type="date" id="dateRenouvHypotheque" max="2099-12-31">
+            <select id="reminderHypotheque" class="renewal-reminder-select">
+                <option value="0">📅 Date exacte du renouvellement</option>
+                <option value="30">⏱️ Rappel 30j avant</option>
+                <option value="60">⏱️ Rappel 60j avant</option>
+                <option value="90" selected>⏱️ Rappel 90j avant</option>
+                <option value="120">⏱️ Rappel 120j avant</option>
+                <option value="180">⏱️ Rappel 180j avant</option>
+            </select>
+            <div class="renewal-status" id="statusHypotheque"></div>
+        </div>
+        <!-- Assurance Auto -->
+        <div class="renewal-card">
+            <div class="renewal-card-header">
+                <div class="renewal-card-icon gold">🚗</div>
+                <div>
+                    <div class="renewal-card-title">Assurance Auto</div>
+                    <div class="renewal-card-sub">Échéance police</div>
+                </div>
+            </div>
+            <input type="date" id="dateAssuranceAuto" max="2099-12-31">
+            <select id="reminderAuto" class="renewal-reminder-select">
+                <option value="0" selected>📅 Date exacte du renouvellement</option>
+                <option value="30">⏱️ Rappel 30j avant</option>
+                <option value="60">⏱️ Rappel 60j avant</option>
+                <option value="90">⏱️ Rappel 90j avant</option>
+                <option value="120">⏱️ Rappel 120j avant</option>
+                <option value="180">⏱️ Rappel 180j avant</option>
+            </select>
+            <div class="renewal-status" id="statusAuto"></div>
+        </div>
+        <!-- Assurance Habitation -->
+        <div class="renewal-card">
+            <div class="renewal-card-header">
+                <div class="renewal-card-icon blue">🏡</div>
+                <div>
+                    <div class="renewal-card-title">Assurance Habitation</div>
+                    <div class="renewal-card-sub">Échéance police</div>
+                </div>
+            </div>
+            <input type="date" id="dateAssuranceHabitation" max="2099-12-31">
+            <select id="reminderHabitation" class="renewal-reminder-select">
+                <option value="0" selected>📅 Date exacte du renouvellement</option>
+                <option value="30">⏱️ Rappel 30j avant</option>
+                <option value="60">⏱️ Rappel 60j avant</option>
+                <option value="90">⏱️ Rappel 90j avant</option>
+                <option value="120">⏱️ Rappel 120j avant</option>
+                <option value="180">⏱️ Rappel 180j avant</option>
+            </select>
+            <div class="renewal-status" id="statusHabitation"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ADRESSE + STATUT -->
+<div class="card address-combined-card">
+    <div class="address-combined-header">
+        <h3 class="card-title" style="margin: 0;">
+            <svg class="card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Adresse de Résidence
+        </h3>
+        <div class="housing-status-inline">
+            <label class="housing-chip">
+                <input type="radio" name="statutLogement" value="Propriétaire" checked onchange="toggleHypotheque()">
+                <span class="chip-content">🏠 Propriétaire</span>
+            </label>
+            <label class="housing-chip">
+                <input type="radio" name="statutLogement" value="Locataire" onchange="toggleHypotheque()">
+                <span class="chip-content">🔑 Locataire</span>
+            </label>
+            <label class="housing-chip">
+                <input type="radio" name="statutLogement" value="Autre" onchange="toggleHypotheque()">
+                <span class="chip-content">📋 Autre</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="address-search-row">
+        <div class="form-group" style="margin: 0;">
+            <label>🔍 Rechercher votre adresse</label>
+            <input type="text" id="addressAutocomplete" placeholder="Commencez à taper votre adresse...">
+        </div>
+    </div>
+
+    <div class="address-fields-grid">
+        <div class="form-group">
+            <label>Numéro et Rue</label>
+            <input type="text" id="streetAddress">
+        </div>
+        <div class="form-group">
+            <label>App.</label>
+            <input type="text" id="appartement" placeholder="4B">
+        </div>
+        <div class="form-group">
+            <label>Ville</label>
+            <input type="text" id="city">
+        </div>
+        <div class="form-group">
+            <label>Province</label>
+            <input type="text" id="province" value="Québec">
+        </div>
+        <div class="form-group">
+            <label>Code Postal</label>
+            <input type="text" id="postalCode">
+        </div>
+    </div>
+</div>
+<script>
+(async function() {
+    console.log('📍 Module ABF Adresse - Init');
+
+    let clientId = null;
+    let userProfile = null;
+
+    // ── Mapping dates → opportunités ──
+    const RENEWAL_MAP = [
+        { dateId: 'dateRenouvHypotheque', reminderId: 'reminderHypotheque', statusId: 'statusHypotheque', category: 'renouv_hypothecaire', titlePrefix: 'Renouv. Hypothèque' },
+        { dateId: 'dateAssuranceAuto',    reminderId: 'reminderAuto',       statusId: 'statusAuto',       category: 'renouv_auto',          titlePrefix: 'Renouv. Auto' },
+        { dateId: 'dateAssuranceHabitation', reminderId: 'reminderHabitation', statusId: 'statusHabitation', category: 'renouv_habitation', titlePrefix: 'Renouv. Habitation' }
+    ];
+
+    const ACTIVE_STAGES = ['active', 'identified', 'qualified', 'action_planned', 'in_progress', 'proposal_sent'];
+
+    function computeAutoActionDate(targetDateStr, days) {
+        if (!targetDateStr) return null;
+        if (!days || days === 0) return targetDateStr; // Date exacte, pas de décalage
+        const target = new Date(targetDateStr + 'T00:00:00');
+        const action = new Date(target);
+        action.setDate(action.getDate() - days);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const final = action < today ? today : action;
+        return final.toISOString().split('T')[0];
+    }
+
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS D'ABORD
+    // ==========================================
+
+    window.toggleHypotheque = function() {
+        const statut = document.querySelector('input[name="statutLogement"]:checked')?.value;
+        const hypothequeItem = document.getElementById('hypothequeItem');
+
+        if (hypothequeItem) {
+            if (statut === 'Propriétaire') {
+                hypothequeItem.style.opacity = '1';
+                hypothequeItem.style.pointerEvents = 'auto';
+            } else {
+                hypothequeItem.style.opacity = '0.4';
+                hypothequeItem.style.pointerEvents = 'none';
+            }
+        }
+    };
+
+    window.saveAndNext = async function() {
+        console.log('💾 Sauvegarde Adresse et navigation...');
+
+        const result = await window.saveModuleData();
+
+        if (result.success) {
+            FINOX.showNotification('Adresse sauvegardée', 'success');
+            FINOX_NAV.markAsSaved();
+
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') {
+                FINOX_NAV.updateABFCheckmarks();
+            }
+
+            FINOX_NAV.loadModule('abf-emploi');
+        } else {
+            FINOX.showNotification('Erreur de sauvegarde: ' + result.error, 'error');
+        }
+    };
+
+    function initGoogleMapsAutocomplete() {
+        const input = document.getElementById('addressAutocomplete');
+
+        if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+            console.log('⏳ Google Maps pas encore prêt, retry dans 500ms...');
+            setTimeout(initGoogleMapsAutocomplete, 500);
+            return;
+        }
+
+        try {
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                componentRestrictions: { country: 'ca' },
+                fields: ['address_components', 'formatted_address'],
+                types: ['address']
+            });
+
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (!place.address_components) return;
+
+                let streetNumber = '', streetName = '', city = '', province = '', postalCode = '';
+
+                place.address_components.forEach(comp => {
+                    const type = comp.types[0];
+                    if (type === 'street_number') streetNumber = comp.long_name;
+                    if (type === 'route') streetName = comp.long_name;
+                    if (type === 'locality') city = comp.long_name;
+                    if (type === 'administrative_area_level_1') province = comp.short_name;
+                    if (type === 'postal_code') postalCode = comp.long_name;
+                });
+
+                document.getElementById('streetAddress').value = (streetNumber + ' ' + streetName).trim();
+                document.getElementById('city').value = city;
+                document.getElementById('province').value = province;
+                document.getElementById('postalCode').value = postalCode;
+
+                FINOX_NAV.markAsUnsaved();
+            });
+            console.log('✅ Google Maps Autocomplete initialisé');
+        } catch (err) {
+            console.error('❌ Erreur init Google Maps:', err);
+        }
+    }
+
+    // ── SYNC RENEWAL → OPPORTUNITIES ──
+    async function syncRenewalOpportunities() {
+        if (!clientId || !userProfile) return;
+
+        for (const mapping of RENEWAL_MAP) {
+            const dateVal = document.getElementById(mapping.dateId).value || null;
+            const reminderDays = parseInt(document.getElementById(mapping.reminderId).value) || 90;
+            const statusEl = document.getElementById(mapping.statusId);
+
+            if (!dateVal) {
+                // Pas de date → vider le status
+                statusEl.className = 'renewal-status';
+                statusEl.innerHTML = '';
+                continue;
+            }
+
+            try {
+                // Chercher une opportunité existante pour ce client + catégorie (active)
+                const { data: existing } = await FINOX.supabase
+                    .from('client_opportunities')
+                    .select('id, stage')
+                    .eq('client_id', clientId)
+                    .eq('category', mapping.category)
+                    .in('stage', ACTIVE_STAGES)
+                    .limit(1);
+
+                const nextActionDate = computeAutoActionDate(dateVal, reminderDays);
+                const clientData = FINOX.getClientData();
+                const clientName = `${clientData?.first_name || ''} ${clientData?.last_name || ''}`.trim();
+                const title = `${mapping.titlePrefix} — ${clientName}`;
+
+                if (existing && existing.length > 0) {
+                    // UPDATE existing opportunity
+                    await FINOX.supabase
+                        .from('client_opportunities')
+                        .update({
+                            target_date: dateVal,
+                            next_action_date: nextActionDate
+                        })
+                        .eq('id', existing[0].id);
+
+                    statusEl.className = 'renewal-status linked';
+                    statusEl.innerHTML = reminderDays > 0
+                        ? `✅ Opportunité mise à jour — rappel ${reminderDays}j avant`
+                        : `✅ Opportunité mise à jour — date exacte`;
+                } else {
+                    // CREATE new opportunity
+                    await FINOX.supabase
+                        .from('client_opportunities')
+                        .insert({
+                            organization_id: userProfile.organization_id,
+                            client_id: clientId,
+                            conseiller_id: userProfile.id,
+                            category: mapping.category,
+                            title,
+                            target_date: dateVal,
+                            next_action_date: nextActionDate,
+                            stage: 'active',
+                            priority: 'normal',
+                            source: 'abf_sync'
+                        });
+
+                    statusEl.className = 'renewal-status linked';
+                    statusEl.innerHTML = reminderDays > 0
+                        ? `✅ Opportunité créée — rappel ${reminderDays}j avant`
+                        : `✅ Opportunité créée — date exacte`;
+                }
+            } catch (e) {
+                console.error(`Erreur sync ${mapping.category}:`, e);
+                statusEl.className = 'renewal-status';
+                statusEl.innerHTML = `⚠️ Erreur sync`;
+            }
+        }
+    }
+
+    // ── CHECK EXISTING OPPS ON LOAD ──
+    async function checkExistingOpportunities() {
+        if (!clientId) return;
+
+        for (const mapping of RENEWAL_MAP) {
+            const statusEl = document.getElementById(mapping.statusId);
+            const dateVal = document.getElementById(mapping.dateId).value;
+
+            if (!dateVal) {
+                statusEl.className = 'renewal-status';
+                statusEl.innerHTML = '';
+                continue;
+            }
+
+            try {
+                const { data: existing } = await FINOX.supabase
+                    .from('client_opportunities')
+                    .select('id, target_date, next_action_date, stage')
+                    .eq('client_id', clientId)
+                    .eq('category', mapping.category)
+                    .in('stage', ACTIVE_STAGES)
+                    .limit(1);
+
+                if (existing && existing.length > 0) {
+                    // Déduire le rappel depuis les dates
+                    const opp = existing[0];
+                    if (opp.target_date && opp.next_action_date) {
+                        const diff = Math.round((new Date(opp.target_date) - new Date(opp.next_action_date)) / 86400000);
+                        const closest = [30, 60, 90, 120, 180].reduce((prev, curr) =>
+                            Math.abs(curr - diff) < Math.abs(prev - diff) ? curr : prev
+                        );
+                        const reminderSelect = document.getElementById(mapping.reminderId);
+                        if (reminderSelect) reminderSelect.value = String(closest);
+                    }
+                    statusEl.className = 'renewal-status linked';
+                    statusEl.innerHTML = '✅ Opportunité liée';
+                } else {
+                    statusEl.className = 'renewal-status pending';
+                    statusEl.innerHTML = '⚡ Créera une opportunité à la sauvegarde';
+                }
+            } catch (e) {
+                console.warn('Check opp error:', e);
+            }
+        }
+    }
+
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT + PROFIL
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) {
+        console.error('❌ Aucun client trouvé');
+        return;
+    }
+
+    clientId = client.id;
+    console.log('📋 Client chargé:', client.first_name, client.last_name);
+
+    // Charger le profil pour organization_id / conseiller_id
+    const user = FINOX.getCurrentUser();
+    if (user) {
+        const { data: profile } = await FINOX.supabase
+            .from('profiles')
+            .select('id, organization_id, first_name, last_name')
+            .eq('id', user.id)
+            .single();
+        userProfile = profile;
+    }
+
+    // ==========================================
+    // 3. REMPLIR LES CHAMPS - COLONNES DIRECTES
+    // ==========================================
+    document.getElementById('dateRenouvHypotheque').value = client.date_renouv_hypotheque || '';
+    document.getElementById('dateAssuranceAuto').value = client.date_assurance_auto || '';
+    document.getElementById('dateAssuranceHabitation').value = client.date_assurance_habitation || '';
+
+    document.getElementById('streetAddress').value = client.street_address || client.address || '';
+    document.getElementById('city').value = client.city || '';
+    document.getElementById('province').value = client.province || 'Québec';
+    document.getElementById('postalCode').value = client.postal_code || '';
+
+    // Statut logement
+    const statut = client.statut_logement || 'Propriétaire';
+    const radio = document.querySelector(`input[name="statutLogement"][value="${statut}"]`);
+    if (radio) radio.checked = true;
+
+    // ==========================================
+    // 4. INITIALISER L'UI
+    // ==========================================
+    window.toggleHypotheque();
+    initGoogleMapsAutocomplete();
+
+    // Vérifier les opportunités existantes et afficher les statuts
+    await checkExistingOpportunities();
+
+    // ── Preview du rappel quand on change la date ──
+    RENEWAL_MAP.forEach(mapping => {
+        const dateInput = document.getElementById(mapping.dateId);
+        const reminderSelect = document.getElementById(mapping.reminderId);
+        const statusEl = document.getElementById(mapping.statusId);
+
+        function updatePreview() {
+            if (dateInput.value) {
+                statusEl.className = 'renewal-status pending';
+                statusEl.innerHTML = '⚡ Sauvegarder pour créer/mettre à jour l\'opportunité';
+            } else {
+                statusEl.className = 'renewal-status';
+                statusEl.innerHTML = '';
+            }
+        }
+
+        dateInput.addEventListener('change', updatePreview);
+        reminderSelect.addEventListener('change', updatePreview);
+    });
+
+    // ==========================================
+    // 5. FONCTION DE SAUVEGARDE POUR AUTO-SAVE
+    // ==========================================
+    window.saveModuleData = async function() {
+        console.log('💾 saveModuleData Adresse appelé');
+
+        // Récupérer abf_data existant pour ne pas l'écraser
+        const currentClient = FINOX.getClientData();
+        const currentAbfData = currentClient?.abf_data || {};
+
+        const clientUpdate = {
+            date_renouv_hypotheque: document.getElementById('dateRenouvHypotheque').value || null,
+            date_assurance_auto: document.getElementById('dateAssuranceAuto').value || null,
+            date_assurance_habitation: document.getElementById('dateAssuranceHabitation').value || null,
+            statut_logement: document.querySelector('input[name="statutLogement"]:checked')?.value || 'Propriétaire',
+            street_address: document.getElementById('streetAddress').value,
+            address: document.getElementById('streetAddress').value,
+            city: document.getElementById('city').value,
+            province: document.getElementById('province').value,
+            postal_code: document.getElementById('postalCode').value,
+
+            abf_data: {
+                ...currentAbfData
+            }
+        };
+
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update(clientUpdate)
+                .eq('id', clientId);
+
+            if (error) throw error;
+
+            FINOX.updateClientDataCache(clientUpdate);
+            FINOX.invalidateCache();
+            await FINOX.loadClientData();
+
+            // ── SYNC: Créer/mettre à jour les opportunités de renouvellement ──
+            await syncRenewalOpportunities();
+
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // ==========================================
+    // 6. DÉTECTER LES CHANGEMENTS
+    // ==========================================
+    const inputs = document.querySelectorAll('#module-content input, #module-content select');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => FINOX_NAV.markAsUnsaved());
+        input.addEventListener('change', () => FINOX_NAV.markAsUnsaved());
+    });
+
+    // Limiter les champs date à 4 chiffres pour l'année
+    if (typeof FINOX.setupAllDateInputs === 'function') {
+        FINOX.setupAllDateInputs();
+    }
+
+    console.log('✅ Module ABF Adresse chargé');
+})();
+</script>

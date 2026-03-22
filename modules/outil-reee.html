@@ -1,0 +1,539 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     OUTIL: CALCULATEUR REEE - Régime enregistré d'épargne-études
+     Subventions: SCEE (fédéral) + IQEE (Québec)
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* LAYOUT */
+.reee-container{display:grid;grid-template-columns:1fr 340px;gap:16px;min-height:calc(100vh - 100px)}
+.reee-form{display:flex;flex-direction:column;gap:12px}
+.reee-results{position:sticky;top:10px;height:fit-content}
+
+/* HEADER */
+.reee-header{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border-color);margin-bottom:4px}
+.reee-header-icon{width:44px;height:44px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 15px rgba(59,130,246,.3)}
+.reee-header-text h1{font-size:22px;font-weight:700;margin:0;background:linear-gradient(135deg,#3b82f6,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.reee-header-text p{font-size:12px;color:var(--text-muted);margin:2px 0 0}
+
+/* CARDS */
+.reee-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:14px 16px;transition:all .2s}
+.reee-card:hover{border-color:rgba(59,130,246,.3)}
+.reee-card-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.reee-card-title span{font-size:16px}
+.reee-card-desc{font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.4}
+
+/* FORM FIELDS */
+.reee-field{margin-bottom:12px}
+.reee-field:last-child{margin-bottom:0}
+.reee-label{display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
+.reee-label-hint{font-size:10px;color:var(--text-muted);font-weight:400;margin-left:6px}
+
+.reee-input-row{display:flex;align-items:center;gap:10px}
+.reee-input{flex:1;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:14px;font-weight:500;transition:all .2s}
+.reee-input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.reee-input::placeholder{color:var(--text-muted);font-weight:400}
+.reee-input-suffix{font-size:13px;color:var(--text-muted);min-width:35px}
+
+/* SLIDER */
+.reee-slider-wrap{display:flex;flex-direction:column;gap:4px}
+.reee-slider-row{display:flex;align-items:center;gap:12px}
+.reee-slider-value{min-width:70px;padding:8px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:6px;color:#60a5fa;font-size:14px;font-weight:600;text-align:center}
+.reee-slider{flex:1;-webkit-appearance:none;height:6px;background:rgba(255,255,255,.1);border-radius:3px;cursor:pointer}
+.reee-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:50%;cursor:pointer;box-shadow:0 2px 8px rgba(59,130,246,.4);transition:transform .2s}
+.reee-slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.reee-slider-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted)}
+
+/* RADIO GROUP */
+.reee-radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.reee-radio{flex:1;min-width:100px}
+.reee-radio input{display:none}
+.reee-radio label{display:block;padding:8px 10px;background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:8px;text-align:center;cursor:pointer;transition:all .2s;font-size:11px}
+.reee-radio label:hover{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)}
+.reee-radio input:checked + label{background:rgba(59,130,246,.15);border-color:#3b82f6;color:#60a5fa;font-weight:600}
+.reee-radio-amount{display:block;font-size:9px;color:var(--text-muted);margin-top:2px}
+
+/* RESULTS PANEL */
+.reee-results-card{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(30,64,175,.05));border:1px solid rgba(59,130,246,.2);border-radius:16px;padding:20px;text-align:center}
+.reee-results-title{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.reee-results-total{font-family:'Montserrat',sans-serif;font-size:38px;font-weight:800;background:linear-gradient(135deg,#3b82f6,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+
+/* DONUT */
+.reee-donut-wrap{display:flex;justify-content:center;margin-bottom:16px}
+.reee-donut{position:relative;width:140px;height:140px}
+.reee-donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.reee-donut circle{fill:none;stroke-width:24;stroke-linecap:round}
+.reee-donut-bg{stroke:rgba(255,255,255,.05)}
+.reee-donut-contrib{stroke:#3b82f6}
+.reee-donut-subv{stroke:#10b981}
+.reee-donut-rend{stroke:#60a5fa}
+
+/* LEGEND */
+.reee-legend{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
+.reee-legend-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:8px}
+.reee-legend-left{display:flex;align-items:center;gap:8px}
+.reee-legend-dot{width:10px;height:10px;border-radius:50%}
+.reee-legend-dot.contrib{background:#3b82f6}
+.reee-legend-dot.subv{background:#10b981}
+.reee-legend-dot.rend{background:#60a5fa}
+.reee-legend-label{font-size:11px;color:var(--text-secondary)}
+.reee-legend-value{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;color:var(--text-primary)}
+
+/* SUBVENTIONS DETAIL */
+.reee-subv-detail{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;margin-bottom:16px;text-align:left}
+.reee-subv-title{font-size:11px;font-weight:600;color:#10b981;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.reee-subv-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(16,185,129,.1)}
+.reee-subv-row:last-child{border-bottom:none}
+.reee-subv-label{font-size:10px;color:var(--text-secondary)}
+.reee-subv-value{font-size:11px;font-weight:600;color:#10b981}
+
+/* BUTTONS */
+.reee-btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.reee-btn-primary{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff}
+.reee-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(59,130,246,.35)}
+.reee-btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* DISCLAIMER */
+.reee-disclaimer{font-size:10px;color:var(--text-muted);line-height:1.5;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-color)}
+
+/* HYPOTHESES */
+.reee-hypotheses{margin-top:8px}
+.reee-hypotheses-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:#3b82f6;cursor:pointer;padding:6px 0}
+.reee-hypotheses-toggle:hover{color:#60a5fa}
+.reee-hypotheses-content{display:none;padding:12px;background:rgba(0,0,0,.2);border-radius:10px;margin-top:6px}
+.reee-hypotheses-content.active{display:block}
+.reee-hypotheses-content ul{margin:0;padding-left:16px;font-size:10px;color:var(--text-muted);line-height:1.6}
+
+/* INFO TOOLTIP */
+.reee-info{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;background:rgba(59,130,246,.2);border-radius:50%;font-size:9px;color:#60a5fa;cursor:help;margin-left:4px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .reee-container{grid-template-columns:1fr}
+    .reee-results{position:relative;order:-1}
+}
+</style>
+
+<div class="reee-container">
+    <!-- FORMULAIRE -->
+    <div class="reee-form">
+        <div class="reee-header">
+            <div class="reee-header-icon">🎓</div>
+            <div class="reee-header-text">
+                <h1>Calculateur REEE</h1>
+                <p>Planifiez l'épargne-études de votre enfant avec les subventions gouvernementales</p>
+            </div>
+        </div>
+        
+        <!-- ÂGE DE L'ENFANT -->
+        <div class="reee-card">
+            <div class="reee-card-title"><span>👶</span> Âge de l'enfant</div>
+            <div class="reee-card-desc">L'âge maximum pour adhérer à un REEE est 17 ans. Les subventions sont versées jusqu'à l'année des 17 ans.</div>
+            <div class="reee-slider-wrap">
+                <div class="reee-slider-row">
+                    <div class="reee-slider-value"><span id="ageValue">0</span> an(s)</div>
+                    <input type="range" class="reee-slider" id="ageEnfant" min="0" max="17" value="0" oninput="updateCalcul()">
+                </div>
+                <div class="reee-slider-labels"><span>Naissance</span><span>17 ans</span></div>
+            </div>
+        </div>
+        
+        <!-- CONTRIBUTION MENSUELLE -->
+        <div class="reee-card">
+            <div class="reee-card-title"><span>💰</span> Contribution mensuelle</div>
+            <div class="reee-card-desc">Pour maximiser les subventions (500$ SCEE + 250$ IQEE), cotisez au moins 208,33$/mois (2 500$/an).</div>
+            <div class="reee-slider-wrap">
+                <div class="reee-slider-row">
+                    <div class="reee-slider-value"><span id="contribValue">200</span> $</div>
+                    <input type="range" class="reee-slider" id="contribMensuelle" min="25" max="500" value="200" step="25" oninput="updateCalcul()">
+                </div>
+                <div class="reee-slider-labels"><span>25 $/mois</span><span>500 $/mois</span></div>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">
+                Cotisation annuelle: <strong id="contribAnnuelle" style="color:#60a5fa">2 400 $</strong>
+                <span class="reee-info" title="Maximum à vie: 50 000$ par bénéficiaire">?</span>
+            </div>
+        </div>
+        
+        <!-- REVENU FAMILIAL -->
+        <div class="reee-card">
+            <div class="reee-card-title"><span>👨‍👩‍👧</span> Revenu familial net<span class="reee-info" title="Pour les subventions supplémentaires SCEE et IQEE">?</span></div>
+            <div class="reee-card-desc">Les familles à revenu modeste reçoivent des subventions bonifiées.</div>
+            <div class="reee-radio-group">
+                <div class="reee-radio">
+                    <input type="radio" name="revenuFamilial" id="revLow" value="low" onchange="updateCalcul()">
+                    <label for="revLow">Moins de 55 867 $<span class="reee-radio-amount">+20% SCEE / +10% IQEE</span></label>
+                </div>
+                <div class="reee-radio">
+                    <input type="radio" name="revenuFamilial" id="revMid" value="mid" onchange="updateCalcul()">
+                    <label for="revMid">55 867 $ - 111 733 $<span class="reee-radio-amount">+10% SCEE / +5% IQEE</span></label>
+                </div>
+                <div class="reee-radio">
+                    <input type="radio" name="revenuFamilial" id="revHigh" value="high" checked onchange="updateCalcul()">
+                    <label for="revHigh">Plus de 111 733 $<span class="reee-radio-amount">Subventions de base</span></label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RENDEMENT -->
+        <div class="reee-card">
+            <div class="reee-card-title"><span>📈</span> Taux de rendement annuel</div>
+            <div class="reee-slider-wrap">
+                <div class="reee-slider-row">
+                    <div class="reee-slider-value"><span id="rendValue">4</span> %</div>
+                    <input type="range" class="reee-slider" id="tauxRendement" min="1" max="8" value="4" step="0.5" oninput="updateCalcul()">
+                </div>
+                <div class="reee-slider-labels"><span>1% (conservateur)</span><span>8% (agressif)</span></div>
+            </div>
+        </div>
+        
+        <!-- HYPOTHÈSES -->
+        <div class="reee-hypotheses">
+            <div class="reee-hypotheses-toggle" onclick="toggleHypotheses()">
+                <span id="hypoChevron">▶</span> Hypothèses de calcul
+            </div>
+            <div class="reee-hypotheses-content" id="hypoContent">
+                <ul>
+                    <li><strong>SCEE (fédéral):</strong> 20% des cotisations, max 500$/an, plafond vie 7 200$</li>
+                    <li><strong>SCEE supplémentaire:</strong> 10-20% sur premiers 500$/an selon revenu</li>
+                    <li><strong>IQEE (Québec):</strong> 10% des cotisations, max 250$/an, plafond vie 3 600$</li>
+                    <li><strong>IQEE supplémentaire:</strong> 5-10% sur premiers 500$/an selon revenu</li>
+                    <li>Contributions mensuelles constantes jusqu'au 31 décembre de l'année des 17 ans</li>
+                    <li>Le rendement est composé annuellement</li>
+                    <li>Le calcul exclut le Bon d'études canadien (BEC)</li>
+                    <li>Les seuils de revenu sont ceux de 2024</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RÉSULTATS -->
+    <div class="reee-results">
+        <div class="reee-results-card">
+            <div class="reee-results-title">En REEE, vous aurez épargné</div>
+            <div class="reee-results-total" id="totalREEE">0 $</div>
+            
+            <!-- DONUT -->
+            <div class="reee-donut-wrap">
+                <div class="reee-donut">
+                    <svg viewBox="0 0 160 160">
+                        <circle class="reee-donut-bg" cx="80" cy="80" r="60"/>
+                        <circle class="reee-donut-rend" id="chartRend" cx="80" cy="80" r="60" stroke-dasharray="0 377" stroke-dashoffset="0"/>
+                        <circle class="reee-donut-subv" id="chartSubv" cx="80" cy="80" r="60" stroke-dasharray="0 377" stroke-dashoffset="0"/>
+                        <circle class="reee-donut-contrib" id="chartContrib" cx="80" cy="80" r="60" stroke-dasharray="0 377" stroke-dashoffset="0"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- LÉGENDE -->
+            <div class="reee-legend">
+                <div class="reee-legend-item">
+                    <div class="reee-legend-left"><div class="reee-legend-dot contrib"></div><span class="reee-legend-label">Vos contributions</span></div>
+                    <span class="reee-legend-value" id="legendContrib">0 $</span>
+                </div>
+                <div class="reee-legend-item">
+                    <div class="reee-legend-left"><div class="reee-legend-dot subv"></div><span class="reee-legend-label">Subventions gouvernementales</span></div>
+                    <span class="reee-legend-value" id="legendSubv">0 $</span>
+                </div>
+                <div class="reee-legend-item">
+                    <div class="reee-legend-left"><div class="reee-legend-dot rend"></div><span class="reee-legend-label">Rendement</span></div>
+                    <span class="reee-legend-value" id="legendRend">0 $</span>
+                </div>
+            </div>
+            
+            <!-- DÉTAIL SUBVENTIONS -->
+            <div class="reee-subv-detail">
+                <div class="reee-subv-title">🏛️ Détail des subventions</div>
+                <div class="reee-subv-row">
+                    <span class="reee-subv-label">SCEE (fédéral)</span>
+                    <span class="reee-subv-value" id="detailSCEE">0 $</span>
+                </div>
+                <div class="reee-subv-row">
+                    <span class="reee-subv-label">SCEE supplémentaire</span>
+                    <span class="reee-subv-value" id="detailSCEESupp">0 $</span>
+                </div>
+                <div class="reee-subv-row">
+                    <span class="reee-subv-label">IQEE (Québec)</span>
+                    <span class="reee-subv-value" id="detailIQEE">0 $</span>
+                </div>
+                <div class="reee-subv-row">
+                    <span class="reee-subv-label">IQEE supplémentaire</span>
+                    <span class="reee-subv-value" id="detailIQEESupp">0 $</span>
+                </div>
+            </div>
+            
+            <!-- BOUTON ENREGISTRER -->
+            <button class="reee-btn reee-btn-primary" id="btnSaveREEE" onclick="saveREEE()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span id="btnSaveText">Enregistrer le scénario</span>
+            </button>
+            
+            <div class="reee-disclaimer">
+                Ce résultat est à titre indicatif seulement et est calculé en fonction des renseignements fournis et de certaines hypothèses. Consultez un conseiller pour une planification personnalisée.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    // Constantes des subventions
+    const SCEE_TAUX = 0.20;           // 20% de base
+    const SCEE_MAX_ANNUEL = 500;      // Max 500$/an
+    const SCEE_PLAFOND_VIE = 7200;    // Plafond à vie
+    
+    const IQEE_TAUX = 0.10;           // 10% de base
+    const IQEE_MAX_ANNUEL = 250;      // Max 250$/an
+    const IQEE_PLAFOND_VIE = 3600;    // Plafond à vie
+    
+    const COTISATION_MAX_VIE = 50000; // Maximum à vie par bénéficiaire
+    
+    // Taux supplémentaires selon revenu (sur premiers 500$)
+    const SUPP_RATES = {
+        low:  { scee: 0.20, iqee: 0.10 },  // Revenu < 55 867$
+        mid:  { scee: 0.10, iqee: 0.05 },  // Revenu 55 867$ - 111 733$
+        high: { scee: 0,    iqee: 0 }      // Revenu > 111 733$
+    };
+    
+    // Formatage monétaire
+    function fmt(n) {
+        return Math.round(n).toLocaleString('fr-CA') + ' $';
+    }
+    
+    // Calcul principal
+    window.updateCalcul = function() {
+        const age = parseInt(document.getElementById('ageEnfant').value);
+        const contribMensuelle = parseInt(document.getElementById('contribMensuelle').value);
+        const tauxRendement = parseFloat(document.getElementById('tauxRendement').value) / 100;
+        const revenuType = document.querySelector('input[name="revenuFamilial"]:checked')?.value || 'high';
+        
+        // Mise à jour affichage sliders
+        document.getElementById('ageValue').textContent = age;
+        document.getElementById('contribValue').textContent = contribMensuelle;
+        document.getElementById('rendValue').textContent = (tauxRendement * 100).toFixed(1).replace('.0', '');
+        document.getElementById('contribAnnuelle').textContent = fmt(contribMensuelle * 12);
+        
+        // Années de cotisation (jusqu'à 17 ans)
+        const anneesRestantes = Math.max(0, 17 - age);
+        const contribAnnuelle = Math.min(contribMensuelle * 12, COTISATION_MAX_VIE / anneesRestantes);
+        
+        // Calcul des subventions année par année
+        let totalContrib = 0;
+        let totalSCEE = 0;
+        let totalSCEESupp = 0;
+        let totalIQEE = 0;
+        let totalIQEESupp = 0;
+        let solde = 0;
+        
+        for (let i = 0; i < anneesRestantes; i++) {
+            // Contribution de l'année
+            const cotisAnnee = contribAnnuelle;
+            totalContrib += cotisAnnee;
+            
+            // SCEE de base: 20% jusqu'à max 500$/an et plafond vie
+            const sceePotentiel = Math.min(cotisAnnee * SCEE_TAUX, SCEE_MAX_ANNUEL);
+            const sceeAnnee = Math.min(sceePotentiel, SCEE_PLAFOND_VIE - totalSCEE - totalSCEESupp);
+            totalSCEE += Math.max(0, sceeAnnee);
+            
+            // SCEE supplémentaire: sur premiers 500$ selon revenu
+            const baseSuppSCEE = Math.min(cotisAnnee, 500);
+            const sceeSuppAnnee = baseSuppSCEE * SUPP_RATES[revenuType].scee;
+            totalSCEESupp += sceeSuppAnnee;
+            
+            // IQEE de base: 10% jusqu'à max 250$/an et plafond vie
+            const iqeePotentiel = Math.min(cotisAnnee * IQEE_TAUX, IQEE_MAX_ANNUEL);
+            const iqeeAnnee = Math.min(iqeePotentiel, IQEE_PLAFOND_VIE - totalIQEE - totalIQEESupp);
+            totalIQEE += Math.max(0, iqeeAnnee);
+            
+            // IQEE supplémentaire: sur premiers 500$ selon revenu
+            const baseSuppIQEE = Math.min(cotisAnnee, 500);
+            const iqeeSuppAnnee = baseSuppIQEE * SUPP_RATES[revenuType].iqee;
+            totalIQEESupp += iqeeSuppAnnee;
+            
+            // Calcul du solde avec rendement composé
+            solde = (solde + cotisAnnee + sceeAnnee + sceeSuppAnnee + iqeeAnnee + iqeeSuppAnnee) * (1 + tauxRendement);
+        }
+        
+        // Totaux
+        const totalSubv = totalSCEE + totalSCEESupp + totalIQEE + totalIQEESupp;
+        const totalRendement = solde - totalContrib - totalSubv;
+        const total = solde;
+        
+        // Mise à jour UI
+        document.getElementById('totalREEE').textContent = fmt(total);
+        document.getElementById('legendContrib').textContent = fmt(totalContrib);
+        document.getElementById('legendSubv').textContent = fmt(totalSubv);
+        document.getElementById('legendRend').textContent = fmt(totalRendement);
+        
+        // Détail subventions
+        document.getElementById('detailSCEE').textContent = fmt(totalSCEE);
+        document.getElementById('detailSCEESupp').textContent = fmt(totalSCEESupp);
+        document.getElementById('detailIQEE').textContent = fmt(totalIQEE);
+        document.getElementById('detailIQEESupp').textContent = fmt(totalIQEESupp);
+        
+        // Donut chart
+        updateDonut(totalContrib, totalSubv, totalRendement, total);
+    };
+    
+    function updateDonut(contrib, subv, rend, total) {
+        if (total <= 0) return;
+        
+        const circ = 2 * Math.PI * 60; // Circonférence
+        
+        const pContrib = (contrib / total) * circ;
+        const pSubv = (subv / total) * circ;
+        const pRend = (rend / total) * circ;
+        
+        // Dessiner dans l'ordre inverse (contrib en dernier = au-dessus)
+        let offset = 0;
+        
+        document.getElementById('chartRend').setAttribute('stroke-dasharray', `${pRend} ${circ}`);
+        document.getElementById('chartRend').setAttribute('stroke-dashoffset', -offset);
+        offset += pRend;
+        
+        document.getElementById('chartSubv').setAttribute('stroke-dasharray', `${pSubv} ${circ}`);
+        document.getElementById('chartSubv').setAttribute('stroke-dashoffset', -offset);
+        offset += pSubv;
+        
+        document.getElementById('chartContrib').setAttribute('stroke-dasharray', `${pContrib} ${circ}`);
+        document.getElementById('chartContrib').setAttribute('stroke-dashoffset', -offset);
+    }
+    
+    window.toggleHypotheses = function() {
+        const content = document.getElementById('hypoContent');
+        const chevron = document.getElementById('hypoChevron');
+        content.classList.toggle('active');
+        chevron.textContent = content.classList.contains('active') ? '▼' : '▶';
+    };
+    
+    // Sauvegarde dans Supabase
+    window.saveREEE = async function() {
+        const btn = document.getElementById('btnSaveREEE');
+        const btnText = document.getElementById('btnSaveText');
+        
+        // Vérifier qu'un client est sélectionné
+        if (typeof FINOX === 'undefined' || !FINOX.CLIENT_ID) {
+            await FINOX.alert('Veuillez d\'abord sélectionner un client.');
+            return;
+        }
+        
+        const clientId = FINOX.CLIENT_ID;
+        btn.disabled = true;
+        btnText.textContent = 'Enregistrement...';
+        
+        try {
+            // Collecter les données du scénario
+            const scenario = {
+                age_enfant: parseInt(document.getElementById('ageEnfant').value),
+                contribution_mensuelle: parseInt(document.getElementById('contribMensuelle').value),
+                contribution_annuelle: parseInt(document.getElementById('contribMensuelle').value) * 12,
+                revenu_familial: document.querySelector('input[name="revenuFamilial"]:checked')?.value || 'high',
+                taux_rendement: parseFloat(document.getElementById('tauxRendement').value),
+                // Résultats
+                total_reee: parseNumber(document.getElementById('totalREEE').textContent),
+                total_contributions: parseNumber(document.getElementById('legendContrib').textContent),
+                total_subventions: parseNumber(document.getElementById('legendSubv').textContent),
+                total_rendement: parseNumber(document.getElementById('legendRend').textContent),
+                // Détail subventions
+                scee_base: parseNumber(document.getElementById('detailSCEE').textContent),
+                scee_supplementaire: parseNumber(document.getElementById('detailSCEESupp').textContent),
+                iqee_base: parseNumber(document.getElementById('detailIQEE').textContent),
+                iqee_supplementaire: parseNumber(document.getElementById('detailIQEESupp').textContent),
+                // Métadonnées
+                date_calcul: new Date().toISOString()
+            };
+            
+            // Récupérer le client actuel pour merger abf_data
+            const currentClient = FINOX.getClientData ? FINOX.getClientData() : null;
+            const currentAbfData = currentClient?.abf_data || {};
+            
+            // Sauvegarder dans abf_data.reee
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({
+                    abf_data: {
+                        ...currentAbfData,
+                        reee: scenario,
+                        section_reee_completed: true
+                    }
+                })
+                .eq('id', clientId);
+            
+            if (error) throw error;
+            
+            // Rafraîchir les données client en cache
+            if (FINOX.loadClientData) await FINOX.loadClientData(true);
+            
+            // Notification
+            if (FINOX.showNotification) FINOX.showNotification('Scénario REEE enregistré', 'success');
+            
+            btnText.textContent = '✓ Enregistré!';
+            setTimeout(() => {
+                btnText.textContent = 'Enregistrer le scénario';
+                btn.disabled = false;
+            }, 2000);
+            
+            console.log('✅ Scénario REEE sauvegardé:', scenario);
+            
+        } catch (error) {
+            console.error('❌ Erreur sauvegarde REEE:', error);
+            if (FINOX.showNotification) FINOX.showNotification('Erreur de sauvegarde', 'error');
+            btnText.textContent = 'Erreur - Réessayer';
+            btn.disabled = false;
+        }
+    };
+    
+    // Helper pour parser les montants formatés
+    function parseNumber(str) {
+        return FINOX.parseNumber(str);
+    }
+    
+    // Charger scénario existant
+    async function loadExistingScenario() {
+        if (typeof FINOX === 'undefined' || !FINOX.CLIENT_ID) return;
+        
+        try {
+            // Utiliser les données client déjà chargées si disponibles
+            const client = FINOX.getClientData ? FINOX.getClientData() : null;
+            
+            if (!client?.abf_data?.reee) return;
+            
+            const r = client.abf_data.reee;
+            
+            // Restaurer les valeurs
+            if (r.age_enfant !== undefined) document.getElementById('ageEnfant').value = r.age_enfant;
+            if (r.contribution_mensuelle) document.getElementById('contribMensuelle').value = r.contribution_mensuelle;
+            if (r.taux_rendement) document.getElementById('tauxRendement').value = r.taux_rendement;
+            if (r.revenu_familial) {
+                const radio = document.querySelector(`input[name="revenuFamilial"][value="${r.revenu_familial}"]`);
+                if (radio) radio.checked = true;
+            }
+            
+            updateCalcul();
+            console.log('📊 Scénario REEE restauré');
+            
+        } catch (e) {
+            console.error('Erreur chargement REEE:', e);
+        }
+    }
+    
+    function collectData() {
+        return {
+            age: document.getElementById('ageEnfant').value,
+            contribution: document.getElementById('contribMensuelle').value,
+            rendement: document.getElementById('tauxRendement').value,
+            total: document.getElementById('totalREEE').textContent,
+            contributions: document.getElementById('legendContrib').textContent,
+            subventions: document.getElementById('legendSubv').textContent,
+            rendements: document.getElementById('legendRend').textContent
+        };
+    }
+    
+    // Initialisation
+    console.log('🎓 Calculateur REEE v1.0 - Init');
+    updateCalcul();
+    loadExistingScenario();
+    console.log('✅ Calculateur REEE chargé');
+})();
+</script>

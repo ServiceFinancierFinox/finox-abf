@@ -1,0 +1,2588 @@
+<!-- MODULE: PULSE VITAL v2.0 — Universel (Prospect Copilote + Client Diagnostic) -->
+<style>
+/* ═══ LAYOUT ═══ */
+.pv-page { max-width: 1100px; margin: 0 auto; padding: 0 8px; }
+.pv-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.pv-header-left { display: flex; align-items: center; gap: 12px; }
+.pv-header h1 { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.pv-header-sub { font-size: 12px; color: var(--text-muted); }
+.pv-transcript-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff; font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+}
+.pv-transcript-btn:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(34,197,94,0.3); }
+
+.pv-soumission-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: #fff; font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+}
+.pv-soumission-btn:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,92,246,0.3); }
+
+/* Soumission Modal */
+.soum-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
+.soum-overlay.show { display: flex; }
+.soum-modal { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border-color, #333); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; animation: soumPopIn 0.3s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+@keyframes soumPopIn { from { opacity: 0; transform: scale(0.9) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.soum-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(139,92,246,0.1); border-bottom: 1px solid var(--border-color, #333); }
+.soum-header-title { font-size: 16px; font-weight: 700; color: #a78bfa; display: flex; align-items: center; gap: 10px; }
+.soum-close { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+.soum-close:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+.soum-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.soum-section-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.soum-textarea { width: 100%; min-height: 180px; padding: 14px; background: var(--bg-primary, #0a0a0a); border: 1px solid var(--border-color, #333); border-radius: 10px; color: var(--text-primary, #fff); font-size: 13px; font-family: inherit; resize: vertical; line-height: 1.6; }
+.soum-textarea:focus { outline: none; border-color: #8b5cf6; }
+.soum-textarea.result { min-height: 300px; background: rgba(139,92,246,0.05); border-color: rgba(139,92,246,0.3); }
+.soum-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 20px; border-top: 1px solid var(--border-color, #333); }
+.soum-btn { padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+.soum-btn.primary { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
+.soum-btn.primary:hover { filter: brightness(1.15); }
+.soum-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+.soum-btn.secondary { background: var(--bg-hover, #1a1a1a); color: var(--text-secondary); border: 1px solid var(--border-color, #333); }
+.soum-btn.secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.soum-btn.copy { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+.soum-btn.copy:hover { background: rgba(34,197,94,0.25); }
+.soum-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: soumSpin 0.6s linear infinite; margin-right: 8px; }
+@keyframes soumSpin { to { transform: rotate(360deg); } }
+
+.pv-refresh-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03); color: var(--text-secondary);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+}
+.pv-refresh-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,162,39,0.08); }
+.pv-refresh-btn.spinning .pv-refresh-icon { animation: spin 1s linear infinite; }
+
+.pv-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 768px) {
+    .pv-grid { grid-template-columns: 1fr; }
+}
+
+.pv-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ═══ SCORE HERO CARD ═══ */
+.pv-score-card {
+    padding: 28px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 24px;
+    transition: all 0.3s;
+}
+.pv-score-card.zone-optimal { background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.02)); border-color: rgba(34,197,94,0.2); }
+.pv-score-card.zone-stable { background: linear-gradient(135deg, rgba(201,162,39,0.1), rgba(201,162,39,0.02)); border-color: rgba(201,162,39,0.2); }
+.pv-score-card.zone-attention { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02)); border-color: rgba(245,158,11,0.2); }
+.pv-score-card.zone-critique { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.02)); border-color: rgba(239,68,68,0.2); }
+/* Prospect zones */
+.pv-score-card.zone-hot { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.02)); border-color: rgba(239,68,68,0.25); }
+.pv-score-card.zone-warm { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.02)); border-color: rgba(245,158,11,0.25); }
+.pv-score-card.zone-cool { background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02)); border-color: rgba(59,130,246,0.25); }
+.pv-score-card.zone-frozen { background: linear-gradient(135deg, rgba(100,116,139,0.12), rgba(100,116,139,0.02)); border-color: rgba(100,116,139,0.25); }
+
+.pv-score-info { flex: 1; }
+.pv-score-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
+.pv-score-value { font-size: 36px; font-weight: 800; line-height: 1; }
+.pv-score-zone { font-size: 15px; margin-top: 6px; font-weight: 600; }
+
+/* ═══ SECTION TITLES ═══ */
+.pv-section {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px;
+}
+.pv-section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-secondary);
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ═══ FACTOR BREAKDOWN ═══ */
+.pv-factor-list { display: flex; flex-direction: column; gap: 8px; }
+.pv-factor {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.15s;
+}
+.pv-factor:hover { background: rgba(255,255,255,0.04); }
+.pv-factor-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+.pv-factor-info { flex: 1; min-width: 0; }
+.pv-factor-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.pv-factor-bar {
+    height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.06);
+    margin-top: 4px; overflow: hidden;
+}
+.pv-factor-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.5s ease;
+}
+.pv-factor-pts {
+    flex-shrink: 0; font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 8px;
+    white-space: nowrap;
+}
+.pv-factor-pts.positive { color: #22c55e; background: rgba(34,197,94,0.1); }
+.pv-factor-pts.zero { color: var(--text-muted); background: rgba(255,255,255,0.04); }
+.pv-factor-pts.negative { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+/* ═══ DIAGNOSTICS LIST ═══ */
+.pv-diag-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* ═══ SUGGESTIONS ═══ */
+.pv-sug-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.pv-sug-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-secondary);
+}
+.pv-sug-badge {
+    font-size: 11px; background: rgba(34,197,94,0.15); color: #22c55e;
+    padding: 3px 10px; border-radius: 10px; font-weight: 700;
+}
+.pv-sug-list { display: flex; flex-direction: column; gap: 10px; }
+.pv-sug-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; border-radius: 12px;
+    background: rgba(34,197,94,0.04);
+    border: 1px solid rgba(34,197,94,0.1);
+    transition: all 0.2s; cursor: pointer;
+}
+.pv-sug-card:hover {
+    background: rgba(34,197,94,0.08);
+    border-color: rgba(34,197,94,0.25);
+    transform: translateY(-1px);
+}
+.pv-sug-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.pv-sug-body { flex: 1; min-width: 0; }
+.pv-sug-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+.pv-sug-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.pv-sug-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.pv-sug-impact {
+    font-size: 12px; font-weight: 700; color: #22c55e;
+    background: rgba(34,197,94,0.12); padding: 4px 10px; border-radius: 8px;
+}
+.pv-sug-action {
+    font-size: 10px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 3px;
+}
+
+/* ═══ EMPTY / LOADING / ERROR ═══ */
+.pv-loading, .pv-empty, .pv-error {
+    text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px;
+}
+.pv-empty-icon, .pv-error-icon { font-size: 48px; margin-bottom: 12px; }
+.pv-all-good {
+    text-align: center; padding: 40px 20px;
+    color: #22c55e; font-size: 15px; font-weight: 600;
+}
+
+/* ═══ PROSPECT PIPELINE ═══ */
+.pv-pipeline {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 16px 8px;
+}
+.pv-pipeline-stage {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: default; position: relative; z-index: 1;
+}
+.pv-pipeline-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    transition: all 0.3s;
+}
+.pv-pipeline-stage.completed .pv-pipeline-dot {
+    border-color: var(--gold);
+    background: rgba(201,162,39,0.15);
+}
+.pv-pipeline-stage.active .pv-pipeline-dot {
+    border-color: var(--gold);
+    background: rgba(201,162,39,0.25);
+    box-shadow: 0 0 12px rgba(201,162,39,0.4);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+.pv-pipeline-stage.dead .pv-pipeline-dot {
+    border-color: #ef4444;
+    background: rgba(239,68,68,0.15);
+}
+.pv-pipeline-label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+.pv-pipeline-stage.active .pv-pipeline-label { color: var(--gold); }
+.pv-pipeline-stage.completed .pv-pipeline-label { color: var(--gold); opacity: 0.7; }
+.pv-pipeline-connector {
+    width: 32px; height: 2px; background: rgba(255,255,255,0.08);
+    flex-shrink: 0; margin-top: -20px;
+}
+.pv-pipeline-connector.completed { background: var(--gold); opacity: 0.5; }
+
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 8px rgba(201,162,39,0.3); }
+    50% { box-shadow: 0 0 18px rgba(201,162,39,0.6); }
+}
+
+/* ═══ FLATLINE — Dead lead heart monitor ═══ */
+.pv-flatline-wrap {
+    padding: 12px 8px 8px;
+    position: relative;
+    overflow: hidden;
+}
+.pv-flatline-svg {
+    width: 100%;
+    height: 60px;
+    display: block;
+}
+.pv-flatline-line {
+    fill: none;
+    stroke: #ef4444;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: pvFlatlineDraw 3s ease-in-out forwards;
+    filter: drop-shadow(0 0 4px rgba(239,68,68,0.5));
+}
+.pv-flatline-glow {
+    fill: none;
+    stroke: rgba(239,68,68,0.15);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: pvFlatlineDraw 3s ease-in-out forwards;
+}
+@keyframes pvFlatlineDraw {
+    to { stroke-dashoffset: 0; }
+}
+.pv-flatline-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0;
+    animation: pvFlatlineFade 0.8s ease-in 2.5s forwards;
+}
+@keyframes pvFlatlineFade {
+    to { opacity: 1; }
+}
+.pv-flatline-dot {
+    fill: #ef4444;
+    opacity: 0;
+    animation: pvFlatlineFade 0.5s ease-in 2.8s forwards;
+}
+
+/* ═══ CORPO DASHBOARD ═══ */
+.pv-corpo-dash {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; padding: 4px 0;
+}
+.pv-corpo-stat {
+    padding: 14px; border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+    transition: all 0.2s;
+}
+.pv-corpo-stat:hover { border-color: rgba(255,255,255,0.12); }
+.pv-corpo-stat-icon { font-size: 22px; margin-bottom: 4px; }
+.pv-corpo-stat-value {
+    font-size: 22px; font-weight: 800;
+    color: var(--text-primary); line-height: 1.2;
+}
+.pv-corpo-stat-label {
+    font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+    margin-top: 2px; font-weight: 600;
+}
+.pv-corpo-stat.highlight {
+    border-color: rgba(201,162,39,0.25);
+    background: rgba(201,162,39,0.04);
+}
+.pv-corpo-stat.danger {
+    border-color: rgba(239,68,68,0.2);
+    background: rgba(239,68,68,0.04);
+}
+.pv-corpo-progress {
+    margin-top: 12px; padding: 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.pv-corpo-progress-title {
+    font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.pv-corpo-section-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 0; font-size: 12px;
+}
+.pv-corpo-section-check {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
+}
+.pv-corpo-section-check.done {
+    background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3);
+}
+.pv-corpo-section-check.pending {
+    background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.08);
+}
+.pv-corpo-section-name { flex: 1; color: var(--text-secondary); }
+.pv-corpo-section-name.done { color: var(--text-primary); }
+
+/* ═══ PROSPECT STATUS INFO ═══ */
+.pv-status-info {
+    text-align: center; padding: 8px 16px;
+    font-size: 12px; color: var(--text-muted);
+}
+.pv-status-current {
+    font-size: 14px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+/* ═══ QUICK STATUS BUTTONS ═══ */
+.pv-quick-statuses {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; padding: 8px 0;
+}
+.pv-quick-status-btn {
+    padding: 6px 12px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-secondary); font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 4px;
+}
+.pv-quick-status-btn:hover {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,162,39,0.08);
+}
+.pv-quick-status-btn.active {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,162,39,0.15);
+    pointer-events: none;
+}
+
+/* ═══ PROSPECT NEXT STEP ═══ */
+.pv-next-step {
+    padding: 18px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(201,162,39,0.08), rgba(201,162,39,0.02));
+    border: 1px solid rgba(201,162,39,0.2);
+}
+.pv-next-step-title {
+    font-size: 11px; color: var(--gold); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+}
+.pv-next-step-action {
+    font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;
+}
+.pv-next-step-tip {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5;
+}
+
+/* ═══ COLLAPSIBLE SECTIONS ═══ */
+.pv-collapse {
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.02);
+    overflow: hidden;
+}
+.pv-collapse summary {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; cursor: pointer;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-secondary);
+    list-style: none; user-select: none;
+    transition: background 0.15s;
+}
+.pv-collapse summary::-webkit-details-marker { display: none; }
+.pv-collapse summary:hover { background: rgba(255,255,255,0.03); }
+.pv-collapse summary .pv-collapse-chevron {
+    margin-left: auto; font-size: 10px; opacity: 0.5;
+    transition: transform 0.2s;
+}
+.pv-collapse[open] summary .pv-collapse-chevron { transform: rotate(90deg); }
+.pv-collapse-body { padding: 0 16px 14px; }
+
+/* ═══ LEAD OR TOGGLE ═══ */
+.pv-lead-or-toggle {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 12px;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+}
+.pv-lead-or-toggle.off {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.pv-lead-or-toggle.on {
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.3);
+}
+.pv-lead-or-toggle:hover { border-color: rgba(255,215,0,0.4); }
+.pv-lead-or-switch {
+    width: 36px; height: 20px; border-radius: 10px;
+    background: rgba(255,255,255,0.15); position: relative;
+    transition: background 0.2s; flex-shrink: 0;
+}
+.pv-lead-or-switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #888; transition: all 0.2s;
+}
+.pv-lead-or-toggle.on .pv-lead-or-switch { background: rgba(255,215,0,0.4); }
+.pv-lead-or-toggle.on .pv-lead-or-switch::after { left: 18px; background: #FFD700; }
+
+/* ═══ DEMANDE DU LEAD ═══ */
+.pv-demande-grid {
+    display: grid; grid-template-columns: 1fr; gap: 8px;
+}
+.pv-demande-field {
+    padding: 8px 10px; background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;
+}
+.pv-demande-label {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.pv-demande-input, .pv-demande-select {
+    width: 100%; padding: 7px 10px; background: var(--bg-primary);
+    border: 1px solid var(--border-color); border-radius: 6px;
+    color: var(--text-primary); font-size: 13px; font-weight: 600;
+    box-sizing: border-box;
+}
+.pv-demande-input:focus, .pv-demande-select:focus { border-color: var(--gold); outline: none; }
+
+/* ═══ SOURCE DU LEAD ═══ */
+.pv-source-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.3px; white-space: nowrap; margin-left: auto;
+}
+.pv-source-divider {
+    border: none; border-top: 1px solid rgba(255,255,255,0.06);
+    margin: 10px 0 8px;
+}
+.pv-utm-section {
+    padding: 8px 10px; background: rgba(255,255,255,0.015);
+    border: 1px dashed rgba(255,255,255,0.06); border-radius: 8px;
+}
+.pv-utm-title {
+    font-size: 10px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;
+}
+.pv-utm-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 2px 0; font-size: 11px;
+}
+.pv-utm-key { color: var(--text-muted); }
+.pv-utm-val { color: var(--text-secondary); font-weight: 600; max-width: 60%; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-refere-field {
+    margin-top: 4px; transition: all 0.2s;
+}
+
+/* ═══ PROFIL LEAD (read-only) ═══ */
+.pv-lead-profile {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding: 10px; background: rgba(201,162,39,0.04);
+    border: 1px solid rgba(201,162,39,0.12); border-radius: 10px;
+    margin-bottom: 8px;
+}
+.pv-lead-profile-header {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 2px;
+}
+.pv-lead-profile-name {
+    font-size: 14px; font-weight: 700; color: var(--text-primary);
+}
+.pv-lead-profile-item {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 4px 8px; background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+}
+.pv-lead-profile-item.full { grid-column: 1 / -1; }
+.pv-profile-key {
+    font-size: 9px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.pv-profile-val {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+}
+.pv-age-nearest {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 6px; background: rgba(201,162,39,0.15);
+    border-radius: 4px; font-size: 10px; font-weight: 700;
+    color: #C9A227; margin-left: 4px;
+}
+.pv-demande-readonly {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.pv-demande-ro-item {
+    padding: 6px 8px; background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05); border-radius: 6px;
+}
+.pv-demande-ro-item.full { grid-column: 1 / -1; }
+.pv-demande-ro-label {
+    font-size: 9px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 2px;
+}
+.pv-demande-ro-val {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+}
+.pv-demande-ro-val.empty {
+    color: var(--text-muted); font-style: italic; font-weight: 400;
+}
+.pv-fumeur-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+}
+.pv-fumeur-badge.oui { background: rgba(239,68,68,0.15); color: #EF4444; }
+.pv-fumeur-badge.non { background: rgba(34,197,94,0.15); color: #22C55E; }
+
+/* ═══ STATUS CARD INTERACTIVE ═══ */
+.pv-status-card-item:not(.active):hover {
+    background: rgba(201,162,39,0.06) !important;
+    border-color: rgba(201,162,39,0.2) !important;
+    transform: translateX(4px);
+}
+
+/* ═══ TYPE CONTACT SELECTOR ═══ */
+.pv-type-selector {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 12px 16px; border-radius: 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+}
+.pv-type-chip {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+}
+.pv-type-chip:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); }
+.pv-type-chip.active { pointer-events: none; }
+.pv-type-chip.active[data-type="prospect"] { background: rgba(232,180,77,0.15); border-color: rgba(232,180,77,0.4); color: var(--gold); }
+.pv-type-chip.active[data-type="client"] { background: rgba(76,175,80,0.15); border-color: rgba(76,175,80,0.4); color: #81C784; }
+.pv-type-chip.active[data-type="corpo"] { background: rgba(156,39,176,0.15); border-color: rgba(156,39,176,0.4); color: #CE93D8; }
+.pv-type-chip.active[data-type="inactif"] { background: rgba(100,100,100,0.15); border-color: rgba(100,100,100,0.4); color: #999; }
+
+/* ═══ TIER SELECTOR ═══ */
+.pv-tier-selector {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.pv-tier-label {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.5px; font-weight: 600; margin-right: 4px;
+}
+.pv-tier-chip {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.pv-tier-chip:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); }
+.pv-tier-chip.active[data-tier="gold"] { background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.5); color: #FFD700; }
+.pv-tier-chip.active[data-tier="silver"] { background: rgba(192,192,192,0.15); border-color: rgba(192,192,192,0.5); color: #C0C0C0; }
+.pv-tier-chip.active[data-tier="bronze"] { background: rgba(205,127,50,0.15); border-color: rgba(205,127,50,0.5); color: #CD7F32; }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ═══ HELP PANEL ═══ */
+.pv-help-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03); color: var(--text-muted);
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+}
+.pv-help-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,162,39,0.08); }
+.pv-help-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,162,39,0.12); }
+
+.pv-help-panel {
+    display: none; overflow: hidden;
+    background: rgba(15,15,20,0.95); border: 1px solid rgba(201,162,39,0.2);
+    border-radius: 16px; margin-bottom: 16px;
+    animation: pvHelpSlide 0.25s ease-out;
+}
+.pv-help-panel.open { display: block; }
+@keyframes pvHelpSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+.pv-help-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.pv-help-title {
+    font-size: 14px; font-weight: 700; color: var(--gold);
+    display: flex; align-items: center; gap: 8px;
+}
+.pv-help-close {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.06); color: var(--text-muted);
+    font-size: 14px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all 0.15s;
+}
+.pv-help-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+.pv-help-body { padding: 16px 18px; }
+.pv-help-intro {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    margin-bottom: 16px; padding: 10px 14px; border-radius: 10px;
+    background: rgba(201,162,39,0.06); border-left: 3px solid var(--gold);
+}
+.pv-help-group-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 6px;
+}
+.pv-help-group-title.positive { color: #22C55E; }
+.pv-help-group-title.negative { color: #ef4444; }
+.pv-help-group { margin-bottom: 14px; }
+.pv-help-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0; font-size: 12px;
+}
+.pv-help-item-icon { font-size: 14px; flex-shrink: 0; width: 22px; text-align: center; }
+.pv-help-item-name { flex: 1; color: var(--text-secondary); }
+.pv-help-item-pts {
+    font-size: 11px; font-weight: 700; padding: 2px 7px;
+    border-radius: 6px; white-space: nowrap;
+}
+.pv-help-item-pts.pos { color: #22C55E; background: rgba(34,197,94,0.1); }
+.pv-help-item-pts.neg { color: #ef4444; background: rgba(239,68,68,0.1); }
+.pv-help-base {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    background: rgba(201,162,39,0.1); padding: 3px 10px;
+    border-radius: 8px; margin-bottom: 12px;
+}
+.pv-help-zones {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px;
+    padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.pv-help-zone {
+    flex: 1; min-width: 80px; padding: 8px 10px; border-radius: 10px;
+    text-align: center; font-size: 11px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+.pv-help-zone-icon { font-size: 16px; margin-bottom: 2px; }
+.pv-help-zone-label { margin-bottom: 1px; }
+.pv-help-zone-range { font-size: 10px; opacity: 0.7; }
+</style>
+
+<!-- ═══ HTML ═══ -->
+<div class="pv-page">
+    <!-- Header (dynamic title) -->
+    <div class="pv-header">
+        <div class="pv-header-left">
+            <h1 id="pvTitle">💓 Pulse Vital</h1>
+            <span class="pv-header-sub" id="pvSubtitle">Diagnostic de santé relationnelle</span>
+            <div id="pvClientDates" style="display:none;font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap;">
+                <span id="pvCreatedAt"></span>
+                <span id="pvLastActivity"></span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button class="pv-transcript-btn" id="pvTranscriptBtn" onclick="pvOpenTranscript()" title="Transcrire un fichier audio avec Gemini AI" style="display:none;">
+                <span>🎙️</span>
+                <span>Transcript AI</span>
+            </button>
+            <button class="pv-soumission-btn" id="pvSoumissionBtn" onclick="pvOpenSoumission()" title="Générer un courriel de soumission à partir d'un transcript" style="display:none;">
+                <span>✨</span>
+                <span>Générer soumission</span>
+            </button>
+            <button class="pv-help-btn" id="pvHelpBtn" onclick="pvToggleHelp()" title="Comment fonctionne le score ?">?</button>
+            <button class="pv-refresh-btn" id="pvRefreshBtn" onclick="refreshPulseVital()">
+                <span class="pv-refresh-icon">🔄</span>
+                <span>Recalculer</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Help Panel (slide-down) -->
+    <div class="pv-help-panel" id="pvHelpPanel"></div>
+
+    <!-- Type contact selector (filtered by current type) -->
+    <div id="pvTypeSelector" class="pv-type-selector" style="display:none;">
+        <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-right:4px;">Type :</span>
+        <button class="pv-type-chip" data-type="prospect" onclick="pvChangeType('prospect')">🎯 Prospect</button>
+        <button class="pv-type-chip" data-type="client" onclick="pvChangeType('client')">✅ Client</button>
+        <button class="pv-type-chip" data-type="corpo" onclick="pvChangeType('corpo')">🏛️ Corporation</button>
+        <button class="pv-type-chip" data-type="inactif" onclick="pvChangeType('inactif')">💤 Inactif</button>
+    </div>
+
+    <!-- Tier selector (Or / Argent / Bronze) -->
+    <div id="pvTierSelector" class="pv-tier-selector" style="display:none;">
+        <span class="pv-tier-label">Importance :</span>
+        <button class="pv-tier-chip" data-tier="gold" onclick="pvChangeTier('gold')">🥇 Or</button>
+        <button class="pv-tier-chip" data-tier="silver" onclick="pvChangeTier('silver')">🥈 Argent</button>
+        <button class="pv-tier-chip" data-tier="bronze" onclick="pvChangeTier('bronze')">🥉 Bronze</button>
+    </div>
+
+    <!-- Content grid -->
+    <div id="pvContent">
+        <div class="pv-loading">
+            <div class="spinner" style="margin: 0 auto 12px; width: 24px; height: 24px;"></div>
+            Calcul en cours...
+        </div>
+    </div>
+</div>
+
+<!-- Soumission AI Modal -->
+<div class="soum-overlay" id="soumOverlay" onclick="if(event.target===this)pvCloseSoumission()">
+    <div class="soum-modal">
+        <div class="soum-header">
+            <span class="soum-header-title">✨ Générateur de soumission AI</span>
+            <button class="soum-close" onclick="pvCloseSoumission()">✕</button>
+        </div>
+        <div class="soum-body">
+            <div>
+                <div class="soum-section-label">📝 Transcript de la rencontre</div>
+                <textarea class="soum-textarea" id="soumTranscript" placeholder="Collez ici le transcript de votre rencontre, vos notes d'appel, ou un résumé détaillé de la discussion avec le client...&#10;&#10;Incluez: les produits discutés, les montants, les primes, les noms des personnes couvertes, etc."></textarea>
+            </div>
+            <div id="soumResultSection" style="display:none;">
+                <div class="soum-section-label">📧 Courriel généré</div>
+                <textarea class="soum-textarea result" id="soumResult" readonly></textarea>
+            </div>
+        </div>
+        <div class="soum-actions">
+            <button class="soum-btn secondary" onclick="pvCloseSoumission()">Fermer</button>
+            <button class="soum-btn copy" id="soumCopyBtn" onclick="pvCopySoumission()" style="display:none;">📋 Copier</button>
+            <button class="soum-btn primary" id="soumGenerateBtn" onclick="pvGenerateSoumission()">✨ Générer le courriel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Transcript AI Modal -->
+<div class="soum-overlay" id="transcriptOverlay" onclick="if(event.target===this)pvCloseTranscript()">
+    <div class="soum-modal">
+        <div class="soum-header" style="background:rgba(34,197,94,0.1);">
+            <span class="soum-header-title" style="color:#22c55e;">🎙️ Transcript AI — Whisper</span>
+            <button class="soum-close" onclick="pvCloseTranscript()">✕</button>
+        </div>
+        <div class="soum-body">
+            <div>
+                <div class="soum-section-label">📂 Fichier audio (MP3, WAV, M4A, WebM — max 25 MB)</div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <label style="flex:1;padding:20px;border:2px dashed var(--border-color);border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;" id="transcriptDropZone">
+                        <input type="file" id="transcriptFile" accept="audio/*,video/webm,.mp3,.wav,.m4a,.ogg,.webm,.mp4" style="display:none;" onchange="pvFileSelected(this)">
+                        <div style="font-size:32px;margin-bottom:8px;">📁</div>
+                        <div id="transcriptFileName" style="color:var(--text-muted);font-size:13px;">Cliquer pour sélectionner un fichier audio</div>
+                    </label>
+                </div>
+            </div>
+            <div id="transcriptResultSection" style="display:none;">
+                <div class="soum-section-label">📝 Transcript généré</div>
+                <textarea class="soum-textarea result" id="transcriptResult" style="min-height:350px;"></textarea>
+            </div>
+        </div>
+        <div class="soum-actions">
+            <button class="soum-btn secondary" onclick="pvCloseTranscript()">Fermer</button>
+            <button class="soum-btn copy" id="transcriptCopyBtn" onclick="pvCopyTranscript()" style="display:none;">📋 Copier</button>
+            <button class="soum-btn" id="transcriptNotesBtn" onclick="pvTranscriptToNotes()" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">📋 Notes AMF</button>
+            <button class="soum-btn" id="transcriptToSoumBtn" onclick="pvTranscriptToSoumission()" style="display:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;">✨ Générer soumission</button>
+            <button class="soum-btn primary" id="transcriptGenerateBtn" onclick="pvTranscribe()" style="background:linear-gradient(135deg,#22c55e,#16a34a);" disabled>🎙️ Transcrire</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══ TYPE CONTACT — résolu async dans initPulseVital ═══
+let pvTypeContact = 'prospect'; // default, will be resolved async
+let pvClientData = null;
+
+{
+
+// ═══ CLIENT FACTOR LABELS ═══
+const CLIENT_FACTOR_LABELS = {
+    contact_recency:      { label: 'Contact récent',       icon: '📞', max: 20 },
+    future_meeting:       { label: 'Rendez-vous planifié', icon: '📅', max: 10 },
+    active_products:      { label: 'Produits actifs',      icon: '🛡️', max: 10 },
+    placements:           { label: 'Placements actifs',    icon: '📈', max: 5 },
+    active_opportunities: { label: 'Opportunités actives', icon: '🎯', max: 5 },
+    future_opportunities: { label: 'Opportunités futures', icon: '🔮', max: 5 },
+    task_completion:      { label: 'Tâches complétées',    icon: '✅', max: 5 },
+    abf_completed:        { label: 'ABF complété',         icon: '📋', max: 5 },
+    referral_active:      { label: 'Référence active',     icon: '🤝', max: 5 },
+    // Pénalités
+    stale_contact:        { label: 'Inactivité contact',   icon: '⏰', max: -30 },
+    renewal_risk:         { label: 'Risque renouvellement', icon: '⚠️', max: -15 },
+    coverage_gap:         { label: 'Lacune de couverture', icon: '🕳️', max: -10 },
+    overdue_tasks:        { label: 'Tâches en retard',     icon: '📌', max: -10 },
+    stale_opportunities:  { label: 'Opportunités stagnantes', icon: '🐌', max: -5 },
+    cancelled_policies:   { label: 'Polices annulées',     icon: '❌', max: -10 },
+};
+
+// ═══ PROSPECT FACTOR LABELS ═══
+const PROSPECT_FACTOR_LABELS = {
+    pipeline_position:    { label: 'Position pipeline',     icon: '📊', max: 25 },
+    velocity:             { label: 'Vélocité progression',  icon: '⚡', max: 15 },
+    recent_contact:       { label: 'Contact récent',        icon: '📞', max: 15 },
+    meeting_scheduled:    { label: 'RDV planifié',          icon: '📅', max: 10 },
+    saq_completed:        { label: 'SAQ complété',          icon: '📝', max: 10 },
+    abf_progress:         { label: 'Progression ABF',       icon: '📋', max: 10 },
+    activity_notes:       { label: 'Activité / Notes',      icon: '📝', max: 5 },
+    // Pénalités
+    stagnation:           { label: 'Stagnation statut',     icon: '🐌', max: -25 },
+    no_show:              { label: 'No Show',               icon: '👻', max: -15 },
+    inactivity:           { label: 'Inactivité',            icon: '⏰', max: -20 },
+    replan_no_rdv:        { label: 'Replanif. sans RDV',    icon: '🔄', max: -10 },
+    no_next_action:       { label: 'Pas de prochaine action', icon: '❓', max: -10 },
+    dead_end:             { label: 'Statut terminal',       icon: '💀', max: -30 },
+};
+
+// ═══ CORPO FACTOR LABELS ═══
+const CORPO_FACTOR_LABELS = {
+    linked_contacts:    { label: 'Contacts rattachés',    icon: '👥', max: 20 },
+    linked_abf:         { label: 'ABF perso complétés',   icon: '📝', max: 15 },
+    abf_corpo:          { label: 'ABF corpo complété',    icon: '📋', max: 15 },
+    corpo_products:     { label: 'Produits corpo actifs', icon: '🛡️', max: 10 },
+    corpo_opportunities:{ label: 'Opportunités corpo',    icon: '🎯', max: 5 },
+    // Pénalités
+    no_contacts:        { label: 'Aucun actionnaire',     icon: '⚠️', max: -20 },
+    missing_abf_perso:  { label: 'ABF perso manquants',   icon: '📝', max: -15 },
+    renewal_risk:       { label: 'Renouvellement à risque', icon: '⏰', max: -15 },
+    cancelled_products: { label: 'Produit annulé',        icon: '❌', max: -10 },
+};
+
+// ═══ ACTION TYPE → MODULE ═══
+const ACTION_MODULE_MAP = {
+    contact: 'communication',
+    meeting: 'communication',
+    opportunity: 'abf-objectifs',
+    renewal: 'abf-objectifs',
+    coverage: 'abf-objectifs',
+    stale_opp: 'abf-objectifs',
+    cancelled: 'communication',
+    task: '__open_tasks_popup__',
+    abf: 'abf-contact',
+    placement: 'mes-placements',
+    referral: 'abf-objectifs',
+};
+
+// ═══ INIT ═══
+async function initPulseVital(forceRefresh = false) {
+    const content = document.getElementById('pvContent');
+    if (!content) return;
+
+    if (!forceRefresh) {
+        content.innerHTML = '<div class="pv-loading"><div class="spinner" style="margin:0 auto 12px;width:24px;height:24px;"></div>Calcul en cours...</div>';
+    }
+
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId || !FINOX.calculatePulseScore) {
+        content.innerHTML = '<div class="pv-empty"><div class="pv-empty-icon">💓</div><div>Données insuffisantes pour le calcul.</div></div>';
+        return;
+    }
+
+    try {
+        // Resolve type_contact async (cache may not be ready at script init)
+        pvClientData = await FINOX.loadClientData();
+        pvTypeContact = (pvClientData?.type_contact || 'prospect').toLowerCase();
+
+        // Show type selector — filter visible options by current type
+        // Prospect → Client, Inactif | Client → Prospect, Inactif | Corpo → Corpo, Inactif | Inactif → Prospect, Client, Corpo, Inactif
+        const typeSelector = document.getElementById('pvTypeSelector');
+        if (typeSelector) {
+            typeSelector.style.display = 'flex';
+            const allowedMap = {
+                prospect: ['prospect', 'client', 'inactif'],
+                client:   ['client', 'prospect', 'inactif'],
+                corpo:    ['corpo', 'inactif'],
+                inactif:  ['inactif', 'prospect', 'client', 'corpo']
+            };
+            const allowed = allowedMap[pvTypeContact] || ['prospect', 'client', 'corpo', 'inactif'];
+            typeSelector.querySelectorAll('.pv-type-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.type === pvTypeContact);
+                c.style.display = allowed.includes(c.dataset.type) ? '' : 'none';
+            });
+        }
+
+        // Show tier selector and mark active chip
+        const tierSelector = document.getElementById('pvTierSelector');
+        if (tierSelector) {
+            tierSelector.style.display = pvTypeContact === 'client' ? 'flex' : 'none';
+            const currentTier = pvClientData?.client_tier || null;
+            tierSelector.querySelectorAll('.pv-tier-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.tier === currentTier);
+            });
+        }
+
+        // Update header based on resolved type
+        const titleEl = document.getElementById('pvTitle');
+        const subEl = document.getElementById('pvSubtitle');
+        if (pvTypeContact === 'prospect') {
+            if (titleEl) titleEl.textContent = '💓 Pulse Vital';
+            if (subEl) subEl.textContent = 'Copilote de conversion — Guidez votre prospect vers la vente';
+        } else if (pvTypeContact === 'client') {
+            if (titleEl) titleEl.textContent = '💓 Pulse Vital';
+            if (subEl) subEl.textContent = 'Diagnostic de santé relationnelle';
+        } else if (pvTypeContact === 'inactif') {
+            if (titleEl) titleEl.textContent = '💀 Pulse Vital';
+            if (subEl) subEl.textContent = 'Dossier inactif — Lead perdu ou numéro invalide';
+        } else if (pvTypeContact === 'corpo') {
+            if (titleEl) titleEl.textContent = '💼 Pulse Vital';
+            if (subEl) subEl.textContent = 'Santé du dossier corporatif';
+        } else {
+            if (titleEl) titleEl.textContent = '💓 Pulse Vital';
+            if (subEl) subEl.textContent = 'Diagnostic de santé relationnelle';
+        }
+
+        // Show soumission button for all types
+        const soumBtn = document.getElementById('pvSoumissionBtn');
+        if (soumBtn) soumBtn.style.display = 'flex';
+        const transBtn = document.getElementById('pvTranscriptBtn');
+        if (transBtn) transBtn.style.display = 'flex';
+
+        // Show creation date and last activity
+        const datesEl = document.getElementById('pvClientDates');
+        if (datesEl && pvClientData) {
+            const created = pvClientData.created_at ? new Date(pvClientData.created_at).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+            const lastAct = pvClientData.last_activity_at || pvClientData.updated_at;
+            const lastActStr = lastAct ? new Date(lastAct).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+            const createdEl = document.getElementById('pvCreatedAt');
+            const lastActEl = document.getElementById('pvLastActivity');
+            if (createdEl && created) createdEl.textContent = `📅 Créé le ${created}`;
+            if (lastActEl && lastActStr) lastActEl.textContent = `🕐 Dernière activité: ${lastActStr}`;
+            datesEl.style.display = 'flex';
+        }
+
+        const pulse = await FINOX.calculatePulseScore(clientId, forceRefresh);
+        if (!pulse) {
+            content.innerHTML = '<div class="pv-empty"><div class="pv-empty-icon">📊</div><div>Données insuffisantes pour le diagnostic.</div></div>';
+            return;
+        }
+
+        if (pvTypeContact === 'prospect' || pvTypeContact === 'inactif') {
+            renderProspectPulse(pulse);
+        } else if (pvTypeContact === 'corpo') {
+            renderCorpoPulse(pulse);
+        } else {
+            renderClientPulse(pulse);
+        }
+
+        updateSidebarPulse(pulse);
+
+    } catch (err) {
+        console.error('[PulseVital] Error:', err);
+        content.innerHTML = '<div class="pv-error"><div class="pv-error-icon">⚠️</div><div>Erreur lors du calcul.</div></div>';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER CLIENT PULSE (existing logic, unchanged)
+// ══════════════════════════════════════════════════════════════
+function renderClientPulse(pulse) {
+    const content = document.getElementById('pvContent');
+    const zoneConfig = FINOX.PULSE_ZONES[pulse.zone];
+    const factors = pulse.factors || {};
+
+    let html = '<div class="pv-grid">';
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE GAUCHE (66%) — Suggestions d'amélioration
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // Suggestions d'amélioration (contenu principal)
+    if (pulse.score >= 100) {
+        html += `<div class="pv-section"><div class="pv-all-good"><div style="font-size:48px;margin-bottom:12px;">🏆</div>Score parfait ! Aucune suggestion d'amélioration.</div></div>`;
+    } else if (FINOX.generatePulseSuggestions) {
+        const suggestions = FINOX.generatePulseSuggestions(pulse);
+        if (suggestions.length > 0) {
+            const totalPotential = suggestions.reduce((sum, s) => sum + s.impact, 0);
+            html += '<div class="pv-section">';
+            html += `<div class="pv-sug-header"><span style="font-size:18px;">💡</span><span class="pv-sug-title">Suggestions d'amélioration</span><span class="pv-sug-badge">+${totalPotential} pts potentiels</span></div>`;
+            html += '<div class="pv-sug-list">';
+            for (const sug of suggestions) {
+                const targetModule = ACTION_MODULE_MAP[sug.actionType] || '';
+                const onclickAttr = targetModule ? ` onclick="pvNavigate('${targetModule}')"` : '';
+                html += `<div class="pv-sug-card"${onclickAttr}>
+                    <span class="pv-sug-icon">${sug.icon}</span>
+                    <div class="pv-sug-body">
+                        <div class="pv-sug-card-title">${sug.title}</div>
+                        <div class="pv-sug-desc">${sug.description}</div>
+                    </div>
+                    <div class="pv-sug-right">
+                        <span class="pv-sug-impact">+${sug.impact}</span>
+                        ${targetModule ? '<span class="pv-sug-action">Ouvrir →</span>' : ''}
+                    </div>
+                </div>`;
+            }
+            html += '</div></div>';
+        } else {
+            html += `<div class="pv-section"><div class="pv-all-good"><div style="font-size:48px;margin-bottom:12px;">✨</div>Dossier en excellente santé. Aucune action requise.</div></div>`;
+        }
+    }
+
+    // Diagnostics (collapsible, inline)
+    if (pulse.diagnostics && pulse.diagnostics.length > 0) {
+        html += '<details class="pv-collapse">';
+        html += '<summary><span>🔍</span> Diagnostic détaillé<span class="pv-collapse-chevron">▶</span></summary>';
+        html += '<div class="pv-collapse-body"><div class="pv-diag-list">';
+        for (const diag of pulse.diagnostics) {
+            html += FINOX.renderPulseDiagnostic(diag);
+        }
+        html += '</div></div></details>';
+    }
+
+    html += '</div>'; // pv-col left
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE DROITE (33%) — Facteurs + Pénalités (collapsibles)
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // Facteurs du score (collapsible, open par défaut)
+    html += '<details class="pv-collapse" open>';
+    html += '<summary><span>📊</span> Facteurs du score<span class="pv-collapse-chevron">▶</span></summary>';
+    html += '<div class="pv-collapse-body"><div class="pv-factor-list">';
+
+    const positiveKeys = ['contact_recency', 'future_meeting', 'active_products', 'placements', 'active_opportunities', 'future_opportunities', 'task_completion', 'abf_completed', 'referral_active'];
+    for (const key of positiveKeys) {
+        const info = CLIENT_FACTOR_LABELS[key];
+        if (!info) continue;
+        const pts = factors[key] || 0;
+        const pct = info.max > 0 ? Math.round((pts / info.max) * 100) : 0;
+        const barColor = pts > 0 ? zoneConfig.color : 'rgba(255,255,255,0.08)';
+        const ptsClass = pts > 0 ? 'positive' : 'zero';
+
+        html += `<div class="pv-factor">
+            <span class="pv-factor-icon">${info.icon}</span>
+            <div class="pv-factor-info">
+                <div class="pv-factor-name">${info.label}</div>
+                <div class="pv-factor-bar"><div class="pv-factor-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+            </div>
+            <span class="pv-factor-pts ${ptsClass}">+${pts}/${info.max}</span>
+        </div>`;
+    }
+
+    const penaltyKeys = ['stale_contact', 'renewal_risk', 'coverage_gap', 'overdue_tasks', 'stale_opportunities', 'cancelled_policies'];
+    let hasPenalty = false;
+    for (const key of penaltyKeys) {
+        if ((factors[key] || 0) < 0) hasPenalty = true;
+    }
+
+    if (hasPenalty) {
+        html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(239,68,68,0.15);">';
+        html += '<div style="font-size:10px;color:#ef4444;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Pénalités</div>';
+        for (const key of penaltyKeys) {
+            const info = CLIENT_FACTOR_LABELS[key];
+            if (!info) continue;
+            const pts = factors[key] || 0;
+            if (pts >= 0) continue;
+
+            html += `<div class="pv-factor">
+                <span class="pv-factor-icon">${info.icon}</span>
+                <div class="pv-factor-info">
+                    <div class="pv-factor-name">${info.label}</div>
+                </div>
+                <span class="pv-factor-pts negative">${pts}</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    html += '</div></div></details>';
+
+    html += '</div>'; // pv-col right
+    html += '</div>'; // pv-grid
+
+    content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER CORPO PULSE — Tableau de bord corporatif
+// ══════════════════════════════════════════════════════════════
+function renderCorpoPulse(pulse) {
+    const content = document.getElementById('pvContent');
+    const ZONES = FINOX.CORPO_ZONES || {};
+    const zoneConfig = ZONES[pulse.zone] || { color: '#64748b', icon: '🔴', label: 'Dossier VIDE' };
+    const factors = pulse.factors || {};
+    const completedSections = pulse.completedSections || 0;
+    const totalSections = pulse.totalSections || 8;
+    const linkedContacts = pulse.linkedContacts || 0;
+    const prodCount = pulse.prodCount || 0;
+
+    let html = '<div class="pv-grid">';
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE GAUCHE (66%) — Dashboard de complétude
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // ═══ CORPO DASHBOARD STATS ═══
+    html += '<div class="pv-section">';
+    html += '<div class="pv-section-title"><span>💼</span> Tableau de bord corporatif</div>';
+
+    html += '<div class="pv-corpo-dash">';
+    html += `<div class="pv-corpo-stat ${linkedContacts > 0 ? 'highlight' : 'danger'}">
+        <div class="pv-corpo-stat-icon">👥</div>
+        <div class="pv-corpo-stat-value">${linkedContacts}</div>
+        <div class="pv-corpo-stat-label">Actionnaire${linkedContacts !== 1 ? 's' : ''} rattaché${linkedContacts !== 1 ? 's' : ''}</div>
+    </div>`;
+    html += `<div class="pv-corpo-stat ${completedSections >= totalSections ? 'highlight' : ''}">
+        <div class="pv-corpo-stat-icon">📋</div>
+        <div class="pv-corpo-stat-value">${completedSections}/${totalSections}</div>
+        <div class="pv-corpo-stat-label">Sections ABF corpo</div>
+    </div>`;
+    html += `<div class="pv-corpo-stat ${prodCount > 0 ? 'highlight' : ''}">
+        <div class="pv-corpo-stat-icon">🛡️</div>
+        <div class="pv-corpo-stat-value">${prodCount}</div>
+        <div class="pv-corpo-stat-label">Produit${prodCount !== 1 ? 's' : ''} actif${prodCount !== 1 ? 's' : ''}</div>
+    </div>`;
+    const abfPersoPct = linkedContacts > 0 ? Math.round(((factors.linked_abf || 0) / 15) * 100) : 0;
+    html += `<div class="pv-corpo-stat ${abfPersoPct >= 100 ? 'highlight' : abfPersoPct === 0 && linkedContacts > 0 ? 'danger' : ''}">
+        <div class="pv-corpo-stat-icon">📝</div>
+        <div class="pv-corpo-stat-value">${abfPersoPct}%</div>
+        <div class="pv-corpo-stat-label">ABF perso complétés</div>
+    </div>`;
+    html += '</div>';
+
+    // ═══ ABF SECTIONS CHECKLIST ═══
+    const sectionLabels = [
+        { key: 'section_corpo_profil_completed', icon: '🏢', label: 'Profil de la société' },
+        { key: 'section_corpo_actionnaires_completed', icon: '👥', label: 'Actionnaires' },
+        { key: 'section_corpo_societe_completed', icon: '📑', label: 'Société et structure' },
+        { key: 'section_corpo_finances_completed', icon: '💰', label: 'Finances corporatives' },
+        { key: 'section_corpo_objectifs_completed', icon: '🎯', label: 'Objectifs' },
+        { key: 'section_corpo_personnes_completed', icon: '👔', label: 'Personnes clés' },
+        { key: 'section_corpo_assurances_completed', icon: '🛡️', label: 'Assurances en vigueur' },
+        { key: 'section_corpo_analyses_completed', icon: '📊', label: 'Analyses des besoins' },
+    ];
+
+    const clientAbf = pvClientData?.abf_data || {};
+    html += '<div class="pv-corpo-progress">';
+    html += `<div class="pv-corpo-progress-title">📋 Progression ABF Corpo — ${completedSections}/${totalSections} sections</div>`;
+    for (const s of sectionLabels) {
+        const done = clientAbf[s.key] === true;
+        html += `<div class="pv-corpo-section-row">
+            <div class="pv-corpo-section-check ${done ? 'done' : 'pending'}">${done ? '✓' : '○'}</div>
+            <span class="pv-corpo-section-name ${done ? 'done' : ''}">${s.icon} ${s.label}</span>
+        </div>`;
+    }
+    html += '</div>';
+
+    html += '</div>'; // pv-section
+
+    html += '</div>'; // pv-col left
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE DROITE (33%) — Facteurs + Diagnostic
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // ═══ FACTEURS DU SCORE (collapsible) ═══
+    html += '<details class="pv-collapse" open>';
+    html += '<summary><span>📊</span> Facteurs du score<span class="pv-collapse-chevron">▶</span></summary>';
+    html += '<div class="pv-collapse-body"><div class="pv-factor-list">';
+
+    const corpoPositiveKeys = ['linked_contacts', 'linked_abf', 'abf_corpo', 'corpo_products', 'corpo_opportunities'];
+    for (const key of corpoPositiveKeys) {
+        const info = CORPO_FACTOR_LABELS[key];
+        if (!info) continue;
+        const pts = factors[key] || 0;
+        const pct = info.max > 0 ? Math.round((pts / info.max) * 100) : 0;
+        const barColor = pts > 0 ? zoneConfig.color : 'rgba(255,255,255,0.08)';
+        const ptsClass = pts > 0 ? 'positive' : 'zero';
+
+        html += `<div class="pv-factor">
+            <span class="pv-factor-icon">${info.icon}</span>
+            <div class="pv-factor-info">
+                <div class="pv-factor-name">${info.label}</div>
+                <div class="pv-factor-bar"><div class="pv-factor-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+            </div>
+            <span class="pv-factor-pts ${ptsClass}">+${pts}/${info.max}</span>
+        </div>`;
+    }
+
+    const corpoPenaltyKeys = ['no_contacts', 'missing_abf_perso', 'renewal_risk', 'cancelled_products'];
+    let hasCorpoPenalty = false;
+    for (const key of corpoPenaltyKeys) {
+        if ((factors[key] || 0) < 0) hasCorpoPenalty = true;
+    }
+    if (hasCorpoPenalty) {
+        html += '<div style="border-top:1px solid rgba(239,68,68,0.1);margin:8px 0;"></div>';
+        for (const key of corpoPenaltyKeys) {
+            const info = CORPO_FACTOR_LABELS[key];
+            if (!info) continue;
+            const pts = factors[key] || 0;
+            if (pts >= 0) continue;
+
+            html += `<div class="pv-factor">
+                <span class="pv-factor-icon">${info.icon}</span>
+                <div class="pv-factor-info">
+                    <div class="pv-factor-name">${info.label}</div>
+                </div>
+                <span class="pv-factor-pts negative">${pts}</span>
+            </div>`;
+        }
+    }
+
+    html += '</div></div></details>';
+
+    // ═══ DIAGNOSTIC (collapsible) ═══
+    if (pulse.diagnostics && pulse.diagnostics.length > 0) {
+        html += '<details class="pv-collapse">';
+        html += '<summary><span>🔍</span> Diagnostic<span class="pv-collapse-chevron">▶</span></summary>';
+        html += '<div class="pv-collapse-body"><div class="pv-diag-list">';
+        for (const diag of pulse.diagnostics) {
+            html += FINOX.renderPulseDiagnostic(diag);
+        }
+        html += '</div></div></details>';
+    }
+
+    html += '</div>'; // pv-col right
+    html += '</div>'; // pv-grid
+
+    content.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER PROSPECT PULSE — Copilote de conversion
+// ══════════════════════════════════════════════════════════════
+function renderProspectPulse(pulse) {
+    const content = document.getElementById('pvContent');
+    const factors = pulse.factors || {};
+    const statutLead = factors.statut_lead || 'Nouveau Lead';
+    const LEAD_CONFIG = FINOX.LEAD_STATUS_CONFIG || {};
+    const STAGES = FINOX.LEAD_PIPELINE_STAGES || [];
+    const SUGGESTIONS = FINOX.LEAD_SUGGESTIONS || {};
+    const ZONES = FINOX.PROSPECT_ZONES || {};
+    const zoneConfig = ZONES[pulse.zone] || { color: '#64748b', icon: '🧊', label: 'Lead GELÉ' };
+
+    const currentConfig = LEAD_CONFIG[statutLead] || {};
+    const currentPipelinePos = currentConfig.pipelinePos ?? -1;
+
+    let html = '<div class="pv-grid">';
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE GAUCHE (66%) — Pipeline + Statuts interactifs
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // ═══ PIPELINE VISUAL ═══
+    html += '<div class="pv-section">';
+    html += '<div class="pv-section-title"><span>🗺️</span> Pipeline de conversion</div>';
+
+    if (currentPipelinePos === -1) {
+        // ═══ FLATLINE — Dead lead heart monitor ═══
+        const deadLabel = statutLead === 'Lead mort' ? '💀 LEAD MORT' : '❌ MAUVAIS NUMÉRO';
+        html += `<div class="pv-flatline-wrap">
+            <svg class="pv-flatline-svg" viewBox="0 0 500 60" preserveAspectRatio="none">
+                <path class="pv-flatline-glow" d="M0,30 L80,30 L95,30 L105,8 L115,52 L125,12 L135,48 L145,20 L155,38 L165,28 L175,32 L195,30 L500,30" />
+                <path class="pv-flatline-line" d="M0,30 L80,30 L95,30 L105,8 L115,52 L125,12 L135,48 L145,20 L155,38 L165,28 L175,32 L195,30 L500,30" />
+                <circle class="pv-flatline-dot" cx="500" cy="30" r="3" />
+            </svg>
+            <div class="pv-flatline-label">${deadLabel}</div>
+        </div>`;
+    } else {
+        html += '<div class="pv-pipeline">';
+        STAGES.forEach((stage, idx) => {
+            const stagePos = idx;
+            let stageClass = '';
+            if (stagePos < currentPipelinePos) {
+                stageClass = 'completed';
+            } else if (stagePos === currentPipelinePos) {
+                stageClass = 'active';
+            }
+
+            if (idx > 0) {
+                html += `<div class="pv-pipeline-connector ${stagePos <= currentPipelinePos ? 'completed' : ''}"></div>`;
+            }
+
+            html += `<div class="pv-pipeline-stage ${stageClass}">
+                <div class="pv-pipeline-dot">${stage.icon}</div>
+                <span class="pv-pipeline-label">${stage.label}</span>
+            </div>`;
+        });
+        html += '</div>';
+    }
+
+    // Separator
+    html += '<div style="border-top:1px solid rgba(255,255,255,0.06);margin:12px 0;"></div>';
+
+    // ═══ STATUTS INTERACTIFS — groupés par étape pipeline ═══
+    html += '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;font-weight:600;">Changer le statut</div>';
+
+    const STATUS_DESCRIPTIONS = {
+        'Nouveau Lead':            'Premier contact à établir',
+        'Lead non rejoint':        'Tentative sans réponse',
+        'À rappeler':              'À rappeler selon le plan',
+        'Rencontre booker':        'RDV confirmé',
+        'No Show':                 'Absent au RDV',
+        'Le lead analyse le tout': 'Réfléchit à la proposition',
+        'Replanifier rencontre':   'Rencontre à replanifier',
+        'ABF':                     'Analyse besoins en cours',
+        'Vente':                   'Converti en client',
+        'Mauvais numéro':          'Numéro invalide',
+        'Lead mort':               'Dossier fermé',
+    };
+
+    for (const stage of STAGES) {
+        const stageStatuses = stage.statuses.map(s => [s, LEAD_CONFIG[s]]).filter(([, c]) => c);
+        if (stageStatuses.length === 0) continue;
+
+        html += `<div style="margin-bottom:10px;">`;
+        html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;display:flex;align-items:center;gap:4px;opacity:0.7;">${stage.icon} ${stage.label}</div>`;
+        html += '<div style="display:flex;flex-direction:column;gap:3px;">';
+
+        for (const [name, cfg] of stageStatuses) {
+            const isActive = name === statutLead;
+            const desc = STATUS_DESCRIPTIONS[name] || '';
+            const escapedName = name.replace(/'/g, "\\'");
+
+            if (isActive) {
+                html += `<div class="pv-status-card-item active" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(201,162,39,0.1);border:1px solid rgba(201,162,39,0.3);cursor:default;">
+                    <span style="font-size:16px;flex-shrink:0;">${cfg.icon}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:var(--gold);">${name}</div>
+                        <div style="font-size:10px;color:var(--text-muted);line-height:1.2;">${desc}</div>
+                    </div>
+                    <span style="font-size:9px;color:var(--gold);background:rgba(201,162,39,0.15);padding:2px 6px;border-radius:6px;font-weight:700;flex-shrink:0;">ACTUEL</span>
+                </div>`;
+            } else {
+                html += `<div class="pv-status-card-item" onclick="pvChangeStatus('${escapedName}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.2s;">
+                    <span style="font-size:16px;flex-shrink:0;">${cfg.icon}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${name}</div>
+                        <div style="font-size:10px;color:var(--text-muted);line-height:1.2;">${desc}</div>
+                    </div>
+                    <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;opacity:0.5;">→</span>
+                </div>`;
+            }
+        }
+
+        html += '</div></div>';
+    }
+
+    // Dead-end statuses
+    const deadEndStatuses = Object.entries(LEAD_CONFIG).filter(([, c]) => c.pipelinePos === -1).sort((a, b) => a[1].order - b[1].order);
+    if (deadEndStatuses.length > 0) {
+        html += `<div style="margin-top:4px;padding-top:6px;border-top:1px dashed rgba(239,68,68,0.15);">`;
+        html += `<div style="font-size:10px;color:rgba(239,68,68,0.6);margin-bottom:5px;display:flex;align-items:center;gap:4px;">⛔ Terminaux</div>`;
+        html += '<div style="display:flex;flex-direction:column;gap:3px;">';
+        for (const [name, cfg] of deadEndStatuses) {
+            const isActive = name === statutLead;
+            const desc = STATUS_DESCRIPTIONS[name] || '';
+            const escapedName = name.replace(/'/g, "\\'");
+
+            if (isActive) {
+                html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);cursor:default;">
+                    <span style="font-size:16px;flex-shrink:0;">${cfg.icon}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:#ef4444;">${name}</div>
+                        <div style="font-size:10px;color:var(--text-muted);line-height:1.2;">${desc}</div>
+                    </div>
+                    <span style="font-size:9px;color:#ef4444;background:rgba(239,68,68,0.15);padding:2px 6px;border-radius:6px;font-weight:700;flex-shrink:0;">ACTUEL</span>
+                </div>`;
+            } else {
+                html += `<div onclick="pvChangeStatus('${escapedName}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.2s;opacity:0.7;">
+                    <span style="font-size:16px;flex-shrink:0;">${cfg.icon}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);">${name}</div>
+                        <div style="font-size:10px;color:var(--text-muted);line-height:1.2;">${desc}</div>
+                    </div>
+                    <span style="font-size:11px;color:var(--text-muted);flex-shrink:0;opacity:0.5;">→</span>
+                </div>`;
+            }
+        }
+        html += '</div></div>';
+    }
+
+    html += '</div>'; // pv-section (pipeline)
+
+    html += '</div>'; // pv-col left
+
+    // ══════════════════════════════════════════════════════════════
+    // COLONNE DROITE (33%) — Prochaine étape + Facteurs + Diagnostic + Actions
+    // ══════════════════════════════════════════════════════════════
+    html += '<div class="pv-col">';
+
+    // ═══ APPROBATION DU LEAD (apparaît 1 seule fois) ═══
+    if (!pvClientData?.workflow_approved && statutLead === 'Nouveau Lead') {
+        const fn = pvClientData?.first_name || '';
+        const ln = pvClientData?.last_name || '';
+        html += `<div class="pv-section" id="pvApprovalCard" style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1.5px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <span style="font-size:20px;">✋</span>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Approbation requise</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Validez le nom avant d'envoyer le courriel de bienvenue</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Prénom</label>
+                    <input type="text" id="pvApproveFirstName" value="${fn.replace(/"/g, '&quot;')}" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);font-size:13px;margin-top:2px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Nom</label>
+                    <input type="text" id="pvApproveLastName" value="${ln.replace(/"/g, '&quot;')}" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-primary);color:var(--text-primary);font-size:13px;margin-top:2px;">
+                </div>
+            </div>
+            <button onclick="pvApproveProspect()" style="width:100%;padding:10px;background:linear-gradient(135deg,#22C55E,#16A34A);color:white;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(34,197,94,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <span>✅</span> Approuver et lancer le workflow
+            </button>
+        </div>`;
+    }
+
+    // ═══ PROCHAINE ÉTAPE SUGGÉRÉE ═══
+    const suggestion = SUGGESTIONS[statutLead];
+    if (suggestion) {
+        html += `<div class="pv-next-step">
+            <div class="pv-next-step-title">🎯 Prochaine étape</div>
+            <div class="pv-next-step-action">${suggestion.next}</div>
+            <div class="pv-next-step-tip">💡 ${suggestion.tip}</div>
+        </div>`;
+    }
+
+    // ═══ LEAD OR TOGGLE ═══
+    const isLeadOR = pvClientData?.is_lead_or || false;
+    html += `<div class="pv-lead-or-toggle ${isLeadOR ? 'on' : 'off'}" onclick="pvToggleLeadOR()">
+        <div class="pv-lead-or-switch"></div>
+        <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:${isLeadOR ? '#FFD700' : 'var(--text-secondary)'};">⭐ Lead OR</div>
+            <div style="font-size:10px;color:var(--text-muted);">Client à haut potentiel — priorité élevée</div>
+        </div>
+    </div>`;
+
+    // ═══ DEMANDE DU LEAD (collapsible) ═══
+    const abfData = pvClientData?.abf_data || {};
+    const leadSource = abfData.lead_source || {};
+    const currentSource = leadSource.source || '';
+    const LEAD_SOURCES = {
+        'google_ads':      { icon: '🔵', label: 'Google Ads',       color: '#4285F4', bg: 'rgba(66,133,244,0.12)' },
+        'facebook':        { icon: '📘', label: 'Facebook / Meta',  color: '#1877F2', bg: 'rgba(24,119,242,0.12)' },
+        'instagram':       { icon: '📸', label: 'Instagram',        color: '#E4405F', bg: 'rgba(228,64,95,0.12)' },
+        'reference':       { icon: '🤝', label: 'Référence client', color: '#22C55E', bg: 'rgba(34,197,94,0.12)' },
+        'appel_entrant':   { icon: '📞', label: 'Appel entrant',    color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+        'walkin':          { icon: '🏢', label: 'Walk-in',          color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+        'evenement':       { icon: '🎪', label: 'Événement',        color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
+        'email':           { icon: '📧', label: 'Email / Newsletter', color: '#06B6D4', bg: 'rgba(6,182,212,0.12)' },
+        'site_organique':  { icon: '🔗', label: 'Site web (organique)', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+        'bouche_a_oreille': { icon: '💬', label: 'Bouche-à-oreille', color: '#F97316', bg: 'rgba(249,115,22,0.12)' },
+        'uv_assurance':    { icon: '🎓', label: 'UV Assurance',     color: '#A855F7', bg: 'rgba(168,85,247,0.12)' },
+        'autre':           { icon: '📋', label: 'Autre',            color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' },
+    };
+    const srcCfg = LEAD_SOURCES[currentSource];
+    const sourceLabel = (currentSource === 'autre' && leadSource.autre_source) ? leadSource.autre_source : (srcCfg ? srcCfg.label : '');
+    const sourceBadge = srcCfg
+        ? `<span class="pv-source-badge" style="background:${srcCfg.bg};color:${srcCfg.color};">${srcCfg.icon} ${FINOX.escapeHtml(sourceLabel)}</span>`
+        : '';
+
+    html += '<details class="pv-collapse">';
+    html += `<summary><span>📝</span> Demande du lead ${sourceBadge}<span class="pv-collapse-chevron">▶</span></summary>`;
+    html += '<div class="pv-collapse-body">';
+
+    // ── Profil du lead (lecture seule) ──
+    const _fullName = `${pvClientData?.first_name || ''} ${pvClientData?.last_name || ''}`.trim() || 'N/D';
+    const _dob = pvClientData?.date_naissance;
+    const _sexe = pvClientData?.sexe;
+    const _fumeur = pvClientData?.fumeur;
+    let _ageDisplay = '';
+    let _nearestAgeDisplay = '';
+    if (_dob) {
+        const birthDate = FINOX.parseLocalDate(_dob);
+        const today = new Date();
+        let ageYears = today.getFullYear() - birthDate.getFullYear();
+        const mDiff = today.getMonth() - birthDate.getMonth();
+        const dDiff = today.getDate() - birthDate.getDate();
+        if (mDiff < 0 || (mDiff === 0 && dDiff < 0)) ageYears--;
+        _ageDisplay = ageYears + ' ans';
+        // Âge le plus proche (nearest age) — calcul assureur
+        const lastBday = new Date(birthDate);
+        lastBday.setFullYear(today.getFullYear());
+        if (lastBday > today) lastBday.setFullYear(today.getFullYear() - 1);
+        const nextBday = new Date(lastBday);
+        nextBday.setFullYear(lastBday.getFullYear() + 1);
+        const msToLast = today - lastBday;
+        const msToNext = nextBday - today;
+        const nearestAge = msToNext <= msToLast ? ageYears + 1 : ageYears;
+        _nearestAgeDisplay = nearestAge;
+    }
+    const _dobFormatted = _dob ? FINOX.parseLocalDate(_dob).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const _sexeDisplay = _sexe === 'M' ? '♂ Homme' : _sexe === 'F' ? '♀ Femme' : '';
+    const _fumeurBadge = _fumeur === true ? '<span class="pv-fumeur-badge oui">🚬 Fumeur</span>'
+        : _fumeur === false ? '<span class="pv-fumeur-badge non">🚭 Non-fumeur</span>' : '';
+    const _titreEmploi = pvClientData?.titre_emploi || '';
+    const _employeur = pvClientData?.employeur || '';
+
+    html += '<div class="pv-lead-profile">';
+    html += `<div class="pv-lead-profile-header">
+        <span style="font-size:18px;">👤</span>
+        <span class="pv-lead-profile-name">${FINOX.escapeHtml(_fullName)}</span>
+        ${_fumeurBadge}
+    </div>`;
+    if (_dob) {
+        html += `<div class="pv-lead-profile-item">
+            <span class="pv-profile-key">Date de naissance</span>
+            <span class="pv-profile-val">${_dobFormatted}</span>
+        </div>`;
+        html += `<div class="pv-lead-profile-item">
+            <span class="pv-profile-key">Âge</span>
+            <span class="pv-profile-val">${_ageDisplay}<span class="pv-age-nearest" title="Âge le plus proche (calcul assureur)">🎯 Âge assureur: ${_nearestAgeDisplay}</span></span>
+        </div>`;
+    }
+    if (_sexeDisplay) {
+        html += `<div class="pv-lead-profile-item">
+            <span class="pv-profile-key">Sexe</span>
+            <span class="pv-profile-val">${_sexeDisplay}</span>
+        </div>`;
+    }
+    if (_titreEmploi || _employeur) {
+        const _emploiDisplay = [_titreEmploi, _employeur ? `chez ${_employeur}` : ''].filter(Boolean).join(' ');
+        html += `<div class="pv-lead-profile-item full">
+            <span class="pv-profile-key">💼 Emploi</span>
+            <span class="pv-profile-val">${FINOX.escapeHtml(_emploiDisplay)}</span>
+        </div>`;
+    }
+    if (!_dob && !_sexeDisplay && !_fumeurBadge && !_titreEmploi) {
+        html += `<div class="pv-lead-profile-item full">
+            <span class="pv-profile-val empty" style="font-size:11px;text-align:center;padding:4px 0;">Aucune info personnelle reçue du formulaire</span>
+        </div>`;
+    }
+    html += '</div>';
+
+    // ── Source du lead (modifiable) ──
+    html += '<div class="pv-demande-grid">';
+    html += `<div class="pv-demande-field">
+        <div class="pv-demande-label">📡 Source du lead</div>
+        <select id="pvLeadSource" class="pv-demande-select" onchange="pvSaveSource()">
+            <option value="">-- Sélectionner --</option>`;
+    for (const [key, cfg] of Object.entries(LEAD_SOURCES)) {
+        html += `<option value="${key}" ${currentSource === key ? 'selected' : ''}>${cfg.icon} ${cfg.label}</option>`;
+    }
+    html += `</select>
+    </div>`;
+
+    // Champ conditionnel "Référé par" (visible si source = reference)
+    const referredBy = leadSource.referred_by || '';
+    html += `<div class="pv-demande-field pv-refere-field" id="pvRefereField" style="display:${currentSource === 'reference' ? 'block' : 'none'};">
+        <div class="pv-demande-label">🤝 Référé par</div>
+        <input type="text" id="pvReferedBy" class="pv-demande-input" placeholder="Nom du client référent" value="${referredBy}" onchange="pvSaveSource()">
+    </div>`;
+    // Champ conditionnel "Autre source" (visible si source = autre)
+    const autreSource = leadSource.autre_source || '';
+    html += `<div class="pv-demande-field" id="pvAutreSourceField" style="display:${currentSource === 'autre' ? 'block' : 'none'};">
+        <div class="pv-demande-label">📝 Préciser la source</div>
+        <input type="text" id="pvAutreSource" class="pv-demande-input" placeholder="Ex: Salon de l'habitation, LinkedIn..." value="${FINOX.escapeHtml(autreSource)}" onchange="pvSaveSource()">
+    </div>`;
+    html += '</div>';
+
+    html += '<hr class="pv-source-divider">';
+
+    // ── Demande du lead (lecture seule — données du formulaire web) ──
+    const _typeAss = abfData.saq_type_assurance || '';
+    const _montantVie = abfData.saq_montant_vie || '';
+    const _montantInv = abfData.saq_montant_invalidite || '';
+    const _terme = abfData.saq_terme || '';
+    const _hasDemande = _typeAss || _montantVie || _montantInv || _terme;
+
+    if (_hasDemande) {
+        html += '<div class="pv-demande-readonly">';
+        if (_typeAss) html += `<div class="pv-demande-ro-item full">
+            <div class="pv-demande-ro-label">🛡️ Type d'assurance</div>
+            <div class="pv-demande-ro-val">${FINOX.escapeHtml(_typeAss)}</div>
+        </div>`;
+        if (_montantVie) html += `<div class="pv-demande-ro-item">
+            <div class="pv-demande-ro-label">💰 Montant vie</div>
+            <div class="pv-demande-ro-val">${FINOX.formatMoney(FINOX.parseNumber(_montantVie))}</div>
+        </div>`;
+        if (_montantInv) html += `<div class="pv-demande-ro-item">
+            <div class="pv-demande-ro-label">🩺 Montant invalidité</div>
+            <div class="pv-demande-ro-val">${FINOX.formatMoney(FINOX.parseNumber(_montantInv))}</div>
+        </div>`;
+        if (_terme) html += `<div class="pv-demande-ro-item">
+            <div class="pv-demande-ro-label">📅 Terme souhaité</div>
+            <div class="pv-demande-ro-val">${FINOX.escapeHtml(_terme)}</div>
+        </div>`;
+        html += '</div>';
+    } else {
+        html += `<div style="text-align:center;padding:8px 0;color:var(--text-muted);font-size:11px;font-style:italic;">Aucune demande d'assurance reçue</div>`;
+    }
+
+    // ── UTM Tracking (lecture seule, si données existent) ──
+    const utm = leadSource.utm || {};
+    const hasUtm = utm.source || utm.medium || utm.campaign || utm.content || utm.term;
+    if (hasUtm) {
+        html += '<hr class="pv-source-divider">';
+        html += '<div class="pv-utm-section">';
+        html += '<div class="pv-utm-title"><span>🔍</span> UTM Tracking (auto)</div>';
+        if (utm.source) html += `<div class="pv-utm-row"><span class="pv-utm-key">Source</span><span class="pv-utm-val">${utm.source}</span></div>`;
+        if (utm.medium) html += `<div class="pv-utm-row"><span class="pv-utm-key">Medium</span><span class="pv-utm-val">${utm.medium}</span></div>`;
+        if (utm.campaign) html += `<div class="pv-utm-row"><span class="pv-utm-key">Campagne</span><span class="pv-utm-val">${utm.campaign}</span></div>`;
+        if (utm.content) html += `<div class="pv-utm-row"><span class="pv-utm-key">Contenu</span><span class="pv-utm-val">${utm.content}</span></div>`;
+        if (utm.term) html += `<div class="pv-utm-row"><span class="pv-utm-key">Mot-clé</span><span class="pv-utm-val">${utm.term}</span></div>`;
+        if (utm.landing_page) html += `<div class="pv-utm-row"><span class="pv-utm-key">Landing</span><span class="pv-utm-val">${utm.landing_page}</span></div>`;
+        if (utm.captured_at) {
+            const utmDate = new Date(utm.captured_at).toLocaleDateString('fr-CA', { day:'numeric', month:'short', year:'numeric' });
+            html += `<div class="pv-utm-row"><span class="pv-utm-key">Capturé le</span><span class="pv-utm-val">${utmDate}</span></div>`;
+        }
+        html += '</div>';
+    }
+
+    html += '</div></details>';
+
+    // ═══ FACTEURS DU SCORE (collapsible) ═══
+    html += '<details class="pv-collapse">';
+    html += '<summary><span>📊</span> Facteurs du score <span class="pv-collapse-chevron">▶</span></summary>';
+    html += '<div class="pv-collapse-body"><div class="pv-factor-list">';
+
+    const prospectPositiveKeys = ['pipeline_position', 'velocity', 'recent_contact', 'meeting_scheduled', 'saq_completed', 'abf_progress', 'activity_notes'];
+    for (const key of prospectPositiveKeys) {
+        const info = PROSPECT_FACTOR_LABELS[key];
+        if (!info) continue;
+        const pts = factors[key] || 0;
+        const pct = info.max > 0 ? Math.round((pts / info.max) * 100) : 0;
+        const barColor = pts > 0 ? zoneConfig.color : 'rgba(255,255,255,0.08)';
+        const ptsClass = pts > 0 ? 'positive' : 'zero';
+
+        html += `<div class="pv-factor">
+            <span class="pv-factor-icon">${info.icon}</span>
+            <div class="pv-factor-info">
+                <div class="pv-factor-name">${info.label}</div>
+                <div class="pv-factor-bar"><div class="pv-factor-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+            </div>
+            <span class="pv-factor-pts ${ptsClass}">+${pts}/${info.max}</span>
+        </div>`;
+    }
+
+    const prospectPenaltyKeys = ['stagnation', 'no_show', 'inactivity', 'replan_no_rdv', 'no_next_action', 'dead_end'];
+    let hasProspectPenalty = false;
+    for (const key of prospectPenaltyKeys) {
+        if ((factors[key] || 0) < 0) hasProspectPenalty = true;
+    }
+
+    if (hasProspectPenalty) {
+        html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(239,68,68,0.15);">';
+        html += '<div style="font-size:10px;color:#ef4444;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Pénalités</div>';
+        for (const key of prospectPenaltyKeys) {
+            const info = PROSPECT_FACTOR_LABELS[key];
+            if (!info) continue;
+            const pts = factors[key] || 0;
+            if (pts >= 0) continue;
+
+            html += `<div class="pv-factor">
+                <span class="pv-factor-icon">${info.icon}</span>
+                <div class="pv-factor-info">
+                    <div class="pv-factor-name">${info.label}</div>
+                </div>
+                <span class="pv-factor-pts negative">${pts}</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    html += '</div></div></details>';
+
+    // ═══ DIAGNOSTIC (collapsible) ═══
+    if (pulse.diagnostics && pulse.diagnostics.length > 0) {
+        html += '<details class="pv-collapse">';
+        html += '<summary><span>🔍</span> Diagnostic <span class="pv-collapse-chevron">▶</span></summary>';
+        html += '<div class="pv-collapse-body"><div class="pv-diag-list">';
+        for (const diag of pulse.diagnostics) {
+            html += FINOX.renderPulseDiagnostic(diag);
+        }
+        html += '</div></div></details>';
+    }
+
+    html += '</div>'; // pv-col right
+    html += '</div>'; // pv-grid
+
+    content.innerHTML = html;
+}
+
+// ═══ APPROVE PROSPECT — Gate humain avant 1er workflow ═══
+window.pvApproveProspect = async function() {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const firstName = document.getElementById('pvApproveFirstName')?.value?.trim();
+    const lastName = document.getElementById('pvApproveLastName')?.value?.trim();
+
+    if (!firstName) {
+        FINOX.showNotification('Le prénom est requis', 'error');
+        return;
+    }
+
+    const card = document.getElementById('pvApprovalCard');
+    const btn = card?.querySelector('button');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span>⏳</span> Approbation...'; }
+
+    try {
+        const sb = FINOX.supabase;
+        const now = new Date().toISOString();
+
+        // 1. Sauvegarder corrections + marquer approuvé
+        const { error } = await sb.from('clients')
+            .update({
+                first_name: firstName,
+                last_name: lastName || '',
+                workflow_approved: true,
+                updated_at: now
+            })
+            .eq('id', clientId);
+        if (error) throw error;
+
+        // 2. Timeline entry
+        await FINOX.addTimelineEntry(clientId, 'status_change', '✅ Lead approuvé — workflow de bienvenue lancé');
+
+        // 3. Déclencher le workflow "lead_approved"
+        const curUser = FINOX.getCurrentUser();
+        fetch('/workflow/trigger', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                trigger_type: 'lead_approved',
+                trigger_data: { first_name: firstName, last_name: lastName || '' },
+                client_id: clientId,
+                user_id: curUser?.id
+            })
+        }).catch(err => console.error('[Workflow] Approve trigger error:', err));
+
+        // 4. Animation de disparition
+        if (card) {
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-10px)';
+            card.style.maxHeight = card.scrollHeight + 'px';
+            requestAnimationFrame(() => {
+                card.style.maxHeight = '0';
+                card.style.padding = '0';
+                card.style.margin = '0';
+                card.style.border = 'none';
+            });
+            setTimeout(() => card.remove(), 500);
+        }
+
+        // 5. Mettre à jour le cache
+        FINOX.invalidateCache('client_data');
+        FINOX.invalidateCache(`pulse_${clientId}`);
+        if (pvClientData) {
+            pvClientData.first_name = firstName;
+            pvClientData.last_name = lastName || '';
+            pvClientData.workflow_approved = true;
+        }
+
+        FINOX.showNotification(`✅ ${firstName} ${lastName || ''} approuvé — workflow envoyé !`, 'success');
+    } catch (err) {
+        console.error('[PulseVital] Approve error:', err);
+        FINOX.showNotification('Erreur lors de l\'approbation', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>✅</span> Approuver et lancer le workflow'; }
+    }
+};
+
+// ═══ CHANGE STATUS FROM PULSE MODULE ═══
+window.pvChangeStatus = async function(newStatus) {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const config = FINOX.LEAD_STATUS_CONFIG || {};
+    const statusConfig = config[newStatus];
+    if (!statusConfig) return;
+
+    try {
+        const sb = FINOX.supabase;
+        const { data: oldClient } = await sb.from('clients')
+            .select('statut_lead')
+            .eq('id', clientId)
+            .single();
+
+        const oldStatus = oldClient?.statut_lead || 'Nouveau Lead';
+        if (oldStatus === newStatus) return;
+
+        const now = new Date().toISOString();
+        const { error } = await sb.from('clients')
+            .update({ statut_lead: newStatus, statut_lead_changed_at: now, updated_at: now })
+            .eq('id', clientId);
+        if (error) throw error;
+
+        // Timeline entry
+        const oldCfg = config[oldStatus] || {};
+        await FINOX.addTimelineEntry(clientId, 'status_change', `Statut lead : ${oldCfg.icon || ''} ${oldStatus} → ${statusConfig.icon} ${newStatus}`);
+
+        // Trigger workflow automation (fire-and-forget)
+        const curUser = FINOX.getCurrentUser();
+        fetch('/workflow/trigger', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                trigger_type: 'lead_status_change',
+                trigger_data: { from_status: oldStatus, to_status: newStatus, client: oldClient },
+                client_id: clientId,
+                user_id: curUser?.id
+            })
+        }).catch(err => console.error('[Workflow] Trigger error:', err));
+
+        // Invalidate caches
+        FINOX.invalidateCache('client_data');
+        FINOX.invalidateCache(`pulse_${clientId}`);
+
+        // Auto-conversion on Vente
+        if (newStatus === 'Vente') {
+            await sb.from('clients')
+                .update({ type_contact: 'client', updated_at: new Date().toISOString() })
+                .eq('id', clientId);
+            await FINOX.addTimelineEntry(clientId, 'status_change', '🎉 Vente conclue ! Converti en Client');
+            FINOX.invalidateCache('client_data');
+            FINOX.showNotification('🎉 Vente conclue ! Converti en Client', 'success');
+
+            // Reload module as client mode
+            if (typeof loadModule === 'function') loadModule('pulse-vital');
+            return;
+        }
+
+        // Auto-réactivation : inactif → prospect quand on sélectionne un statut non-terminal
+        if (pvTypeContact === 'inactif' && statusConfig.pipelinePos !== -1) {
+            await sb.from('clients')
+                .update({ type_contact: 'prospect', updated_at: new Date().toISOString() })
+                .eq('id', clientId);
+            await FINOX.addTimelineEntry(clientId, 'status_change', '🔄 Réactivé ! Inactif → Prospect');
+            FINOX.invalidateCache('client_data');
+            FINOX.showNotification(`🔄 Lead réactivé en Prospect → ${statusConfig.icon} ${newStatus}`, 'success');
+
+            // Reload module as prospect mode
+            if (typeof loadModule === 'function') loadModule('pulse-vital');
+            return;
+        }
+
+        FINOX.showNotification(`Statut → ${statusConfig.icon} ${newStatus}`, 'success');
+
+        // Recalculate and re-render
+        await initPulseVital(true);
+
+    } catch (err) {
+        console.error('[PulseVital] Erreur changement statut:', err);
+        FINOX.showNotification('Erreur lors du changement de statut', 'error');
+    }
+};
+
+// ═══ UPDATE SIDEBAR PULSE RING (merged with client name) ═══
+function updateSidebarPulse(pulse) {
+    const ringContainer = document.getElementById('sidebarPulseRing');
+    const labelEl = document.getElementById('sidebarPulseLabel');
+    const dotEl = document.getElementById('sidebarPulseDot');
+    const subtitleEl = document.getElementById('sidebarPulseSubtitle');
+    if (!ringContainer || !pulse) return;
+
+    const pulseType = (pvTypeContact === 'inactif') ? 'prospect' : pvTypeContact;
+    ringContainer.style.display = 'block';
+    ringContainer.innerHTML = FINOX.renderPulseRing(pulse.score, 36, pulseType);
+    if (subtitleEl) subtitleEl.style.display = 'block';
+    const zones = pvTypeContact === 'corpo' ? FINOX.CORPO_ZONES
+        : (pvTypeContact === 'prospect' || pvTypeContact === 'inactif') ? FINOX.PROSPECT_ZONES
+        : FINOX.PULSE_ZONES;
+    const zoneConfig = zones[pulse.zone];
+    if (zoneConfig && labelEl) {
+        // Don't show zone label (e.g. "Lead CHAUD") — visible during screen shares with clients
+        labelEl.textContent = '';
+        if (dotEl) dotEl.style.display = 'none';
+    }
+}
+
+// ═══ HELP PANEL ═══
+window.pvToggleHelp = function() {
+    const panel = document.getElementById('pvHelpPanel');
+    const btn = document.getElementById('pvHelpBtn');
+    if (!panel) return;
+
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) {
+        panel.classList.remove('open');
+        btn?.classList.remove('active');
+        return;
+    }
+
+    btn?.classList.add('active');
+    const type = pvTypeContact || 'prospect';
+    let h = '';
+
+    h += '<div class="pv-help-header">';
+    const helpTypeLabel = type === 'prospect' || type === 'inactif' ? ' — Prospect' : type === 'corpo' ? ' — Corporation' : ' — Client';
+    h += `<div class="pv-help-title"><span>📖</span> Comment fonctionne le Pulse Vital${helpTypeLabel}</div>`;
+    h += '<button class="pv-help-close" onclick="pvToggleHelp()">✕</button>';
+    h += '</div>';
+    h += '<div class="pv-help-body">';
+
+    if (type === 'prospect' || type === 'inactif') {
+        h += '<div class="pv-help-intro">Le score Pulse Vital évalue la <strong>température de conversion</strong> de votre prospect sur 100 points. Plus le score est élevé, plus le lead est chaud et proche de la vente. Le score démarre à une <strong>base de 40</strong> et évolue selon vos interactions.</div>';
+        h += '<div class="pv-help-base">🏁 Score de base : 40 / 100</div>';
+
+        // Positive factors
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title positive"><span>✅</span> Facteurs positifs (bonus)</div>';
+        const prospPos = [
+            { icon: '📊', name: 'Position dans le pipeline', pts: '+5 à +25', desc: 'Plus le lead avance (Contact → Suivi → Rencontre → ABF → Vente), plus le score monte' },
+            { icon: '⚡', name: 'Vélocité de progression', pts: '+5 à +15', desc: 'Mise à jour récente du dossier (< 7j = +15, < 14j = +10, < 30j = +5)' },
+            { icon: '📞', name: 'Contact récent', pts: '+5 à +15', desc: 'Dernier contact entrant ou sortant — appel, SMS, email (< 3j = +15, < 7j = +10, < 14j = +5)' },
+            { icon: '📅', name: 'RDV planifié', pts: '+10', desc: 'Au moins un rendez-vous futur est planifié' },
+            { icon: '📝', name: 'SAQ complété', pts: '+10', desc: 'Le questionnaire SAQ a été rempli' },
+            { icon: '📋', name: 'Progression ABF', pts: '+3 à +10', desc: 'Sections de l\'analyse des besoins financiers complétées' },
+            { icon: '📝', name: 'Activité / Notes', pts: '+3 à +5', desc: 'Nombre d\'entrées dans la timeline (≥ 5 = +5, ≥ 3 = +3)' },
+        ];
+        for (const f of prospPos) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts pos">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Penalties
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title negative"><span>⚠️</span> Pénalités (malus)</div>';
+        const prospNeg = [
+            { icon: '🐌', name: 'Stagnation du statut', pts: '-5 à -25', desc: 'Même statut depuis trop longtemps (> 7j = -5, > 14j = -10, > 21j = -15, > 30j = -25)' },
+            { icon: '👻', name: 'No Show', pts: '-15', desc: 'Le prospect ne s\'est pas présenté au rendez-vous' },
+            { icon: '⏰', name: 'Inactivité', pts: '-10 à -20', desc: 'Aucun contact (appel, SMS, email) entrant ni sortant (> 14j = -10, > 21j = -15, > 30j = -20)' },
+            { icon: '🔄', name: 'Replanification sans RDV', pts: '-10', desc: 'Statut "Replanifier" mais aucun nouveau RDV booké' },
+            { icon: '❓', name: 'Pas de prochaine action', pts: '-10', desc: 'Aucun RDV futur ni tâche en attente' },
+            { icon: '💀', name: 'Statut terminal', pts: '-20 à -30', desc: 'Lead mort (-30) ou Mauvais numéro (-20)' },
+        ];
+        for (const f of prospNeg) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts neg">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Zones
+        h += '<div class="pv-help-zones">';
+        h += '<div class="pv-help-zone" style="background:rgba(239,68,68,0.08);color:#ef4444;border-color:rgba(239,68,68,0.2);"><div class="pv-help-zone-icon">🔥</div><div class="pv-help-zone-label">CHAUD</div><div class="pv-help-zone-range">75 – 100</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(245,158,11,0.08);color:#F59E0B;border-color:rgba(245,158,11,0.2);"><div class="pv-help-zone-icon">🌤️</div><div class="pv-help-zone-label">TIÈDE</div><div class="pv-help-zone-range">50 – 74</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(59,130,246,0.08);color:#3B82F6;border-color:rgba(59,130,246,0.2);"><div class="pv-help-zone-icon">❄️</div><div class="pv-help-zone-label">FROID</div><div class="pv-help-zone-range">25 – 49</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(100,116,139,0.08);color:#64748B;border-color:rgba(100,116,139,0.2);"><div class="pv-help-zone-icon">🧊</div><div class="pv-help-zone-label">GELÉ</div><div class="pv-help-zone-range">0 – 24</div></div>';
+        h += '</div>';
+        h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--text-muted);line-height:1.5;">📡 <strong>Canaux suivis :</strong> Appels entrants/sortants, SMS entrants/sortants, Emails entrants/sortants, Rencontres virtuelles/personne. Les contacts sont synchronisés automatiquement via Gmail et RingCentral.</div>';
+
+    } else if (type === 'corpo') {
+        h += '<div class="pv-help-intro">Le score Pulse Vital corporatif évalue la <strong>complétude du dossier corpo</strong> sur 100 points. Contrairement aux prospects/clients, le score corpo ne mesure pas les contacts directs (on contacte les actionnaires, pas la corpo elle-même). Il évalue plutôt la qualité et la complétude de la structure corporative.</div>';
+        h += '<div class="pv-help-base">🏁 Score de base : 20 / 100</div>';
+
+        // Positive factors
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title positive"><span>✅</span> Facteurs positifs (bonus)</div>';
+        const corpoPos = [
+            { icon: '👥', name: 'Contacts rattachés (actionnaires)', pts: '+8 à +20', desc: 'Actionnaires liés à la corpo (1 = +8, 2 = +14, 3+ = +20)' },
+            { icon: '📝', name: 'ABF perso complétés', pts: '+5 à +15', desc: 'Pourcentage des actionnaires ayant complété leur analyse personnelle (> 75% = +15, > 50% = +10, > 0% = +5)' },
+            { icon: '📋', name: 'Sections ABF corpo', pts: '+5 à +15', desc: '8 sections corporatives complétées (> 75% = +15, > 50% = +10, > 25% = +5)' },
+            { icon: '🛡️', name: 'Produits corpo actifs', pts: '+3 à +10', desc: 'Polices d\'assurance corporatives actives (1 = +3, 2 = +7, 3+ = +10)' },
+            { icon: '🎯', name: 'Opportunités corpo', pts: '+5', desc: 'Au moins une opportunité corporative active' },
+        ];
+        for (const f of corpoPos) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts pos">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Penalties
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title negative"><span>⚠️</span> Pénalités (malus)</div>';
+        const corpoNeg = [
+            { icon: '⚠️', name: 'Aucun actionnaire rattaché', pts: '-20', desc: 'La corpo n\'a aucun contact lié — impossible de travailler le dossier' },
+            { icon: '📝', name: 'ABF perso manquants', pts: '-5 à -15', desc: 'Actionnaires sans analyse personnelle (100% manquants = -15, > 50% = -10, > 0% = -5)' },
+            { icon: '⏰', name: 'Renouvellement à risque', pts: '-15', desc: 'Renouvellement de police approchant sans action planifiée' },
+            { icon: '❌', name: 'Produit annulé', pts: '-10', desc: 'Police corporative annulée récemment' },
+        ];
+        for (const f of corpoNeg) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts neg">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Zones
+        h += '<div class="pv-help-zones">';
+        h += '<div class="pv-help-zone" style="background:rgba(34,197,94,0.08);color:#22C55E;border-color:rgba(34,197,94,0.2);"><div class="pv-help-zone-icon">💚</div><div class="pv-help-zone-label">COMPLET</div><div class="pv-help-zone-range">75 – 100</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(201,162,39,0.08);color:#C9A227;border-color:rgba(201,162,39,0.2);"><div class="pv-help-zone-icon">💛</div><div class="pv-help-zone-label">EN COURS</div><div class="pv-help-zone-range">50 – 74</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(245,158,11,0.08);color:#F59E0B;border-color:rgba(245,158,11,0.2);"><div class="pv-help-zone-icon">🟠</div><div class="pv-help-zone-label">INCOMPLET</div><div class="pv-help-zone-range">25 – 49</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(239,68,68,0.08);color:#ef4444;border-color:rgba(239,68,68,0.2);"><div class="pv-help-zone-icon">🔴</div><div class="pv-help-zone-label">VIDE</div><div class="pv-help-zone-range">0 – 24</div></div>';
+        h += '</div>';
+
+        h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--text-muted);line-height:1.5;">💼 <strong>Note :</strong> Le Pulse Vital corpo ne suit pas les contacts directs (appels, SMS, emails) car on contacte toujours les actionnaires, jamais la corporation elle-même. Consultez le Pulse Vital de chaque actionnaire pour suivre les communications.</div>';
+
+    } else {
+        h += '<div class="pv-help-intro">Le score Pulse Vital évalue la <strong>santé de votre relation client</strong> sur 100 points. Un score élevé signifie un client actif, bien couvert et engagé. Le score démarre à une <strong>base de 10</strong> et évolue selon la qualité du suivi.</div>';
+        h += '<div class="pv-help-base">🏁 Score de base : 10 / 100</div>';
+
+        // Positive factors
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title positive"><span>✅</span> Facteurs positifs (bonus)</div>';
+        const clientPos = [
+            { icon: '📞', name: 'Contact récent', pts: '+5 à +20', desc: 'Dernier contact entrant ou sortant — appel, SMS, email (< 30j = +20, < 60j = +12, < 90j = +5)' },
+            { icon: '📅', name: 'RDV planifié', pts: '+10', desc: 'Au moins un rendez-vous futur est prévu' },
+            { icon: '🛡️', name: 'Produits actifs', pts: '+2 à +10', desc: 'Polices d\'assurance actives (2 pts par police, max 10)' },
+            { icon: '📈', name: 'Placements actifs', pts: '+5', desc: 'Au moins un placement en cours' },
+            { icon: '🎯', name: 'Opportunités actives', pts: '+5', desc: 'Opportunités de vente ouvertes' },
+            { icon: '🔮', name: 'Opportunités futures', pts: '+5', desc: 'Renouvellements ou opportunités à venir' },
+            { icon: '✅', name: 'Tâches complétées', pts: '+5', desc: 'Tâches récentes marquées complétées' },
+            { icon: '📋', name: 'ABF complété', pts: '+5', desc: 'Analyse des besoins financiers terminée' },
+            { icon: '🤝', name: 'Référence active', pts: '+5', desc: 'Le client a référé quelqu\'un récemment' },
+        ];
+        for (const f of clientPos) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts pos">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Penalties
+        h += '<div class="pv-help-group">';
+        h += '<div class="pv-help-group-title negative"><span>⚠️</span> Pénalités (malus)</div>';
+        const clientNeg = [
+            { icon: '⏰', name: 'Inactivité contact', pts: '-10 à -30', desc: 'Aucun contact (appel, SMS, email) entrant ni sortant (> 60j = -10, > 120j = -20, > 180j = -30)' },
+            { icon: '⚠️', name: 'Risque renouvellement', pts: '-5 à -15', desc: 'Renouvellement d\'assurance approchant sans action' },
+            { icon: '🕳️', name: 'Lacune de couverture', pts: '-5 à -10', desc: 'Couverture insuffisante vs les besoins identifiés' },
+            { icon: '📌', name: 'Tâches en retard', pts: '-3 à -10', desc: 'Tâches non complétées passées leur date limite' },
+            { icon: '🐌', name: 'Opportunités stagnantes', pts: '-5', desc: 'Opportunités ouvertes depuis plus de 90 jours' },
+            { icon: '❌', name: 'Polices annulées', pts: '-5 à -10', desc: 'Des polices ont été annulées récemment' },
+        ];
+        for (const f of clientNeg) {
+            h += `<div class="pv-help-item"><span class="pv-help-item-icon">${f.icon}</span><span class="pv-help-item-name" title="${f.desc}">${f.name}</span><span class="pv-help-item-pts neg">${f.pts}</span></div>`;
+        }
+        h += '</div>';
+
+        // Zones
+        h += '<div class="pv-help-zones">';
+        h += '<div class="pv-help-zone" style="background:rgba(34,197,94,0.08);color:#22C55E;border-color:rgba(34,197,94,0.2);"><div class="pv-help-zone-icon">💚</div><div class="pv-help-zone-label">OPTIMAL</div><div class="pv-help-zone-range">75 – 100</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(201,162,39,0.08);color:#C9A227;border-color:rgba(201,162,39,0.2);"><div class="pv-help-zone-icon">💛</div><div class="pv-help-zone-label">STABLE</div><div class="pv-help-zone-range">50 – 74</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(245,158,11,0.08);color:#F59E0B;border-color:rgba(245,158,11,0.2);"><div class="pv-help-zone-icon">🟠</div><div class="pv-help-zone-label">ATTENTION</div><div class="pv-help-zone-range">25 – 49</div></div>';
+        h += '<div class="pv-help-zone" style="background:rgba(239,68,68,0.08);color:#ef4444;border-color:rgba(239,68,68,0.2);"><div class="pv-help-zone-icon">🔴</div><div class="pv-help-zone-label">CRITIQUE</div><div class="pv-help-zone-range">0 – 24</div></div>';
+        h += '</div>';
+        h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--text-muted);line-height:1.5;">📡 <strong>Canaux suivis :</strong> Appels entrants/sortants, SMS entrants/sortants, Emails entrants/sortants, Rencontres virtuelles/personne. Les contacts sont synchronisés automatiquement via Gmail et RingCentral.</div>';
+    }
+
+    h += '</div>'; // pv-help-body
+    panel.innerHTML = h;
+    panel.classList.add('open');
+};
+
+// ═══ REFRESH ═══
+window.refreshPulseVital = async function() {
+    const btn = document.getElementById('pvRefreshBtn');
+    if (btn) btn.classList.add('spinning');
+    await initPulseVital(true);
+    if (btn) btn.classList.remove('spinning');
+};
+
+// ═══ NAVIGATE TO MODULE ═══
+window.pvNavigate = function(moduleName) {
+    if (moduleName === '__open_tasks_popup__') {
+        if (typeof openTachesPopup === 'function') openTachesPopup();
+        return;
+    }
+    if (moduleName && typeof loadModule === 'function') {
+        loadModule(moduleName);
+    }
+};
+
+// ═══ TOGGLE LEAD OR ═══
+window.pvToggleLeadOR = async function() {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const current = pvClientData?.is_lead_or || false;
+    const newVal = !current;
+
+    try {
+        const { error } = await FINOX.supabase.from('clients')
+            .update({ is_lead_or: newVal, updated_at: new Date().toISOString() })
+            .eq('id', clientId);
+        if (error) throw error;
+
+        await FINOX.addTimelineEntry(clientId, 'status_change', newVal ? '⭐ Marqué comme Lead OR (priorité élevée)' : '⭐ Lead OR retiré');
+        FINOX.invalidateCache('client_data');
+        FINOX.showNotification(newVal ? '⭐ Lead OR activé' : 'Lead OR désactivé', 'success');
+        await initPulseVital(true);
+    } catch (err) {
+        console.error('[PulseVital] Erreur toggle Lead OR:', err);
+        FINOX.showNotification('Erreur', 'error');
+    }
+};
+
+// ═══ SAVE DEMANDE DU LEAD ═══
+// ═══ SAVE LEAD SOURCE ═══
+window.pvSaveSource = async function() {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const sourceValue = document.getElementById('pvLeadSource')?.value || '';
+    const referredBy = document.getElementById('pvReferedBy')?.value || '';
+    const autreSource = document.getElementById('pvAutreSource')?.value || '';
+
+    // Toggle champs conditionnels
+    const refField = document.getElementById('pvRefereField');
+    if (refField) refField.style.display = sourceValue === 'reference' ? 'block' : 'none';
+    const autreField = document.getElementById('pvAutreSourceField');
+    if (autreField) autreField.style.display = sourceValue === 'autre' ? 'block' : 'none';
+
+    try {
+        const currentAbf = pvClientData?.abf_data || {};
+        const existingSource = currentAbf.lead_source || {};
+        const updatedSource = {
+            ...existingSource,
+            source: sourceValue,
+            referred_by: sourceValue === 'reference' ? referredBy : '',
+            autre_source: sourceValue === 'autre' ? autreSource : '',
+            updated_at: new Date().toISOString()
+        };
+        const updated = { ...currentAbf, lead_source: updatedSource };
+        await FINOX.supabase.from('clients')
+            .update({ abf_data: updated })
+            .eq('id', clientId);
+        FINOX.updateClientDataCache({ abf_data: updated });
+        if (pvClientData) pvClientData.abf_data = updated;
+        FINOX.showNotification('✓ Source enregistrée', 'success');
+    } catch (err) {
+        console.error('[PulseVital] Erreur sauvegarde source:', err);
+        FINOX.showNotification('Erreur', 'error');
+    }
+};
+
+// pvSaveDemande supprimé — champs de demande maintenant en lecture seule (données du formulaire web)
+
+// ═══ CHANGE CLIENT TIER (OR / ARGENT / BRONZE) ═══
+window.pvChangeTier = async function(tier) {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const currentTier = pvClientData?.client_tier || null;
+    const newTier = (currentTier === tier) ? null : tier; // toggle
+
+    const tierLabels = { gold: '🥇 Or', silver: '🥈 Argent', bronze: '🥉 Bronze' };
+
+    try {
+        const { error } = await FINOX.supabase.from('clients')
+            .update({ client_tier: newTier, updated_at: new Date().toISOString() })
+            .eq('id', clientId);
+        if (error) throw error;
+
+        // Update local data
+        if (pvClientData) pvClientData.client_tier = newTier;
+        FINOX.invalidateCache('client_data');
+
+        // Update UI chips
+        document.querySelectorAll('.pv-tier-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.tier === newTier);
+        });
+
+        // Update sidebar tier badge if present
+        const sidebarTier = document.getElementById('sidebarTierBadge');
+        if (sidebarTier) sidebarTier.textContent = newTier ? tierLabels[newTier] : '';
+
+        FINOX.showNotification(newTier ? `${tierLabels[newTier]} — Importance mise à jour` : 'Importance retirée', 'success');
+    } catch (err) {
+        console.error('[PV] Tier update error:', err);
+        FINOX.showNotification('Erreur mise à jour importance', 'error');
+    }
+};
+
+// ═══ CHANGE TYPE CONTACT FROM PULSE MODULE ═══
+window.pvChangeType = async function(newType) {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId) return;
+
+    const oldType = pvTypeContact;
+    if (oldType === newType) return;
+
+    const typeLabels = { prospect: 'Prospect', client: 'Client', corpo: 'Corporation', inactif: 'Inactif' };
+    const typeIcons = { prospect: '🎯', client: '✅', corpo: '🏛️', inactif: '💤' };
+
+    const confirmed = await FINOX.confirm(
+        `Changer le type de contact ?\n\n${typeIcons[oldType]} ${typeLabels[oldType]}  →  ${typeIcons[newType]} ${typeLabels[newType]}\n\nCette action modifiera l'affichage et les fonctionnalités disponibles.`
+    );
+    if (!confirmed) return;
+
+    try {
+        // Update DB
+        const { error } = await FINOX.supabase.from('clients')
+            .update({ type_contact: newType, updated_at: new Date().toISOString() })
+            .eq('id', clientId);
+        if (error) throw error;
+
+        // Timeline
+        await FINOX.addTimelineEntry(clientId, 'status_change', `Type de contact : ${typeIcons[oldType]} ${typeLabels[oldType]} → ${typeIcons[newType]} ${typeLabels[newType]}`);
+
+        // Invalidate caches
+        FINOX.invalidateCache('client_data');
+        FINOX.invalidateCache(`pulse_${clientId}`);
+
+        // ── Sync sidebar pulse indicator ──
+        if (typeof initSidebarPulse === 'function') await initSidebarPulse();
+
+        // Toggle corpo mode (ABF vs ABF Corpo, tools visibility)
+        if (window.FINOX_NAV?.toggleCorpoMode) {
+            FINOX_NAV.toggleCorpoMode({ type_contact: newType });
+        } else if (typeof toggleCorpoMode === 'function') {
+            toggleCorpoMode({ type_contact: newType });
+        }
+
+        // Update drawer pulse ring
+        const drawerPulse = document.getElementById('drawerPulseRing');
+        if (drawerPulse) {
+            if (newType === 'client' || newType === 'prospect') {
+                drawerPulse.style.display = 'block';
+                const pulse = await FINOX.calculatePulseScore(clientId, true);
+                if (pulse) drawerPulse.innerHTML = FINOX.renderPulseRing(pulse.score, 48, newType);
+            } else {
+                drawerPulse.style.display = 'none';
+                drawerPulse.innerHTML = '';
+            }
+        }
+
+        FINOX.showNotification(`Type → ${typeIcons[newType]} ${typeLabels[newType]}`, 'success');
+
+        // Re-render Pulse Vital with new type
+        await initPulseVital(true);
+
+    } catch (err) {
+        console.error('[PulseVital] Erreur changement type:', err);
+        FINOX.showNotification('Erreur lors du changement de type', 'error');
+    }
+};
+
+// ═══ SOUMISSION AI ═══
+// ═══ TRANSCRIPT AI (GEMINI) ═══
+let _transcriptFileData = null;
+
+window.pvOpenTranscript = function() {
+    document.getElementById('transcriptOverlay').classList.add('show');
+    document.getElementById('transcriptResult').value = '';
+    document.getElementById('transcriptResultSection').style.display = 'none';
+    document.getElementById('transcriptCopyBtn').style.display = 'none';
+    document.getElementById('transcriptToSoumBtn').style.display = 'none';
+    document.getElementById('transcriptGenerateBtn').disabled = true;
+    document.getElementById('transcriptFileName').textContent = 'Cliquer pour sélectionner un fichier audio';
+    _transcriptFileData = null;
+};
+
+window.pvCloseTranscript = function() {
+    document.getElementById('transcriptOverlay').classList.remove('show');
+};
+
+window.pvFileSelected = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Check size (25MB max — Whisper limit)
+    if (file.size > 25 * 1024 * 1024) {
+        FINOX.showNotification('Fichier trop gros (max 25 MB). Compresse l\'audio ou découpe en segments.', 'error');
+        input.value = '';
+        return;
+    }
+
+    document.getElementById('transcriptFileName').textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+    document.getElementById('transcriptGenerateBtn').disabled = false;
+
+    // Store the raw file reference (don't load into memory yet)
+    _transcriptFileData = { file, mimeType: file.type || 'audio/mpeg', name: file.name };
+};
+
+window.pvTranscribe = async function() {
+    if (!_transcriptFileData?.file) {
+        FINOX.showNotification('Sélectionne un fichier audio', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('transcriptGenerateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="soum-spinner"></span>Chargement du fichier...';
+
+    try {
+        // Read file as base64 only when needed (in a worker-friendly way)
+        const arrayBuffer = await _transcriptFileData.file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        // Process in chunks to avoid call stack overflow
+        const chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        const base64 = btoa(binary);
+
+        btn.innerHTML = '<span class="soum-spinner"></span>Transcription Whisper en cours...';
+
+        const resp = await fetch('/whisper/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'transcribe',
+                audio_base64: base64,
+                mime_type: _transcriptFileData.mimeType,
+                filename: _transcriptFileData.name
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const transcript = data.content?.[0]?.text || data.transcript || data.text || '';
+        window._lastTranscriptDuration = data.duration_seconds;
+
+        if (!transcript) throw new Error('Aucun transcript généré');
+
+        document.getElementById('transcriptResult').value = transcript;
+        document.getElementById('transcriptResultSection').style.display = 'block';
+        document.getElementById('transcriptCopyBtn').style.display = 'inline-flex';
+        document.getElementById('transcriptToSoumBtn').style.display = 'inline-flex';
+        document.getElementById('transcriptNotesBtn').style.display = 'inline-flex';
+        btn.innerHTML = '🔄 Re-transcrire';
+        btn.disabled = false;
+
+        // Auto-save transcript to DB and capture ID for later AMF notes link
+        try {
+            const user = FINOX.getCurrentUser();
+            const saveResp = await fetch('/whisper/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save',
+                    client_id: pvClientData?.id || null,
+                    conseiller_id: user?.id,
+                    transcript: transcript,
+                    audio_source: 'upload',
+                    audio_filename: _transcriptFileData.name,
+                    duration_seconds: data.duration_seconds
+                })
+            });
+            const saveData = await saveResp.json().catch(() => ({}));
+            window._lastTranscriptId = saveData.id || null;
+            console.log('[Transcript] Saved, id:', window._lastTranscriptId);
+        } catch (saveErr) {
+            console.warn('[Transcript] Save to DB failed:', saveErr.message);
+            window._lastTranscriptId = null;
+        }
+
+        FINOX.showNotification('Transcript généré (Whisper)!', 'success');
+    } catch (err) {
+        console.error('[Transcript] Error:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+        btn.innerHTML = '🎙️ Transcrire';
+        btn.disabled = false;
+    }
+};
+
+window.pvCopyTranscript = function() {
+    const result = document.getElementById('transcriptResult').value;
+    if (!result) return;
+    navigator.clipboard.writeText(result).then(() => {
+        FINOX.showNotification('Transcript copié!', 'success');
+    });
+};
+
+window.pvTranscriptToSoumission = function() {
+    const transcript = document.getElementById('transcriptResult').value;
+    if (!transcript) return;
+    pvCloseTranscript();
+    pvOpenSoumission();
+    document.getElementById('soumTranscript').value = transcript;
+};
+
+window.pvTranscriptToNotes = async function() {
+    const transcript = document.getElementById('transcriptResult').value;
+    if (!transcript || transcript.length < 50) {
+        FINOX.showNotification('Transcript trop court pour générer des notes', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('transcriptNotesBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="soum-spinner"></span>Notes AMF...';
+
+    try {
+        let clientInfo = '';
+        if (pvClientData) {
+            const c = pvClientData;
+            clientInfo += `Prénom: ${c.first_name || '?'}\nNom: ${c.last_name || '?'}`;
+            if (c.date_naissance) clientInfo += `\nDate de naissance: ${c.date_naissance}`;
+            if (c.email) clientInfo += `\nEmail: ${c.email}`;
+            if (c.type_contact) clientInfo += `\nType: ${c.type_contact}`;
+            if (c.conjoint_prenom) clientInfo += `\nConjoint: ${c.conjoint_prenom} ${c.conjoint_nom || ''}`;
+        }
+
+        const user = FINOX.getCurrentUser();
+        const conseillerName = user ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() : '';
+
+        const resp = await fetch('/claude/notes_amf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'notes_amf',
+                transcript,
+                clientInfo: clientInfo || null,
+                conseillerName: conseillerName || null
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const notes = data.content?.[0]?.text || '';
+
+        if (!notes) throw new Error('Aucune note générée');
+
+        // Show notes in the result area
+        document.getElementById('transcriptResult').value = notes;
+        btn.innerHTML = '📋 Notes AMF';
+        btn.disabled = false;
+
+        // Auto-save notes to client timeline if we have a client
+        if (pvClientData?.id) {
+            try {
+                const durationMin = window._lastTranscriptDuration ? Math.round(window._lastTranscriptDuration / 60) : '?';
+                const sb = FINOX.supabase;
+                await sb.from('client_timeline').insert({
+                    client_id: pvClientData.id,
+                    created_by: user?.id,
+                    activity_type: 'ai_notes_amf',
+                    title: `Notes AMF — Transcription manuelle (${durationMin} min)`,
+                    description: notes,
+                    external_source: 'whisper_manual',
+                    call_duration_seconds: window._lastTranscriptDuration || null,
+                    metadata: { source: 'whisper_manual', auto_generated: true, transcript_id: window._lastTranscriptId || null }
+                });
+                FINOX.showNotification('Notes AMF générées et sauvegardées au dossier!', 'success');
+            } catch (saveErr) {
+                console.warn('[Notes AMF] Save to timeline failed:', saveErr.message);
+                FINOX.showNotification('Notes AMF générées! (sauvegarde échouée)', 'warning');
+            }
+        } else {
+            FINOX.showNotification('Notes AMF générées!', 'success');
+        }
+    } catch (err) {
+        console.error('[Notes AMF] Error:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+        btn.innerHTML = '📋 Notes AMF';
+        btn.disabled = false;
+    }
+};
+
+window.pvOpenSoumission = function() {
+    document.getElementById('soumOverlay').classList.add('show');
+    document.getElementById('soumTranscript').value = '';
+    document.getElementById('soumResult').value = '';
+    document.getElementById('soumResultSection').style.display = 'none';
+    document.getElementById('soumCopyBtn').style.display = 'none';
+    document.getElementById('soumGenerateBtn').disabled = false;
+    document.getElementById('soumGenerateBtn').innerHTML = '✨ Générer le courriel';
+};
+
+window.pvCloseSoumission = function() {
+    document.getElementById('soumOverlay').classList.remove('show');
+};
+
+window.pvGenerateSoumission = async function() {
+    const transcript = document.getElementById('soumTranscript').value.trim();
+    if (!transcript || transcript.length < 50) {
+        FINOX.showNotification('Collez un transcript d\'au moins 50 caractères', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('soumGenerateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="soum-spinner"></span>Génération en cours...';
+
+    try {
+        // Build client context from loaded data
+        let clientInfo = '';
+        if (pvClientData) {
+            const c = pvClientData;
+            clientInfo += `Prénom: ${c.first_name || '?'}\nNom: ${c.last_name || '?'}`;
+            if (c.date_naissance) clientInfo += `\nDate de naissance: ${c.date_naissance}`;
+            if (c.email) clientInfo += `\nEmail: ${c.email}`;
+            if (c.phone) clientInfo += `\nTéléphone: ${c.phone}`;
+            if (c.adresse) clientInfo += `\nAdresse: ${c.adresse}`;
+            if (c.type_contact) clientInfo += `\nType: ${c.type_contact}`;
+            // Conjoint info if available
+            if (c.conjoint_prenom) clientInfo += `\nConjoint: ${c.conjoint_prenom} ${c.conjoint_nom || ''}`;
+            if (c.conjoint_date_naissance) clientInfo += `\nDate naissance conjoint: ${c.conjoint_date_naissance}`;
+        }
+
+        // Get conseiller name
+        const user = FINOX.getCurrentUser();
+        const conseillerName = user ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() : '';
+
+        const resp = await fetch('/claude/soumission', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'soumission',
+                transcript,
+                clientInfo: clientInfo || null,
+                conseillerName: conseillerName || null
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const result = data.content?.[0]?.text || data.text || '';
+
+        if (!result) throw new Error('Aucune réponse générée');
+
+        document.getElementById('soumResult').value = result;
+        document.getElementById('soumResultSection').style.display = 'block';
+        document.getElementById('soumCopyBtn').style.display = 'inline-flex';
+        btn.innerHTML = '🔄 Regénérer';
+        btn.disabled = false;
+
+        FINOX.showNotification('Courriel de soumission généré!', 'success');
+    } catch (err) {
+        console.error('[Soumission] Error:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+        btn.innerHTML = '✨ Générer le courriel';
+        btn.disabled = false;
+    }
+};
+
+window.pvCopySoumission = function() {
+    const result = document.getElementById('soumResult').value;
+    if (!result) return;
+    navigator.clipboard.writeText(result).then(() => {
+        FINOX.showNotification('Courriel copié dans le presse-papier!', 'success');
+    }).catch(() => {
+        // Fallback
+        document.getElementById('soumResult').select();
+        document.execCommand('copy');
+        FINOX.showNotification('Courriel copié!', 'success');
+    });
+};
+
+// ═══ LANCER ═══
+// Force recalcul à chaque ouverture du module (pas de cache stale)
+requestAnimationFrame(() => initPulseVital(true));
+
+} // fin du guard type contact
+</script>

@@ -1,0 +1,1032 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-PROJETS-EPARGNE
+     Planification des projets d'épargne et calculs financiers
+     VERSION MODALE 2 ÉTAPES - Sélection type → Détails
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Enlever les flèches des inputs number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* Summary Dashboard */
+.epargne-summary-dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.epargne-summary-card {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.epargne-summary-card:hover { border-color: rgba(232, 180, 77, 0.4); }
+
+.epargne-summary-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.15), rgba(232, 180, 77, 0.05));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.epargne-summary-content { flex: 1; min-width: 0; }
+.epargne-summary-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.epargne-summary-value { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+
+/* Person Selector */
+.epargne-person-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.epargne-person-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.epargne-person-chips { display: flex; gap: 6px; }
+
+.epargne-person-chip {
+    padding: 8px 16px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.epargne-person-chip span { pointer-events: none; }
+.epargne-person-chip:hover { border-color: rgba(232, 180, 77, 0.5); }
+.epargne-person-chip.active { background: rgba(232, 180, 77, 0.15); border-color: var(--gold); color: var(--gold); }
+.epargne-person-chip.conjoint-chip, .epargne-person-chip.both-chip { display: none; }
+.epargne-person-chip.conjoint-chip.visible, .epargne-person-chip.both-chip.visible { display: flex; }
+
+/* Add Button — Uniform style */
+.epargne-add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--gold); color:#000; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.epargne-add-btn:hover { background:#d4a82a; transform:translateY(-1px); }
+
+/* Card Wrapper */
+.card { background: var(--bg-card, #1a1a1a); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 16px; }
+
+/* Projects Grid */
+.epargne-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+
+/* Project Card */
+.epargne-card {
+    background: var(--bg-card, #1e1e1e);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.epargne-card:hover { border-color: rgba(232, 180, 77, 0.5); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3); }
+
+.epargne-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.08), transparent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.epargne-card-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--gold), #f5d485);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.epargne-card-info { flex: 1; min-width: 0; }
+.epargne-card-type { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.epargne-card-owner { font-size: 11px; color: var(--text-muted); }
+
+.epargne-card-body { padding: 16px; }
+.epargne-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+.epargne-card-stat { text-align: center; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; }
+.epargne-card-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+.epargne-card-stat-value { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+.epargne-card-stat-value.monthly { color: #10b981; }
+.epargne-card-stat-sub { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+.epargne-card-timeline { padding: 10px; background: var(--bg-primary, #121212); border-radius: 10px; }
+.epargne-card-timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 10px; }
+.epargne-card-timeline-label { color: var(--text-muted); }
+.epargne-card-timeline-value { color: var(--gold); font-weight: 600; }
+.epargne-card-timeline-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.epargne-card-timeline-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #f5d485); border-radius: 3px; }
+
+.epargne-card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
+.epargne-card:hover .epargne-card-actions { opacity: 1; }
+
+.epargne-card-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.epargne-card-action.edit { background: rgba(232, 180, 77, 0.15); color: var(--gold); }
+.epargne-card-action.delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.epargne-card-action:hover { transform: scale(1.1); }
+
+/* Empty State */
+.epargne-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.epargne-empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
+.epargne-empty-title { font-size: 18px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+
+/* Modal Overlay */
+.epargne-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+
+.epargne-modal-overlay.active { opacity: 1; visibility: visible; }
+
+/* Step 1 - Type Selection — Uniform style */
+.modal-step1 { background:var(--bg-card,#1e1e1e); border:1px solid var(--border-color); border-radius:16px; width:95%; max-width:480px; max-height:85vh; overflow:hidden; display:none; animation:atp-in 0.2s ease; }
+@keyframes atp-in { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.step1-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid var(--border-color); position:relative; }
+.step1-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:8px; position:absolute; top:16px; right:16px; }
+.step1-close:hover { background:rgba(255,255,255,0.1); }
+.step1-title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.step1-subtitle { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.step1-body { padding:16px 20px 20px; overflow-y:auto; max-height:calc(85vh - 80px); }
+.type-category { margin-bottom:14px; }
+.type-category:last-child { margin-bottom:0; }
+.type-category-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.type-category-icon { font-size:16px; }
+.type-category-name { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; }
+.type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; }
+.type-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:12px 6px; background:rgba(255,255,255,0.03); border:1.5px solid var(--border-color); border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.type-btn:hover { border-color:var(--gold); background:rgba(232,180,77,0.1); transform:translateY(-2px); }
+.type-btn-icon { font-size:24px; line-height:1; }
+.type-btn-name { font-size:10px; font-weight:500; color:var(--text-secondary); line-height:1.2; }
+
+/* Step 2 - Details */
+.modal-step2 {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: none;
+}
+
+.step2-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.step2-back {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.step2-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.2), rgba(232, 180, 77, 0.05));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.step2-title-group { flex: 1; }
+.step2-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.step2-subtitle { font-size: 12px; color: var(--text-muted); }
+
+.step2-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.step2-body { padding: 20px; max-height: calc(90vh - 200px); overflow-y: auto; }
+
+/* Form Elements */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+.form-input, .form-select {
+    padding: 10px 12px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.form-input:focus, .form-select:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px rgba(232, 180, 77, 0.1); }
+
+/* Mode Toggle */
+.mode-toggle { display: flex; gap: 4px; padding: 3px; background: var(--bg-primary, #121212); border-radius: 10px; margin-bottom: 16px; }
+
+.mode-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-btn.active { background: linear-gradient(135deg, var(--gold), #f5d485); color: #1a1a1a; }
+
+/* Amount Input */
+.amount-wrapper { position: relative; margin-bottom: 16px; }
+
+.amount-input {
+    width: 100%;
+    padding: 14px 16px;
+    padding-left: 44px;
+    background: var(--bg-primary, #121212);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.amount-input:focus { border-color: var(--gold); outline: none; }
+.amount-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; }
+
+/* Timeline */
+.timeline-section {
+    padding: 14px;
+    background: rgba(232, 180, 77, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(232, 180, 77, 0.15);
+    margin-bottom: 16px;
+}
+
+.timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.timeline-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.timeline-value { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+.timeline-year { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    outline: none;
+    margin-bottom: 6px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--gold), #f5d485);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(232, 180, 77, 0.4);
+}
+
+.slider-marks { display: flex; justify-content: space-between; font-size: 8px; color: var(--text-muted); }
+
+
+
+/* Results */
+.results-box {
+    background: linear-gradient(135deg, rgba(232, 180, 77, 0.1), rgba(232, 180, 77, 0.03));
+    border: 1px solid rgba(232, 180, 77, 0.2);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.results-title { font-size: 10px; font-weight: 600; color: var(--gold); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.result-item { text-align: center; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px; }
+.result-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; }
+.result-value { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); }
+.result-value.main { font-size: 18px; }
+.result-value.gains { color: #10b981; }
+.result-sub { font-size: 8px; color: var(--text-muted); margin-top: 2px; }
+
+/* Footer */
+.step2-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.2);
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.modal-btn.cancel { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+.modal-btn.save { background: var(--gold); color: #000; }
+.modal-btn.delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; flex: 0; padding: 12px 16px; }
+.modal-btn:hover { transform: translateY(-2px); }
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+
+.save-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: #10b981; }
+.save-status-dot.unsaved { background: #f59e0b; animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+@media (max-width: 768px) {
+    .epargne-summary-dashboard { grid-template-columns: repeat(2, 1fr); }
+    .type-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+
+
+<!-- Person Selector -->
+<div class="epargne-person-selector">
+    <span class="epargne-person-label">Projets pour :</span>
+    <div class="epargne-person-chips">
+        <div class="epargne-person-chip active" data-person="client" onclick="selectEpargneOwner('client')">
+            <span>👤</span>
+            <span id="epargneClientName">Client</span>
+        </div>
+        <div class="epargne-person-chip conjoint-chip" data-person="conjoint" onclick="selectEpargneOwner('conjoint')">
+            <span>👥</span>
+            <span id="epargneConjointName">Conjoint</span>
+        </div>
+        <div class="epargne-person-chip both-chip" data-person="both" onclick="selectEpargneOwner('both')">
+            <span>👫</span>
+            <span>Les deux</span>
+        </div>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="epargne-summary-dashboard">
+    <div class="epargne-summary-card">
+        <div class="epargne-summary-icon">📊</div>
+        <div class="epargne-summary-content">
+            <div class="epargne-summary-label">Projets Actifs</div>
+            <div class="epargne-summary-value" id="totalProjets">0</div>
+        </div>
+    </div>
+    <div class="epargne-summary-card">
+        <div class="epargne-summary-icon">🎯</div>
+        <div class="epargne-summary-content">
+            <div class="epargne-summary-label">Objectif Total</div>
+            <div class="epargne-summary-value" id="totalObjectif">0 $</div>
+        </div>
+    </div>
+    <div class="epargne-summary-card">
+        <div class="epargne-summary-icon">💳</div>
+        <div class="epargne-summary-content">
+            <div class="epargne-summary-label">Épargne Mensuelle</div>
+            <div class="epargne-summary-value" id="totalMensuel">0 $</div>
+        </div>
+    </div>
+    <div class="epargne-summary-card">
+        <div class="epargne-summary-icon">📈</div>
+        <div class="epargne-summary-content">
+            <div class="epargne-summary-label">Valeur Projetée</div>
+            <div class="epargne-summary-value" id="totalProjecte">0 $</div>
+        </div>
+    </div>
+</div>
+
+<!-- Projets Card -->
+<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 class="card-title" style="margin:0">Vos Projets d'Épargne</h3>
+        <button class="epargne-add-btn" onclick="openStep1()">➕ Ajouter</button>
+    </div>
+    <div class="epargne-grid" id="epargneGrid"></div>
+    <div class="epargne-empty" id="epargneEmptyState" style="display: none;">
+        <div class="epargne-empty-icon">💰</div>
+        <div class="epargne-empty-title">Aucun projet d'épargne</div>
+        <div class="epargne-empty-text">Cliquez sur ➕ Ajouter pour commencer.</div>
+    </div>
+</div>
+<!-- MODAL -->
+<div class="epargne-modal-overlay" id="epargneModalOverlay" onclick="closeModalOutside(event)">
+    <!-- STEP 1: Type Selection -->
+    <div class="modal-step1" id="modalStep1" onclick="event.stopPropagation()">
+        <div class="step1-header">
+            <button class="step1-close" onclick="closeModal()">✕</button>
+            <div class="step1-title">💰 Nouveau projet d'épargne</div>
+            <div class="step1-subtitle">Quel type de projet souhaitez-vous planifier?</div>
+        </div>
+        <div class="step1-body">
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">🏠</span><span class="type-category-name">Immobilier</span></div>
+                <div class="type-grid" id="gridImmobilier"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">🛡️</span><span class="type-category-name">Sécurité financière</span></div>
+                <div class="type-grid" id="gridSecurite"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">👨‍👩‍👧‍👦</span><span class="type-category-name">Famille & Éducation</span></div>
+                <div class="type-grid" id="gridFamille"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">✨</span><span class="type-category-name">Projets personnels</span></div>
+                <div class="type-grid" id="gridPersonnel"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">🏖️</span><span class="type-category-name">Retraite</span></div>
+                <div class="type-grid" id="gridRetraite"></div>
+            </div>
+            <div class="type-category">
+                <div class="type-category-header"><span class="type-category-icon">📋</span><span class="type-category-name">Stratégie</span></div>
+                <div class="type-grid" id="gridStrategie"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- STEP 2: Details -->
+    <div class="modal-step2" id="modalStep2" onclick="event.stopPropagation()">
+        <div class="step2-header">
+            <button class="step2-back" id="step2BackBtn" onclick="goBackToStep1()">←</button>
+            <div class="step2-icon" id="step2Icon">🎯</div>
+            <div class="step2-title-group">
+                <div class="step2-title" id="step2Title">Projet</div>
+                <div class="step2-subtitle" id="step2Subtitle">Configurez les détails</div>
+            </div>
+            <button class="step2-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="step2-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">👤 Propriétaire</label>
+                    <select class="form-select" id="modalOwner">
+                        <option value="client" id="optionClient">Client</option>
+                        <option value="conjoint" id="optionConjoint" style="display:none;">Conjoint</option>
+                        <option value="both" id="optionBoth" style="display:none;">Les deux</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🏦 Compte</label>
+                    <select class="form-select" id="modalAccount">
+                        <option value="">-- Sélectionner --</option>
+                        <option value="celi">🌱 CELI</option>
+                        <option value="reer">📈 REER</option>
+                        <option value="reee">🎓 REEE</option>
+                        <option value="celiapp">🏠 CELIAPP</option>
+                        <option value="non-enregistre">💰 Non enregistré</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="modeTarget" onclick="setCalcMode('target')">🎯 Objectif</button>
+                <button class="mode-btn" id="modeMonthly" onclick="setCalcMode('monthly')">💳 Épargne mensuelle</button>
+            </div>
+            
+            <div id="targetDiv">
+                <label class="form-label">🎯 Montant objectif</label>
+                <div class="amount-wrapper">
+                    <span class="amount-icon">💰</span>
+                    <input type="text" class="amount-input money-input" id="modalTarget" placeholder="50 000 $" oninput="calc()">
+                </div>
+            </div>
+            
+            <div id="monthlyDiv" style="display:none;">
+                <label class="form-label">💳 Épargne mensuelle</label>
+                <div class="amount-wrapper">
+                    <span class="amount-icon">💵</span>
+                    <input type="text" class="amount-input money-input" id="modalMonthly" placeholder="500 $" oninput="calc()">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">💵 Montant initial</label>
+                    <input type="text" class="form-input money-input" id="modalInitial" placeholder="0 $" oninput="calc()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">📊 Rendement (%)</label>
+                    <input type="number" class="form-input" id="modalRate" value="5" min="0" max="15" step="0.5" oninput="calc()">
+                </div>
+            </div>
+            
+            <div class="timeline-section">
+                <div class="timeline-header">
+                    <span class="timeline-label">📅 Horizon</span>
+                    <span><span class="timeline-value" id="horizonVal">5 ans</span><span class="timeline-year" id="targetYear">→ 2031</span></span>
+                </div>
+                <input type="range" class="slider" id="modalHorizon" min="1" max="30" value="5" oninput="updateHorizon()">
+                <div class="slider-marks"><span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span></div>
+            </div>
+            
+            <div class="results-box">
+                <div class="results-title">📊 Résultats</div>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-label" id="resMainLabel">Épargne requise</div>
+                        <div class="result-value main" id="resMain">—</div>
+                        <div class="result-sub" id="resMainSub">par mois</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Contributions</div>
+                        <div class="result-value" id="resContrib">—</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Rendements</div>
+                        <div class="result-value gains" id="resGains">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step2-footer">
+            <button class="modal-btn delete" id="deleteBtn" onclick="deleteProject()" style="display:none;">🗑️</button>
+            <button class="modal-btn cancel" onclick="closeModal()">Annuler</button>
+            <button class="modal-btn save" onclick="saveProject()">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    
+    let isSaving = false;
+    let projects = [];
+    let counter = 0;
+    let owner = 'client';
+    let editId = null;
+    let clientName = 'Client';
+    let conjointName = 'Conjoint';
+    
+    let data = { type:'', owner:'client', calcMode:'target', targetAmount:0, monthlyAmount:0, initialAmount:0, horizon:5, rate:5, account:'' };
+    
+    const types = {
+        'achat-maison': { icon:'🏠', name:'Achat de maison', cat:'Immobilier', rate:4 },
+        'mise-de-fonds': { icon:'🏡', name:'Mise de fonds', cat:'Immobilier', rate:3 },
+        'renovations': { icon:'🔨', name:'Rénovations', cat:'Immobilier', rate:3 },
+        'chalet': { icon:'🏔️', name:'Chalet', cat:'Immobilier', rate:4 },
+        'immo-locatif': { icon:'🏢', name:'Investissement locatif', cat:'Immobilier', rate:5 },
+        'fonds-urgence': { icon:'🛟', name:"Fonds d'urgence", cat:'Sécurité', rate:2 },
+        'fonds-transition': { icon:'🔄', name:'Fonds transition', cat:'Sécurité', rate:2 },
+        'protection-imprevus': { icon:'🛡️', name:'Protection imprévus', cat:'Sécurité', rate:2 },
+        'etudes-enfant': { icon:'🎓', name:'Études enfant (REEE)', cat:'Famille', rate:4 },
+        'retour-etudes': { icon:'📚', name:'Retour aux études', cat:'Famille', rate:3 },
+        'aide-proche': { icon:'🤝', name:'Aide à un proche', cat:'Famille', rate:3 },
+        'vehicule': { icon:'🚗', name:'Achat véhicule', cat:'Personnel', rate:2 },
+        'projet-personnel': { icon:'✨', name:'Projet personnel', cat:'Personnel', rate:3 },
+        'voyage-majeur': { icon:'✈️', name:'Voyage majeur', cat:'Personnel', rate:2 },
+        'entrepreneuriat': { icon:'💼', name:'Entrepreneuriat', cat:'Personnel', rate:4 },
+        'retraite': { icon:'👴', name:'Revenu retraite', cat:'Retraite', rate:5 },
+        'retraite-anticipee': { icon:'🏖️', name:'Retraite anticipée', cat:'Retraite', rate:5 },
+        'pont-retraite': { icon:'🌉', name:'Pont retraite', cat:'Retraite', rate:4 },
+        'liberte-financiere': { icon:'🦅', name:'Liberté financière', cat:'Retraite', rate:6 },
+        'optimisation-fiscale': { icon:'📋', name:'Optimisation fiscale', cat:'Stratégie', rate:4 },
+        'accumulation-lt': { icon:'📈', name:'Accumulation LT', cat:'Stratégie', rate:5 },
+        'decaissement': { icon:'💸', name:'Décaissement', cat:'Stratégie', rate:4 },
+        'autre': { icon:'🎯', name:'Autre projet', cat:'Stratégie', rate:4 }
+    };
+    
+    const parse = s => FINOX.parseNumber(s);
+    const fmt = n => Math.round(n||0).toLocaleString('fr-CA')+' $';
+    const fv = (m,r,y) => r===0 ? m*y*12 : m*((Math.pow(1+r/100/12,y*12)-1)/(r/100/12));
+    const fvL = (p,r,y) => p*Math.pow(1+r/100,y);
+    const pmt = (fv,r,y) => r===0 ? fv/(y*12) : fv*((r/100/12)/(Math.pow(1+r/100/12,y*12)-1));
+    
+    function initGrids() {
+        const cats = { 'Immobilier':'gridImmobilier', 'Sécurité':'gridSecurite', 'Famille':'gridFamille', 'Personnel':'gridPersonnel', 'Retraite':'gridRetraite', 'Stratégie':'gridStrategie' };
+        Object.entries(cats).forEach(([c,id]) => {
+            const g = document.getElementById(id);
+            if(!g) return;
+            g.innerHTML = Object.entries(types).filter(([_,i])=>i.cat===c).map(([k,i])=>`<div class="type-btn" onclick="selectType('${k}')"><div class="type-btn-icon">${i.icon}</div><div class="type-btn-name">${i.name}</div></div>`).join('');
+        });
+    }
+    
+    window.openStep1 = function() {
+        editId = null;
+        document.getElementById('modalStep1').style.display = 'block';
+        document.getElementById('modalStep2').style.display = 'none';
+        document.getElementById('epargneModalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.selectType = function(t) {
+        const info = types[t];
+        data = { type:t, owner:owner, calcMode:'target', targetAmount:0, monthlyAmount:0, initialAmount:0, horizon:5, rate:info.rate, account:t==='etudes-enfant'?'reee':'' };
+        
+        document.getElementById('step2Icon').textContent = info.icon;
+        document.getElementById('step2Title').textContent = info.name;
+        document.getElementById('step2Subtitle').textContent = 'Configurez les détails';
+        
+        document.getElementById('modalOwner').value = owner;
+        // Auto-sélectionner et masquer si pas de conjoint
+        if (!client.has_conjoint) {
+            document.getElementById('modalOwner').value = 'client';
+            document.getElementById('modalOwner').closest('.form-group').style.display = 'none';
+        } else {
+            document.getElementById('modalOwner').closest('.form-group').style.display = '';
+        }
+        document.getElementById('modalAccount').value = data.account;
+        document.getElementById('modalTarget').value = '';
+        document.getElementById('modalMonthly').value = '';
+        document.getElementById('modalInitial').value = '';
+        document.getElementById('modalRate').value = data.rate;
+        document.getElementById('modalHorizon').value = 5;
+
+        setCalcMode('target');
+        updateHorizon();
+        calc();
+
+        document.getElementById('deleteBtn').style.display = 'none';
+        document.getElementById('step2BackBtn').style.display = 'block';
+        
+        document.getElementById('modalStep1').style.display = 'none';
+        document.getElementById('modalStep2').style.display = 'block';
+    };
+    
+    window.goBackToStep1 = function() {
+        document.getElementById('modalStep1').style.display = 'block';
+        document.getElementById('modalStep2').style.display = 'none';
+    };
+    
+    window.openEdit = function(id) {
+        const p = projects.find(x=>x.id===id);
+        if(!p) return;
+        
+        editId = id;
+        data = {...p};
+        const info = types[p.type]||{icon:'🎯',name:'Projet'};
+        
+        document.getElementById('step2Icon').textContent = info.icon;
+        document.getElementById('step2Title').textContent = info.name;
+        document.getElementById('step2Subtitle').textContent = 'Modifier le projet';
+        
+        document.getElementById('modalOwner').value = p.owner;
+        // Auto-sélectionner et masquer si pas de conjoint
+        if (!client.has_conjoint) {
+            document.getElementById('modalOwner').value = 'client';
+            document.getElementById('modalOwner').closest('.form-group').style.display = 'none';
+        } else {
+            document.getElementById('modalOwner').closest('.form-group').style.display = '';
+        }
+        document.getElementById('modalAccount').value = p.account||'';
+        document.getElementById('modalTarget').value = p.targetAmount ? fmt(p.targetAmount) : '';
+        document.getElementById('modalMonthly').value = p.monthlyAmount ? fmt(p.monthlyAmount) : '';
+        document.getElementById('modalInitial').value = p.initialAmount ? fmt(p.initialAmount) : '';
+        document.getElementById('modalRate').value = p.rate||5;
+        document.getElementById('modalHorizon').value = p.horizon||5;
+        
+        setCalcMode(p.calcMode||'target');
+        updateHorizon();
+        calc();
+        
+        document.getElementById('deleteBtn').style.display = 'block';
+        document.getElementById('step2BackBtn').style.display = 'none';
+        
+        document.getElementById('modalStep1').style.display = 'none';
+        document.getElementById('modalStep2').style.display = 'block';
+        document.getElementById('epargneModalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    
+    window.closeModal = function() {
+        document.getElementById('epargneModalOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+        editId = null;
+    };
+    
+    window.closeModalOutside = function(e) { if(e.target.id==='epargneModalOverlay') closeModal(); };
+    
+    window.setCalcMode = function(m) {
+        data.calcMode = m;
+        document.getElementById('modeTarget').classList.toggle('active', m==='target');
+        document.getElementById('modeMonthly').classList.toggle('active', m==='monthly');
+        document.getElementById('targetDiv').style.display = m==='target'?'block':'none';
+        document.getElementById('monthlyDiv').style.display = m==='monthly'?'block':'none';
+        document.getElementById('resMainLabel').textContent = m==='target'?'Épargne requise':'Montant projeté';
+        document.getElementById('resMainSub').textContent = m==='target'?'par mois':'à l\'échéance';
+        calc();
+    };
+    
+    window.updateHorizon = function() {
+        const y = parseInt(document.getElementById('modalHorizon').value)||5;
+        data.horizon = y;
+        document.getElementById('horizonVal').textContent = y+' an'+(y>1?'s':'');
+        document.getElementById('targetYear').textContent = '→ '+(new Date().getFullYear()+y);
+        calc();
+    };
+    
+    window.calc = function() {
+        const y = parseInt(document.getElementById('modalHorizon').value)||5;
+        const r = parseFloat(document.getElementById('modalRate').value)||0;
+        const ini = parse(document.getElementById('modalInitial').value);
+        
+        data.horizon = y;
+        data.rate = r;
+        data.initialAmount = ini;
+        
+        if(y<=0) { document.getElementById('resMain').textContent='—'; document.getElementById('resContrib').textContent='—'; document.getElementById('resGains').textContent='—'; return; }
+        
+        const fvI = fvL(ini,r,y);
+        
+        if(data.calcMode==='target') {
+            const t = parse(document.getElementById('modalTarget').value);
+            data.targetAmount = t;
+            if(t<=0) { document.getElementById('resMain').textContent='—'; document.getElementById('resContrib').textContent='—'; document.getElementById('resGains').textContent='—'; return; }
+            const rem = Math.max(0,t-fvI);
+            const m = rem>0?pmt(rem,r,y):0;
+            const c = (m*y*12)+ini;
+            const g = t-c;
+            data.monthlyAmount = m;
+            document.getElementById('resMain').textContent = fmt(m);
+            document.getElementById('resContrib').textContent = fmt(c);
+            document.getElementById('resGains').textContent = fmt(g);
+        } else {
+            const m = parse(document.getElementById('modalMonthly').value);
+            data.monthlyAmount = m;
+            if(m<=0&&ini<=0) { document.getElementById('resMain').textContent='—'; document.getElementById('resContrib').textContent='—'; document.getElementById('resGains').textContent='—'; return; }
+            const fvM = fv(m,r,y);
+            const tot = fvM+fvI;
+            const c = (m*y*12)+ini;
+            const g = tot-c;
+            data.targetAmount = tot;
+            document.getElementById('resMain').textContent = fmt(tot);
+            document.getElementById('resContrib').textContent = fmt(c);
+            document.getElementById('resGains').textContent = fmt(g);
+        }
+    };
+    
+    window.saveProject = function() {
+        if(!data.type) { FINOX.showNotification('Sélectionnez un type','error'); return; }
+        data.owner = document.getElementById('modalOwner').value;
+        data.account = document.getElementById('modalAccount').value;
+        
+        if(editId) {
+            const i = projects.findIndex(p=>p.id===editId);
+            if(i!==-1) projects[i] = {...projects[i],...data};
+        } else {
+            counter++;
+            projects.push({ id:`ep-${Date.now()}-${counter}`, ...data });
+        }
+        
+        render();
+        closeModal();
+        FINOX_NAV.markAsUnsaved();
+        FINOX.showNotification('Projet enregistré','success');
+    };
+    
+    window.deleteProject = async function() {
+        if(!editId) return;
+        if(await FINOX.confirm('Supprimer ce projet?')) {
+            projects = projects.filter(p=>p.id!==editId);
+            render();
+            closeModal();
+            FINOX_NAV.markAsUnsaved();
+            FINOX.showNotification('Projet supprimé','success');
+        }
+    };
+    
+    window.deleteDirect = async function(id) {
+        if(await FINOX.confirm('Supprimer ce projet?')) {
+            projects = projects.filter(p=>p.id!==id);
+            render();
+            FINOX_NAV.markAsUnsaved();
+        }
+    };
+    
+    window.selectEpargneOwner = function(p) {
+        owner = p;
+        document.querySelectorAll('.epargne-person-chip').forEach(c=>c.classList.toggle('active',c.dataset.person===p));
+        render();
+    };
+    
+    function render() {
+        const g = document.getElementById('epargneGrid');
+        const e = document.getElementById('epargneEmptyState');
+        const f = projects.filter(p=>p.owner===owner);
+        
+        if(f.length===0) { g.innerHTML=''; e.style.display='block'; }
+        else { e.style.display='none'; g.innerHTML = f.map(p=>card(p)).join(''); }
+        
+        summary();
+    }
+    
+    function card(p) {
+        const info = types[p.type]||{icon:'🎯',name:'Projet'};
+        const oL = p.owner==='client'?clientName:p.owner==='conjoint'?conjointName:'Les deux';
+        
+        const hP = Math.min(100,((p.horizon||5)/30)*100);
+        const tY = new Date().getFullYear()+(p.horizon||5);
+        const y = p.horizon||5, r = p.rate||5, ini = p.initialAmount||0;
+        const fvI = fvL(ini,r,y);
+        
+        let mV='—', mL='', mS='';
+        if(p.calcMode==='target'&&p.targetAmount>0) {
+            const rem = Math.max(0,p.targetAmount-fvI);
+            const m = rem>0?pmt(rem,r,y):0;
+            mV = fmt(m); mL = 'Épargne requise'; mS = '/mois';
+        } else if(p.calcMode==='monthly'&&p.monthlyAmount>0) {
+            const fvM = fv(p.monthlyAmount,r,y);
+            mV = fmt(fvM+fvI); mL = 'Montant projeté'; mS = 'à l\'échéance';
+        }
+        
+        return `<div class="epargne-card" onclick="openEdit('${p.id}')">
+            <div class="epargne-card-actions">
+                <button class="epargne-card-action edit" onclick="event.stopPropagation();openEdit('${p.id}')">✏️</button>
+                <button class="epargne-card-action delete" onclick="event.stopPropagation();deleteDirect('${p.id}')">🗑️</button>
+            </div>
+            <div class="epargne-card-header">
+                <div class="epargne-card-icon">${info.icon}</div>
+                <div class="epargne-card-info">
+                    <div class="epargne-card-type">${info.name}</div>
+                    <div class="epargne-card-owner">👤 ${oL}</div>
+                </div>
+            </div>
+            <div class="epargne-card-body">
+                <div class="epargne-card-stats">
+                    <div class="epargne-card-stat"><div class="epargne-card-stat-label">🎯 Objectif</div><div class="epargne-card-stat-value">${fmt(p.targetAmount||0)}</div></div>
+                    <div class="epargne-card-stat"><div class="epargne-card-stat-label">${mL||'Résultat'}</div><div class="epargne-card-stat-value monthly">${mV}</div><div class="epargne-card-stat-sub">${mS}</div></div>
+                </div>
+                <div class="epargne-card-timeline">
+                    <div class="epargne-card-timeline-header"><span class="epargne-card-timeline-label">📅 Échéance</span><span class="epargne-card-timeline-value">${y} an${y>1?'s':''} → ${tY}</span></div>
+                    <div class="epargne-card-timeline-track"><div class="epargne-card-timeline-fill" style="width:${hP}%"></div></div>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    function summary() {
+        const f = projects.filter(p=>p.owner===owner);
+        let tO=0, tM=0, tP=0;
+        f.forEach(p=>{
+            tO += p.targetAmount||0;
+            const y=p.horizon||5, r=p.rate||5, ini=p.initialAmount||0;
+            const fvI = fvL(ini,r,y);
+            if(p.calcMode==='target'&&p.targetAmount>0) {
+                const rem = Math.max(0,p.targetAmount-fvI);
+                tM += rem>0?pmt(rem,r,y):0;
+                tP += p.targetAmount;
+            } else if(p.calcMode==='monthly') {
+                tM += p.monthlyAmount||0;
+                tP += fv(p.monthlyAmount||0,r,y)+fvI;
+            }
+        });
+        document.getElementById('totalProjets').textContent = f.length;
+        document.getElementById('totalObjectif').textContent = fmt(tO);
+        document.getElementById('totalMensuel').textContent = fmt(tM);
+        document.getElementById('totalProjecte').textContent = fmt(tP);
+    }
+    
+    window.saveAndNext = async function() {
+        const r = await window.saveModuleData();
+        if(r.success) { FINOX.showNotification('Projets sauvegardés','success'); FINOX_NAV.markAsSaved(); if(typeof FINOX_NAV?.updateABFCheckmarks==='function') FINOX_NAV.updateABFCheckmarks(); FINOX_NAV.loadModule('abf-objectifs'); }
+        else FINOX.showNotification('Erreur: '+r.error,'error');
+    };
+    
+    const client = await FINOX.loadClientData(true);
+    if(!client) { console.error('❌ Aucun client'); return; }
+    
+    clientName = client.first_name||'Client';
+    conjointName = client.conjoint_first_name||'Conjoint';
+    
+    // Mettre à jour les chips du sélecteur principal
+    document.getElementById('epargneClientName').textContent = clientName;
+    document.getElementById('epargneConjointName').textContent = conjointName;
+    
+    // Mettre à jour les options du select dans la modale
+    document.getElementById('optionClient').textContent = clientName;
+    document.getElementById('optionConjoint').textContent = conjointName;
+    document.getElementById('optionBoth').textContent = clientName + ' & ' + conjointName;
+    
+    // Afficher/masquer les options selon si conjoint existe
+    if(client.has_conjoint) {
+        document.querySelectorAll('.conjoint-chip,.both-chip').forEach(c=>c.classList.add('visible'));
+        document.getElementById('optionConjoint').style.display = '';
+        document.getElementById('optionBoth').style.display = '';
+    } else {
+        // Pas de conjoint: masquer le sélecteur de personne (filtre inutile)
+        document.querySelector('.epargne-person-selector').style.display = 'none';
+    }
+    
+    const abfData = client.abf_data||{};
+    if(abfData.projets_epargne&&Array.isArray(abfData.projets_epargne)) { projects = abfData.projets_epargne; counter = projects.length; }
+    initGrids();
+    FINOX.setupAllMoneyInputs();
+    render();
+    
+    window.saveModuleData = async function() {
+        if(isSaving) return {success:true};
+        isSaving = true;
+        const cur = client.abf_data||{};
+        const ps = projects.map(p=>({id:p.id,owner:p.owner,type:p.type,calcMode:p.calcMode,targetAmount:p.targetAmount,monthlyAmount:p.monthlyAmount,initialAmount:p.initialAmount,horizon:p.horizon,rate:p.rate,account:p.account}));
+        const upd = {...cur,projets_epargne:ps};
+        try {
+            const {error} = await FINOX.supabase.from('clients').update({abf_data:upd,updated_at:new Date().toISOString()}).eq('id',FINOX.CLIENT_ID);
+            if(error) throw error;
+            FINOX.updateClientDataCache({abf_data:upd});
+            isSaving = false;
+            return {success:true};
+        } catch(e) { console.error('Erreur:',e); isSaving=false; return {success:false,error:e.message}; }
+    };
+    
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&document.getElementById('epargneModalOverlay').classList.contains('active')) closeModal(); });
+    
+    console.log('✅ Module ABF Projets Épargne (2 étapes) chargé');
+})();
+</script>

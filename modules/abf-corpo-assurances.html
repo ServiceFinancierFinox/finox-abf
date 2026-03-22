@@ -1,0 +1,360 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - ASSURANCES EN VIGUEUR
+     Polices d'assurance existantes de l'entreprise
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.asv-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.asv-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.asv-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.asv-add-btn { padding: 10px 20px; background: rgba(156,39,176,0.2); border: 1px solid rgba(156,39,176,0.3); border-radius: 10px; color: #CE93D8; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.asv-add-btn:hover { background: rgba(156,39,176,0.3); }
+
+.asv-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+@media (max-width: 800px) { .asv-summary { grid-template-columns: repeat(2, 1fr); } }
+.asv-stat { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: center; }
+.asv-stat-value { font-size: 20px; font-weight: 700; color: var(--gold); }
+.asv-stat-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.asv-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; overflow-x: auto; }
+.asv-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+.asv-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+.asv-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+.asv-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 10px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+.asv-table td { padding: 10px; font-size: 12px; color: var(--text-primary); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.asv-table tr:hover td { background: rgba(255,255,255,0.02); }
+.asv-type-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.asv-type-vie { background: rgba(33,150,243,0.15); color: #64B5F6; }
+.asv-type-mg { background: rgba(233,30,99,0.15); color: #F48FB1; }
+.asv-type-inv { background: rgba(255,152,0,0.15); color: #FFB74D; }
+.asv-type-coll { background: rgba(156,39,176,0.15); color: #CE93D8; }
+.asv-toggle { width: 32px; height: 18px; background: rgba(255,255,255,0.1); border-radius: 9px; position: relative; cursor: pointer; display: inline-block; }
+.asv-toggle.on { background: rgba(76,175,80,0.4); }
+.asv-toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s; }
+.asv-toggle.on::after { transform: translateX(14px); }
+.asv-actions { display: flex; gap: 6px; }
+.asv-action-btn { padding: 3px 8px; border-radius: 5px; font-size: 10px; cursor: pointer; border: none; }
+.asv-action-edit { background: rgba(33,150,243,0.15); color: #64B5F6; }
+.asv-action-del { background: rgba(244,67,54,0.15); color: #ef9a9a; }
+
+/* MODAL */
+.asv-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.asv-modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; width: 560px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+.asv-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; }
+.asv-form-group { margin-bottom: 14px; }
+.asv-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.asv-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; }
+.asv-form-input:focus { border-color: var(--gold); }
+.asv-form-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; box-sizing: border-box; }
+.asv-form-select option { background: var(--bg-card); color: var(--text-primary); }
+.asv-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.asv-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.asv-modal-cancel { padding: 10px 20px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.asv-modal-save { padding: 10px 20px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.asv-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.asv-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.asv-save-btn:hover { filter: brightness(1.1); }
+</style>
+
+<!-- HEADER -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+    <button class="asv-add-btn" onclick="openAsvModal()">+ Ajouter une police</button>
+</div>
+
+<!-- SOMMAIRE -->
+<div class="asv-summary">
+    <div class="asv-stat"><div class="asv-stat-value" id="asvTotalPolices">0</div><div class="asv-stat-label">Polices</div></div>
+    <div class="asv-stat"><div class="asv-stat-value" id="asvTotalVie">0 $</div><div class="asv-stat-label">Capital Vie</div></div>
+    <div class="asv-stat"><div class="asv-stat-value" id="asvTotalMG">0 $</div><div class="asv-stat-label">Capital MG</div></div>
+    <div class="asv-stat"><div class="asv-stat-value" id="asvTotalInv">0 $</div><div class="asv-stat-label">Capital Invalidité</div></div>
+</div>
+
+<!-- TABLEAU -->
+<div class="asv-card">
+    <div id="asvContainer"></div>
+</div>
+
+<!-- MODAL -->
+<div id="asvModalOverlay" class="asv-modal-overlay" style="display:none;">
+    <div class="asv-modal">
+        <div class="asv-modal-title" id="asvModalTitle">Ajouter une police</div>
+        <input type="hidden" id="asvEditIndex" value="-1">
+        <div class="asv-form-row">
+            <div class="asv-form-group">
+                <label class="asv-form-label">Preneur</label>
+                <select class="asv-form-select" id="asvPreneur"></select>
+            </div>
+            <div class="asv-form-group">
+                <label class="asv-form-label">Personne assurée</label>
+                <select class="asv-form-select" id="asvAssure"></select>
+            </div>
+        </div>
+        <div class="asv-form-row">
+            <div class="asv-form-group">
+                <label class="asv-form-label">Compagnie d'assurance</label>
+                <input type="text" class="asv-form-input" id="asvCompagnie" placeholder="Ex: Desjardins, Manuvie...">
+            </div>
+            <div class="asv-form-group">
+                <label class="asv-form-label">Capital assuré ($)</label>
+                <input type="text" inputmode="decimal" class="asv-form-input money-input" id="asvCapital" placeholder="Ex: 500 000">
+            </div>
+        </div>
+        <div class="asv-form-row">
+            <div class="asv-form-group">
+                <label class="asv-form-label">Type</label>
+                <select class="asv-form-select" id="asvType">
+                    <option value="">-- Sélectionner --</option>
+                    <option value="vie">Assurance Vie</option>
+                    <option value="mg">Maladies Graves</option>
+                    <option value="invalidite">Invalidité</option>
+                    <option value="collective">Collective</option>
+                </select>
+            </div>
+            <div class="asv-form-group">
+                <label class="asv-form-label">Protection</label>
+                <input type="text" class="asv-form-input" id="asvProtection" placeholder="Ex: Temporaire 10, Vie entière...">
+            </div>
+        </div>
+        <div class="asv-form-group">
+            <label class="asv-form-label">Bénéficiaire</label>
+            <input type="text" class="asv-form-input" id="asvBeneficiaire" placeholder="Nom du bénéficiaire">
+        </div>
+        <div class="asv-modal-actions">
+            <button class="asv-modal-cancel" onclick="closeAsvModal()">Annuler</button>
+            <button class="asv-modal-save" onclick="savePolice()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- SAUVEGARDER -->
+<div class="asv-save-bar">
+    <button class="asv-save-btn" onclick="saveAssurances()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('🏥 Module ABF Corpo - Assurances en vigueur');
+
+    const client = await FINOX.loadClientData();
+    if (!client) return;
+
+    let polices = client.abf_data?.corpo?.assurances_vigueur || [];
+    const typeLabels = { vie: 'Vie', mg: 'MG', invalidite: 'Invalidité', collective: 'Collective' };
+    const typeClasses = { vie: 'asv-type-vie', mg: 'asv-type-mg', invalidite: 'asv-type-inv', collective: 'asv-type-coll' };
+
+    // ═══ Build persons list from corpo data + relations ═══
+    const corpoName = client.company_name || client.first_name || 'Corporation';
+    const corpoData = client.abf_data?.corpo || {};
+    const personnesCles = corpoData.personnes_cles || [];
+    const actionnaires = corpoData.actionnaires || [];
+    const persons = []; // {name, label, group}
+
+    personnesCles.forEach(p => {
+        const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
+        if (nom) persons.push({ name: nom, label: nom + (p.fonction ? ' (' + p.fonction + ')' : ''), group: 'cle' });
+    });
+    actionnaires.forEach(a => {
+        const nom = [a.prenom, a.nom].filter(Boolean).join(' ');
+        if (nom && !persons.some(p => p.name === nom)) {
+            persons.push({ name: nom, label: nom + (a.parts_pct ? ' (' + a.parts_pct + '%)' : ''), group: 'cle' });
+        }
+    });
+
+    // Fetch relations
+    try {
+        const { data: rels } = await FINOX.supabase
+            .from('client_relationships')
+            .select('related_client_id, relationship_type, clients!client_relationships_related_client_id_fkey(first_name, last_name)')
+            .eq('client_id', FINOX.CLIENT_ID);
+        if (rels) {
+            rels.forEach(r => {
+                const rc = r.clients;
+                if (rc) {
+                    const nom = [rc.first_name, rc.last_name].filter(Boolean).join(' ');
+                    if (nom && !persons.some(p => p.name === nom)) {
+                        persons.push({ name: nom, label: nom + (r.relationship_type ? ' (' + r.relationship_type + ')' : ''), group: 'relation' });
+                    }
+                }
+            });
+        }
+    } catch(e) { console.warn('⚠️ Erreur chargement relations:', e); }
+
+    // Build select options HTML
+    function buildPersonOptions(includeCorpo) {
+        let html = '<option value="">-- Sélectionner --</option>';
+        if (includeCorpo) {
+            html += '<option value="' + corpoName + '">' + corpoName + ' (Corporation)</option>';
+        }
+        const pcList = persons.filter(p => p.group === 'cle');
+        const relList = persons.filter(p => p.group === 'relation');
+        if (pcList.length > 0) {
+            html += '<optgroup label="Personnes clés / Actionnaires">';
+            pcList.forEach(p => { html += '<option value="' + p.name + '">' + p.label + '</option>'; });
+            html += '</optgroup>';
+        }
+        if (relList.length > 0) {
+            html += '<optgroup label="Relations">';
+            relList.forEach(p => { html += '<option value="' + p.name + '">' + p.label + '</option>'; });
+            html += '</optgroup>';
+        }
+        // Option "Autre" pour saisie libre
+        html += '<option value="__autre__">✏️ Autre (saisie libre)</option>';
+        return html;
+    }
+
+    // Populate selects
+    document.getElementById('asvPreneur').innerHTML = buildPersonOptions(true);
+    document.getElementById('asvAssure').innerHTML = buildPersonOptions(false);
+
+    // Handle "Autre" — convert to text input on change
+    function handleAutreSelect(selectEl) {
+        selectEl.addEventListener('change', function() {
+            if (this.value === '__autre__') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'asv-form-input';
+                input.id = this.id;
+                input.placeholder = 'Saisir le nom...';
+                input.dataset.freeText = 'true';
+                this.replaceWith(input);
+                input.focus();
+            }
+        });
+    }
+    handleAutreSelect(document.getElementById('asvPreneur'));
+    handleAutreSelect(document.getElementById('asvAssure'));
+
+    function formatMoney(n) { return (n || 0).toLocaleString('fr-CA') + ' $'; }
+
+    function updateStats() {
+        document.getElementById('asvTotalPolices').textContent = polices.length;
+        document.getElementById('asvTotalVie').textContent = formatMoney(polices.filter(p => p.type === 'vie').reduce((s, p) => s + (FINOX.parseNumber(p.capital) || 0), 0));
+        document.getElementById('asvTotalMG').textContent = formatMoney(polices.filter(p => p.type === 'mg').reduce((s, p) => s + (FINOX.parseNumber(p.capital) || 0), 0));
+        document.getElementById('asvTotalInv').textContent = formatMoney(polices.filter(p => p.type === 'invalidite').reduce((s, p) => s + (FINOX.parseNumber(p.capital) || 0), 0));
+    }
+
+    function render() {
+        const c = document.getElementById('asvContainer');
+        if (!c) return;
+        if (polices.length === 0) {
+            c.innerHTML = `<div class="asv-empty"><div class="asv-empty-icon">🛡️</div>Aucune police ajoutée.<br>Cliquez sur "Ajouter une police" pour commencer.</div>`;
+        } else {
+            c.innerHTML = `<table class="asv-table"><thead><tr>
+                <th>Preneur</th><th>Assuré(e)</th><th>Compagnie</th><th>Capital</th><th>Type</th><th>Protection</th><th>Bénéficiaire</th><th>Calculs</th><th></th>
+            </tr></thead><tbody>${polices.map((p, i) => `<tr>
+                <td>${p.preneur || '-'}</td>
+                <td style="font-weight:600;">${p.assure || '-'}</td>
+                <td>${p.compagnie || '-'}</td>
+                <td style="font-weight:600;">${formatMoney(p.capital)}</td>
+                <td><span class="asv-type-badge ${typeClasses[p.type] || ''}">${typeLabels[p.type] || '-'}</span></td>
+                <td>${p.protection || '-'}</td>
+                <td>${p.beneficiaire || '-'}</td>
+                <td><span class="asv-toggle ${p.inclus_calculs !== false ? 'on' : ''}" onclick="toggleCalc(${i})"></span></td>
+                <td><div class="asv-actions">
+                    <button class="asv-action-btn asv-action-edit" onclick="editAsv(${i})">Modifier</button>
+                    <button class="asv-action-btn asv-action-del" onclick="deleteAsv(${i})">Supprimer</button>
+                </div></td>
+            </tr>`).join('')}</tbody></table>`;
+        }
+        updateStats();
+    }
+    render();
+
+    window.toggleCalc = function(i) { polices[i].inclus_calculs = !polices[i].inclus_calculs; render(); };
+    // Restore a field to select if it was converted to free text input
+    function restoreSelectIfNeeded(id, includeCorpo) {
+        const el = document.getElementById(id);
+        if (el && el.dataset.freeText) {
+            const select = document.createElement('select');
+            select.className = 'asv-form-select';
+            select.id = id;
+            select.innerHTML = buildPersonOptions(includeCorpo);
+            el.replaceWith(select);
+            handleAutreSelect(select);
+            return select;
+        }
+        return el;
+    }
+
+    function setPersonField(id, value, includeCorpo) {
+        const el = restoreSelectIfNeeded(id, includeCorpo);
+        if (!el) return;
+        // Try to set the select value
+        el.value = value || '';
+        // If value doesn't match any option, switch to free text
+        if (value && el.value !== value) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'asv-form-input';
+            input.id = id;
+            input.value = value;
+            input.dataset.freeText = 'true';
+            el.replaceWith(input);
+        }
+    }
+
+    function getPersonFieldValue(id) {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        return el.dataset.freeText ? el.value.trim() : el.value;
+    }
+
+    window.openAsvModal = function(idx) {
+        document.getElementById('asvEditIndex').value = idx !== undefined ? idx : -1;
+        document.getElementById('asvModalTitle').textContent = idx !== undefined ? 'Modifier la police' : 'Ajouter une police';
+        const p = idx !== undefined ? polices[idx] : {};
+        setPersonField('asvPreneur', p.preneur || '', true);
+        setPersonField('asvAssure', p.assure || '', false);
+        document.getElementById('asvCompagnie').value = p.compagnie || '';
+        document.getElementById('asvCapital').value = p.capital || '';
+        document.getElementById('asvType').value = p.type || '';
+        document.getElementById('asvProtection').value = p.protection || '';
+        document.getElementById('asvBeneficiaire').value = p.beneficiaire || '';
+        document.getElementById('asvModalOverlay').style.display = 'flex';
+        FINOX.setupAllMoneyInputs(document.getElementById('asvModalOverlay'));
+    };
+    window.closeAsvModal = function() { document.getElementById('asvModalOverlay').style.display = 'none'; };
+    window.editAsv = function(i) { openAsvModal(i); };
+    window.deleteAsv = function(i) { polices.splice(i, 1); render(); };
+
+    window.savePolice = function() {
+        const entry = {
+            preneur: getPersonFieldValue('asvPreneur'),
+            assure: getPersonFieldValue('asvAssure'),
+            compagnie: document.getElementById('asvCompagnie').value.trim(),
+            capital: FINOX.parseNumber(document.getElementById('asvCapital').value) || 0,
+            type: document.getElementById('asvType').value,
+            protection: document.getElementById('asvProtection').value.trim(),
+            beneficiaire: document.getElementById('asvBeneficiaire').value.trim(),
+            inclus_calculs: true
+        };
+        if (!entry.assure) { FINOX.showNotification('La personne assurée est requise', 'error'); return; }
+        const idx = parseInt(document.getElementById('asvEditIndex').value);
+        if (idx >= 0) { entry.inclus_calculs = polices[idx].inclus_calculs; polices[idx] = entry; } else { polices.push(entry); }
+        render(); closeAsvModal();
+    };
+
+    window.saveAssurances = async function() {
+        const btn = document.querySelector('.asv-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+        try {
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, assurances_vigueur: polices }, section_corpo_assurances_completed: polices.length > 0 };
+            const { error } = await FINOX.supabase.from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Assurances en vigueur sauvegardées', 'success');
+        } catch (err) { FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally { btn.disabled = false; btn.textContent = '💾 Sauvegarder'; }
+    };
+
+    document.getElementById('asvModalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeAsvModal(); });
+    console.log('✅ Module Assurances en vigueur chargé');
+})();
+</script>

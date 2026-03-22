@@ -1,0 +1,763 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF-BESOINS-INVALIDITE
+     Calcul des besoins en assurance invalidité
+     EXTRAIT DU MONOLITHIQUE - Visuel compact original + SQL
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Enlever les flèches des inputs number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Person Tabs — style intégré */
+.person-tabs-container { margin-bottom: 0; }
+.person-tabs { display: flex; gap: 4px; margin-bottom: 0; }
+.person-tab {
+    padding: 14px 28px;
+    background: var(--finox-dark, #1a1a1a);
+    border: 2px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.person-tab:hover {
+    background: var(--finox-gray, #2b2b2b);
+    color: var(--text-secondary);
+}
+.person-tab.active {
+    background: var(--finox-gray, #2b2b2b);
+    border-color: var(--gold);
+    color: var(--gold);
+    z-index: 1;
+}
+.person-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--finox-gray, #2b2b2b);
+}
+.person-tab .tab-icon { font-size: 16px; }
+.tab-content-wrapper {
+    background: var(--finox-gray, #2b2b2b);
+    border: 2px solid var(--gold);
+    border-radius: 0 16px 16px 16px;
+    padding: 24px;
+}
+.conjoint-tab { display: none; }
+.conjoint-tab.visible { display: flex; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Vie Compact Container (réutilisé pour invalidité) */
+.vie-compact-container {
+    background: var(--bg-card, #1e1e1e);
+    border-radius: 16px;
+    border: 1px solid rgba(156, 39, 176, 0.15);
+    overflow: hidden;
+}
+
+.vie-compact-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+    background: rgba(156, 39, 176, 0.08);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.vie-param-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vie-param-inline label {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vie-param-inline input {
+    width: 100px;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: var(--bg-primary, #121212);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+.vie-param-inline input:focus {
+    border-color: #CE93D8;
+    outline: none;
+}
+
+.auto-tag {
+    font-size: 9px;
+    color: #CE93D8;
+    margin-left: 2px;
+}
+
+/* Result Compact */
+.vie-result-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    gap: 20px;
+}
+
+.vie-result-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.vie-result-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vie-result-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #CE93D8, #BA68C8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vie-status-badge {
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vie-status-badge.adequate {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.vie-status-badge.inadequate {
+    background: rgba(156, 39, 176, 0.15);
+    color: #CE93D8;
+    border: 1px solid #CE93D8;
+}
+
+.vie-breakdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(156, 39, 176, 0.1);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 8px;
+    color: #CE93D8;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vie-breakdown-toggle:hover { background: rgba(156, 39, 176, 0.2); }
+.vie-breakdown-toggle svg { width: 14px; height: 14px; transition: transform 0.3s; }
+.vie-breakdown-toggle.open svg { transform: rotate(180deg); }
+
+/* Breakdown Content */
+.vie-breakdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.vie-breakdown-content.open { max-height: 400px; }
+
+.vie-breakdown-inner {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.vie-calc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.vie-calc-item-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vie-calc-item-value { font-weight: 600; color: var(--text-primary); }
+.vie-calc-item-value.positive { color: #4CAF50; }
+.vie-calc-item-value.negative { color: #f44336; }
+
+.vie-calc-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(156, 39, 176, 0.1);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 8px;
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.vie-calc-total-label { color: #CE93D8; font-size: 13px; }
+.vie-calc-total-value { color: #CE93D8; font-size: 16px; }
+
+/* Assurance Prêt Section */
+.pret-section {
+    margin-top: 32px;
+    padding: 24px;
+    background: linear-gradient(145deg, rgba(156, 39, 176, 0.08), rgba(156, 39, 176, 0.03));
+    border: 1px solid rgba(156, 39, 176, 0.2);
+    border-radius: 16px;
+}
+
+.pret-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pret-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #9C27B0, #BA68C8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.pret-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.pret-subtitle { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+.pret-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+}
+
+.pret-result-label { font-size: 12px; color: var(--text-muted); }
+.pret-result-value { font-size: 28px; font-weight: 800; color: #9C27B0; }
+
+.pret-items {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pret-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(156, 39, 176, 0.05);
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.pret-item-name { color: var(--text-secondary); }
+.pret-item-value { color: #BA68C8; font-weight: 600; }
+
+/* Navigation */
+.nav-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn-prev { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); }
+.nav-btn-next { background: var(--gold); border: none; color: #000; }
+.nav-btn:hover { transform: translateY(-2px); }
+.nav-btn svg { width: 16px; height: 16px; }
+
+.nav-btn-save { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+.nav-btn-save:hover { border-color: #CE93D8; color: #CE93D8; }
+
+.save-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background: #10b981;
+}
+
+.save-status-dot.unsaved {
+    background: #f59e0b;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.nav-section-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+</style>
+
+
+
+<!-- Person Tabs -->
+<div class="person-tabs-container">
+    <div class="person-tabs" id="invaliditeTabs">
+        <div class="person-tab active" data-tab="client" onclick="switchInvaliditeTab('client')">
+            <span class="tab-icon">🩼</span>
+            <span id="invaliditeTabClientName">Client</span>
+        </div>
+        <div class="person-tab conjoint-tab" data-tab="conjoint" onclick="switchInvaliditeTab('conjoint')">
+            <span class="tab-icon">🩼</span>
+            <span id="invaliditeTabConjointName">Conjoint</span>
+        </div>
+    </div>
+    <div class="tab-content-wrapper">
+
+<!-- ========== CLIENT TAB ========== -->
+<div class="tab-content active" id="invaliditeClientContent">
+    <div class="vie-compact-container">
+        <!-- Header with params inline -->
+        <div class="vie-compact-header">
+            <div class="vie-param-inline">
+                <label>Revenu net annuel <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetClientInv" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>% à protéger</label>
+                <input type="number" id="pctRevenuInvClient" value="70" min="0" max="100" oninput="calculateInvaliditeClient()">
+            </div>
+            <div class="vie-param-inline">
+                <label>En vigueur/mois <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="invaliditeVigueurClient" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+        </div>
+
+        <!-- Result row -->
+        <div class="vie-result-compact">
+            <div class="vie-result-main">
+                <div>
+                    <div class="vie-result-label">Besoin mensuel en invalidité</div>
+                    <div class="vie-result-value" id="besoinInvaliditeClient">$0/mois</div>
+                </div>
+                <div class="vie-status-badge inadequate" id="statusInvaliditeClient">Protection insuffisante</div>
+            </div>
+            <button class="vie-breakdown-toggle" onclick="toggleInvaliditeBreakdown('client')">
+                <span>Détail</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+        </div>
+
+        <!-- Collapsible breakdown -->
+        <div class="vie-breakdown-content" id="invaliditeBreakdownClient">
+            <div class="vie-breakdown-inner">
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">Revenu net mensuel (÷ 12)</span>
+                    <span class="vie-calc-item-value" id="revenuMensuelCalcClient">$0</span>
+                </div>
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">× % du revenu à protéger</span>
+                    <span class="vie-calc-item-value" id="pctRevenuCalcClient">$0</span>
+                </div>
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">- Invalidité en vigueur <span class="auto-tag">AUTO</span></span>
+                    <span class="vie-calc-item-value negative" id="invVigueurCalcClient">-$0</span>
+                </div>
+                <div class="vie-calc-total">
+                    <span class="vie-calc-total-label">= Besoin mensuel</span>
+                    <span class="vie-calc-total-value" id="besoinInvCalcClient">$0/mois</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CONJOINT TAB ========== -->
+<div class="tab-content" id="invaliditeConjointContent">
+    <div class="vie-compact-container">
+        <div class="vie-compact-header">
+            <div class="vie-param-inline">
+                <label>Revenu net annuel <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="revenuNetConjointInv" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+            <div class="vie-param-inline">
+                <label>% à protéger</label>
+                <input type="number" id="pctRevenuInvConjoint" value="70" min="0" max="100" oninput="calculateInvaliditeConjoint()">
+            </div>
+            <div class="vie-param-inline">
+                <label>En vigueur/mois <span class="auto-tag">AUTO</span></label>
+                <input type="text" class="money-input" id="invaliditeVigueurConjoint" readonly style="background:var(--bg-primary); opacity: 0.7;">
+            </div>
+        </div>
+
+        <div class="vie-result-compact">
+            <div class="vie-result-main">
+                <div>
+                    <div class="vie-result-label">Besoin mensuel en invalidité</div>
+                    <div class="vie-result-value" id="besoinInvaliditeConjoint">$0/mois</div>
+                </div>
+                <div class="vie-status-badge inadequate" id="statusInvaliditeConjoint">Protection insuffisante</div>
+            </div>
+            <button class="vie-breakdown-toggle" onclick="toggleInvaliditeBreakdown('conjoint')">
+                <span>Détail</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+        </div>
+
+        <div class="vie-breakdown-content" id="invaliditeBreakdownConjoint">
+            <div class="vie-breakdown-inner">
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">Revenu net mensuel (÷ 12)</span>
+                    <span class="vie-calc-item-value" id="revenuMensuelCalcConjoint">$0</span>
+                </div>
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">× % du revenu à protéger</span>
+                    <span class="vie-calc-item-value" id="pctRevenuCalcConjoint">$0</span>
+                </div>
+                <div class="vie-calc-item">
+                    <span class="vie-calc-item-label">- Invalidité en vigueur <span class="auto-tag">AUTO</span></span>
+                    <span class="vie-calc-item-value negative" id="invVigueurCalcConjoint">-$0</span>
+                </div>
+                <div class="vie-calc-total">
+                    <span class="vie-calc-total-label">= Besoin mensuel</span>
+                    <span class="vie-calc-total-value" id="besoinInvCalcConjoint">$0/mois</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== ASSURANCE PRÊT ========== -->
+<div class="pret-section" style="margin-top: 24px;">
+    <div class="pret-header">
+        <div class="pret-icon">🏦</div>
+        <div>
+            <h3 class="pret-title">Besoin en Assurance Prêt</h3>
+            <p class="pret-subtitle">Protection des paiements mensuels en cas d'invalidité</p>
+        </div>
+    </div>
+    
+    <div class="pret-result">
+        <div>
+            <div class="pret-result-label">Total paiements mensuels à protéger</div>
+            <div class="pret-result-value" id="besoinPretTotal">$0/mois</div>
+        </div>
+    </div>
+    
+    <div class="pret-items" id="pretItemsList">
+        <p style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 16px;">
+            Aucun passif avec paiement mensuel. Ajoutez des actifs/passifs avec paiement dans la section Actifs & Passifs.
+        </p>
+    </div>
+</div>
+    </div><!-- /tab-content-wrapper -->
+</div><!-- /person-tabs-container -->
+<script>
+(async function() {
+    console.log('🩼 Module ABF Besoins Invalidité - Init');
+    let isSaving = false;
+    let revenuNetClient = 0;
+    let revenuNetConjoint = 0;
+    let invVigueurClient = 0;
+    let invVigueurConjoint = 0;
+    let paiementsMensuels = [];
+    
+    // ==========================================
+    // 1. DÉFINIR TOUTES LES FONCTIONS WINDOW
+    // ==========================================
+    
+    window.switchInvaliditeTab = function(tab) {
+        document.querySelectorAll('#invaliditeTabs .person-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`#invaliditeTabs .person-tab[data-tab="${tab}"]`).classList.add('active');
+        document.getElementById('invaliditeClientContent').classList.toggle('active', tab === 'client');
+        document.getElementById('invaliditeConjointContent').classList.toggle('active', tab === 'conjoint');
+    };
+    
+    window.toggleInvaliditeBreakdown = function(person) {
+        const content = document.getElementById(`invaliditeBreakdown${person === 'client' ? 'Client' : 'Conjoint'}`);
+        const btn = content.previousElementSibling.querySelector('.vie-breakdown-toggle');
+        content.classList.toggle('open');
+        btn.classList.toggle('open');
+    };
+    
+    window.calculateInvaliditeClient = function() {
+        const pctRevenu = parseFloat(document.getElementById('pctRevenuInvClient').value) || 70;
+        const revenuMensuel = revenuNetClient / 12;
+        const besoinBrut = revenuMensuel * (pctRevenu / 100);
+        const besoin = Math.max(0, besoinBrut - invVigueurClient);
+        
+        document.getElementById('revenuMensuelCalcClient').textContent = FINOX.formatCurrency(revenuMensuel);
+        document.getElementById('pctRevenuCalcClient').textContent = FINOX.formatCurrency(besoinBrut);
+        document.getElementById('invVigueurCalcClient').textContent = '-' + FINOX.formatCurrency(invVigueurClient);
+        document.getElementById('besoinInvCalcClient').textContent = FINOX.formatCurrency(besoin) + '/mois';
+        document.getElementById('besoinInvaliditeClient').textContent = FINOX.formatCurrency(besoin) + '/mois';
+        
+        const statusEl = document.getElementById('statusInvaliditeClient');
+        if (besoin === 0) {
+            statusEl.textContent = 'Protection adéquate';
+            statusEl.className = 'vie-status-badge adequate';
+        } else {
+            statusEl.textContent = 'Protection insuffisante';
+            statusEl.className = 'vie-status-badge inadequate';
+        }
+        
+        FINOX_NAV.markAsUnsaved();
+    };
+    
+    window.calculateInvaliditeConjoint = function() {
+        const pctRevenu = parseFloat(document.getElementById('pctRevenuInvConjoint').value) || 70;
+        const revenuMensuel = revenuNetConjoint / 12;
+        const besoinBrut = revenuMensuel * (pctRevenu / 100);
+        const besoin = Math.max(0, besoinBrut - invVigueurConjoint);
+        
+        document.getElementById('revenuMensuelCalcConjoint').textContent = FINOX.formatCurrency(revenuMensuel);
+        document.getElementById('pctRevenuCalcConjoint').textContent = FINOX.formatCurrency(besoinBrut);
+        document.getElementById('invVigueurCalcConjoint').textContent = '-' + FINOX.formatCurrency(invVigueurConjoint);
+        document.getElementById('besoinInvCalcConjoint').textContent = FINOX.formatCurrency(besoin) + '/mois';
+        document.getElementById('besoinInvaliditeConjoint').textContent = FINOX.formatCurrency(besoin) + '/mois';
+        
+        const statusEl = document.getElementById('statusInvaliditeConjoint');
+        if (besoin === 0) {
+            statusEl.textContent = 'Protection adéquate';
+            statusEl.className = 'vie-status-badge adequate';
+        } else {
+            statusEl.textContent = 'Protection insuffisante';
+            statusEl.className = 'vie-status-badge inadequate';
+        }
+    };
+    
+    function renderPretItems() {
+        const container = document.getElementById('pretItemsList');
+        let totalPret = 0;
+        
+        if (paiementsMensuels.length === 0) {
+            container.innerHTML = `<p style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 16px;">
+                Aucun passif avec paiement mensuel trouvé.
+            </p>`;
+        } else {
+            container.innerHTML = paiementsMensuels.map(item => {
+                totalPret += item.montant;
+                return `<div class="pret-item">
+                    <span class="pret-item-name">${item.type}</span>
+                    <span class="pret-item-value">${FINOX.formatCurrency(item.montant)}/mois</span>
+                </div>`;
+            }).join('');
+        }
+        
+        document.getElementById('besoinPretTotal').textContent = FINOX.formatCurrency(totalPret) + '/mois';
+    }
+    
+    window.saveAndNext = async function() {
+        const result = await window.saveModuleData();
+        if (result.success) {
+            FINOX.showNotification('Besoins invalidité sauvegardés', 'success');
+            FINOX_NAV.markAsSaved();
+            if (typeof FINOX_NAV?.updateABFCheckmarks === 'function') FINOX_NAV.updateABFCheckmarks();
+            FINOX_NAV.loadModule('abf-besoins-mg');
+        } else {
+            FINOX.showNotification('Erreur: ' + result.error, 'error');
+        }
+    };
+    
+    // ==========================================
+    // 2. CHARGER DONNÉES CLIENT
+    // ==========================================
+    const client = await FINOX.loadClientData(true);
+    if (!client) { console.error('❌ Aucun client'); return; }
+    
+    // Afficher conjoint
+    if (client.has_conjoint) {
+        document.querySelector('.conjoint-tab').classList.add('visible');
+    }
+    
+    // Noms
+    document.getElementById('invaliditeTabClientName').textContent = client.first_name || 'Client';
+    document.getElementById('invaliditeTabConjointName').textContent = client.conjoint_first_name || 'Conjoint';
+    
+    // Revenus nets - Priorité: abf_data.emploi_client.revenu_net (calcul réel Québec), sinon revenu_emploi × 0.7 (estimation)
+    const abfDataEmploi = client.abf_data || {};
+    if (abfDataEmploi.emploi_client?.revenu_net) {
+        revenuNetClient = parseFloat(abfDataEmploi.emploi_client.revenu_net);
+        console.log('💰 Revenu net Client depuis module Emploi:', revenuNetClient);
+    } else {
+        revenuNetClient = Math.round((client.revenu_emploi || 0) * 0.7);
+        console.log('💰 Revenu net Client estimé (70%):', revenuNetClient);
+    }
+    
+    if (abfDataEmploi.emploi_conjoint?.revenu_net) {
+        revenuNetConjoint = parseFloat(abfDataEmploi.emploi_conjoint.revenu_net);
+        console.log('💰 Revenu net Conjoint depuis module Emploi:', revenuNetConjoint);
+    } else {
+        revenuNetConjoint = Math.round((client.revenu_emploi_conjoint || 0) * 0.7);
+        console.log('💰 Revenu net Conjoint estimé (70%):', revenuNetConjoint);
+    }
+    
+    document.getElementById('revenuNetClientInv').value = revenuNetClient;
+    document.getElementById('revenuNetConjointInv').value = revenuNetConjoint;
+    
+    // Charger assurance invalidité en vigueur depuis abf_assurances
+    try {
+        const { data: assurances } = await FINOX.supabase
+            .from('abf_assurances')
+            .select('type, assure, montant_couverture, exclure_calcul')
+            .eq('client_id', FINOX.CLIENT_ID);
+        
+        if (assurances) {
+            const clientPrenom = client.first_name || 'Client';
+            const conjointPrenom = client.conjoint_first_name || 'Conjoint';
+            
+            assurances.forEach(a => {
+                if (a.exclure_calcul) return;
+                if (a.type?.includes('Invalidité')) {
+                    if (a.assure === clientPrenom || a.assure === 'client') {
+                        invVigueurClient += a.montant_couverture || 0;
+                    } else if (a.assure === conjointPrenom || a.assure === 'conjoint') {
+                        invVigueurConjoint += a.montant_couverture || 0;
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('invaliditeVigueurClient').value = invVigueurClient;
+        document.getElementById('invaliditeVigueurConjoint').value = invVigueurConjoint;
+    } catch (err) { console.warn('Erreur assurances:', err); }
+    
+    // Charger paiements mensuels depuis abf_actifs
+    try {
+        const { data: actifs } = await FINOX.supabase
+            .from('abf_actifs')
+            .select('type, paiement_mensuel')
+            .eq('client_id', FINOX.CLIENT_ID);
+        
+        if (actifs) {
+            actifs.forEach(a => {
+                if (a.paiement_mensuel && a.paiement_mensuel > 0) {
+                    paiementsMensuels.push({
+                        type: a.type,
+                        montant: a.paiement_mensuel
+                    });
+                }
+            });
+        }
+    } catch (err) { console.warn('Erreur actifs:', err); }
+    
+    // Charger valeurs sauvegardées depuis abf_data
+    const abfData = client.abf_data || {};
+    const invClient = abfData.inv_client || {};
+    const invConjoint = abfData.inv_conjoint || {};
+    
+    if (invClient.pct_revenu) document.getElementById('pctRevenuInvClient').value = invClient.pct_revenu;
+    if (invConjoint.pct_revenu) document.getElementById('pctRevenuInvConjoint').value = invConjoint.pct_revenu;
+    
+    // Formater les inputs monétaires
+    FINOX.setupAllMoneyInputs();
+
+    // Calculs et affichage
+    calculateInvaliditeClient();
+    calculateInvaliditeConjoint();
+    renderPretItems();
+    
+    // ==========================================
+    // 3. FONCTION DE SAUVEGARDE SQL
+    // ==========================================
+    window.saveModuleData = async function() {
+        if (isSaving) return { success: true };
+        isSaving = true;
+        
+        const currentAbfData = client.abf_data || {};
+
+        // Recalculer les besoins directement (pas parser le texte formaté)
+        const pctRevenuClient = parseFloat(document.getElementById('pctRevenuInvClient').value) || 70;
+        const revenuMensuelClient = revenuNetClient / 12;
+        const besoinBrutClient = revenuMensuelClient * (pctRevenuClient / 100);
+        const besoinClient = Math.max(0, besoinBrutClient - invVigueurClient);
+        
+        const pctRevenuConjoint = parseFloat(document.getElementById('pctRevenuInvConjoint').value) || 70;
+        const revenuMensuelConjoint = revenuNetConjoint / 12;
+        const besoinBrutConjoint = revenuMensuelConjoint * (pctRevenuConjoint / 100);
+        const besoinConjoint = Math.max(0, besoinBrutConjoint - invVigueurConjoint);
+        
+        const abfUpdate = {
+            ...currentAbfData,
+            inv_client: {
+                pct_revenu: pctRevenuClient,
+                besoin_calcule: Math.round(besoinClient * 100) / 100  // Arrondir à 2 décimales
+            },
+            inv_conjoint: {
+                pct_revenu: pctRevenuConjoint,
+                besoin_calcule: Math.round(besoinConjoint * 100) / 100
+            }
+        };
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: abfUpdate, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+            
+            if (error) throw error;
+            
+            FINOX.updateClientDataCache({ abf_data: abfUpdate });
+            await FINOX.loadClientData(true);
+            
+            isSaving = false;
+            return { success: true };
+        } catch (err) {
+            console.error('Erreur sauvegarde:', err);
+            isSaving = false;
+            return { success: false, error: err.message };
+        }
+    };
+    
+    console.log('✅ Module ABF Besoins Invalidité chargé');
+})();
+</script>

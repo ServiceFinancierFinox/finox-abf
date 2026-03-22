@@ -1,0 +1,295 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: ABF CORPO - SOCIÉTÉ PAR ACTIONS
+     Informations corporatives détaillées
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.societe-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.societe-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+.societe-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.societe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .societe-grid { grid-template-columns: 1fr; } }
+
+.societe-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+.societe-card-title { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.societe-form-group { margin-bottom: 16px; }
+.societe-form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.societe-form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+.societe-form-input:focus { border-color: var(--gold); }
+.societe-form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.societe-form-select { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; outline: none; appearance: auto; box-sizing: border-box; }
+.societe-form-select option { background: var(--bg-card); color: var(--text-primary); }
+.societe-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.societe-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+.societe-toggle-switch { width: 40px; height: 22px; background: rgba(255,255,255,0.1); border-radius: 11px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.societe-toggle-switch.active { background: rgba(76,175,80,0.4); }
+.societe-toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s; }
+.societe-toggle-switch.active::after { transform: translateX(18px); }
+.societe-toggle-label { font-size: 13px; color: var(--text-primary); }
+
+.societe-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.societe-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(156,39,176,0.15); border: 1px solid rgba(156,39,176,0.3); border-radius: 14px; font-size: 11px; color: #CE93D8; }
+.societe-tag-remove { cursor: pointer; opacity: 0.6; font-size: 14px; }
+.societe-tag-remove:hover { opacity: 1; }
+.societe-tag-input { padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px dashed var(--border-color); border-radius: 14px; font-size: 11px; color: var(--text-primary); outline: none; width: 120px; }
+
+.societe-save-bar { display: flex; justify-content: flex-end; margin-top: 20px; }
+.societe-save-btn { padding: 10px 28px; background: var(--gold); border: none; border-radius: 8px; color: #1a1a2e; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.societe-save-btn:hover { filter: brightness(1.1); }
+.societe-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+
+<!-- HEADER -->
+
+
+<!-- FORMULAIRE -->
+<div class="societe-grid">
+    <!-- STRUCTURE -->
+    <div class="societe-card">
+        <div class="societe-card-title">📋 Structure corporative</div>
+        <div class="societe-form-row">
+            <div class="societe-form-group">
+                <label class="societe-form-label">Date d'incorporation</label>
+                <input type="date" class="societe-form-input" id="socDateIncorp">
+            </div>
+            <div class="societe-form-group">
+                <label class="societe-form-label">Catégorie de société</label>
+                <select class="societe-form-select" id="socCategorie">
+                    <option value="">-- Sélectionner --</option>
+                    <option value="privee">Privée</option>
+                    <option value="publique">Publique</option>
+                </select>
+            </div>
+        </div>
+        <div class="societe-form-group">
+            <label class="societe-form-label">Type de société</label>
+            <select class="societe-form-select" id="socType">
+                <option value="">-- Sélectionner --</option>
+                <option value="operante">Opérante</option>
+                <option value="gestion">De gestion</option>
+                <option value="portefeuille">De portefeuille</option>
+                <option value="holding">Holding</option>
+            </select>
+        </div>
+        <div class="societe-form-group">
+            <label class="societe-form-label">Fin de l'exercice financier</label>
+            <input type="text" class="societe-form-input" id="socFinExercice" placeholder="Ex: 31 décembre">
+        </div>
+        <div class="societe-form-row">
+            <div class="societe-form-group">
+                <label class="societe-form-label">Nombre d'employés</label>
+                <input type="number" class="societe-form-input" id="socNbEmployes" placeholder="0">
+            </div>
+            <div class="societe-form-group">
+                <label class="societe-form-label">Valeur estimée de l'entreprise</label>
+                <input type="text" class="societe-form-input" id="socValeur" placeholder="Ex: 500 000 $">
+            </div>
+        </div>
+    </div>
+
+    <!-- CONVENTION & ÉVOLUTION -->
+    <div class="societe-card">
+        <div class="societe-card-title">📑 Convention & Évolution</div>
+
+        <div class="societe-form-group">
+            <label class="societe-form-label">Convention entre actionnaires signée?</label>
+            <div class="societe-toggle" id="socConventionToggle">
+                <div class="societe-toggle-switch" id="socConventionSwitch"></div>
+                <span class="societe-toggle-label" id="socConventionLabel">Non</span>
+            </div>
+        </div>
+        <div class="societe-form-group" id="socConventionDateGroup" style="display:none;">
+            <label class="societe-form-label">Date de la convention</label>
+            <input type="date" class="societe-form-input" id="socConventionDate">
+        </div>
+        <div class="societe-form-group" id="socConventionModifGroup" style="display:none;">
+            <label class="societe-form-label">A-t-elle été modifiée?</label>
+            <div class="societe-toggle">
+                <div class="societe-toggle-switch" id="socConventionModifSwitch"></div>
+                <span class="societe-toggle-label" id="socConventionModifLabel">Non</span>
+            </div>
+        </div>
+
+        <div class="societe-form-group">
+            <label class="societe-form-label">Personnes autorisées à signer</label>
+            <div class="societe-tags" id="socPersonnesTags"></div>
+            <input type="text" class="societe-tag-input" id="socPersonnesInput" placeholder="+ Ajouter un nom" style="margin-top:6px;">
+        </div>
+
+        <div class="societe-form-group">
+            <label class="societe-form-label">Évolution future de l'entreprise</label>
+            <select class="societe-form-select" id="socEvolution">
+                <option value="">-- Sélectionner --</option>
+                <option value="croissance">En croissance</option>
+                <option value="stable">Stable</option>
+                <option value="declin">En déclin</option>
+            </select>
+        </div>
+
+        <div class="societe-form-group">
+            <label class="societe-form-label">Projets futurs</label>
+            <textarea class="societe-form-input" id="socProjets" rows="3" placeholder="Projets d'expansion, acquisitions, etc." style="resize:vertical;"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- RÉORGANISATION -->
+<div class="societe-card" style="margin-top:20px;">
+    <div class="societe-card-title">🔄 Capital-actions & Réorganisation</div>
+    <div class="societe-form-row">
+        <div class="societe-form-group">
+            <label class="societe-form-label">Date dernière réorganisation du capital-actions</label>
+            <input type="date" class="societe-form-input" id="socDateReorg">
+        </div>
+        <div class="societe-form-group">
+            <label class="societe-form-label">Raison de la réorganisation</label>
+            <input type="text" class="societe-form-input" id="socRaisonReorg" placeholder="Ex: Gel successoral">
+        </div>
+    </div>
+    <div class="societe-form-group">
+        <label class="societe-form-label">La JVM tient-elle compte de la valeur des filiales?</label>
+        <div class="societe-toggle">
+            <div class="societe-toggle-switch" id="socJVMSwitch"></div>
+            <span class="societe-toggle-label" id="socJVMLabel">Non</span>
+        </div>
+    </div>
+</div>
+
+<!-- BOUTON SAUVEGARDER -->
+<div class="societe-save-bar">
+    <button class="societe-save-btn" onclick="saveSociete()">💾 Sauvegarder</button>
+</div>
+
+<script>
+(async function() {
+    'use strict';
+    console.log('🏦 Module ABF Corpo - Société par actions');
+
+    const client = await FINOX.loadClientData();
+    if (!client) { console.warn('[Societe] Pas de client chargé'); return; }
+
+    const socData = client.abf_data?.corpo?.societe || {};
+    let personnesAutorisees = socData.personnes_autorisees || [];
+
+    // Populate fields
+    const fields = {
+        'socDateIncorp': socData.date_incorporation || '',
+        'socCategorie': socData.categorie || '',
+        'socType': socData.type_societe || '',
+        'socFinExercice': socData.fin_exercice || '',
+        'socNbEmployes': socData.nb_employes || '',
+        'socValeur': socData.valeur_estimee || '',
+        'socConventionDate': socData.convention_date || '',
+        'socEvolution': socData.evolution || '',
+        'socProjets': socData.projets_futurs || '',
+        'socDateReorg': socData.date_reorg || '',
+        'socRaisonReorg': socData.raison_reorg || ''
+    };
+    Object.entries(fields).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+
+    // Toggles
+    function initToggle(switchId, labelId, value, onChange) {
+        const sw = document.getElementById(switchId);
+        const lb = document.getElementById(labelId);
+        if (!sw || !lb) return;
+        if (value) { sw.classList.add('active'); lb.textContent = 'Oui'; }
+        sw.addEventListener('click', () => {
+            sw.classList.toggle('active');
+            const isActive = sw.classList.contains('active');
+            lb.textContent = isActive ? 'Oui' : 'Non';
+            if (onChange) onChange(isActive);
+        });
+    }
+
+    initToggle('socConventionSwitch', 'socConventionLabel', socData.convention_signee, (active) => {
+        document.getElementById('socConventionDateGroup').style.display = active ? '' : 'none';
+        document.getElementById('socConventionModifGroup').style.display = active ? '' : 'none';
+    });
+    if (socData.convention_signee) {
+        document.getElementById('socConventionDateGroup').style.display = '';
+        document.getElementById('socConventionModifGroup').style.display = '';
+    }
+    initToggle('socConventionModifSwitch', 'socConventionModifLabel', socData.convention_modifiee);
+    initToggle('socJVMSwitch', 'socJVMLabel', socData.jvm_filiales);
+
+    // Tags - Personnes autorisées
+    function renderTags() {
+        const container = document.getElementById('socPersonnesTags');
+        if (!container) return;
+        container.innerHTML = personnesAutorisees.map((p, i) =>
+            `<span class="societe-tag">${p}<span class="societe-tag-remove" data-idx="${i}">&times;</span></span>`
+        ).join('');
+        container.querySelectorAll('.societe-tag-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                personnesAutorisees.splice(parseInt(btn.dataset.idx), 1);
+                renderTags();
+            });
+        });
+    }
+    renderTags();
+
+    const tagInput = document.getElementById('socPersonnesInput');
+    if (tagInput) {
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && tagInput.value.trim()) {
+                e.preventDefault();
+                personnesAutorisees.push(tagInput.value.trim());
+                tagInput.value = '';
+                renderTags();
+            }
+        });
+    }
+
+    // Save
+    window.saveSociete = async function() {
+        const btn = document.querySelector('.societe-save-btn');
+        btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+
+        try {
+            const data = {
+                date_incorporation: document.getElementById('socDateIncorp').value || null,
+                categorie: document.getElementById('socCategorie').value,
+                type_societe: document.getElementById('socType').value,
+                fin_exercice: document.getElementById('socFinExercice').value.trim(),
+                nb_employes: document.getElementById('socNbEmployes').value.trim(),
+                valeur_estimee: document.getElementById('socValeur').value.trim(),
+                convention_signee: document.getElementById('socConventionSwitch').classList.contains('active'),
+                convention_date: document.getElementById('socConventionDate').value || null,
+                convention_modifiee: document.getElementById('socConventionModifSwitch').classList.contains('active'),
+                personnes_autorisees: personnesAutorisees,
+                evolution: document.getElementById('socEvolution').value,
+                projets_futurs: document.getElementById('socProjets').value.trim(),
+                date_reorg: document.getElementById('socDateReorg').value || null,
+                raison_reorg: document.getElementById('socRaisonReorg').value.trim(),
+                jvm_filiales: document.getElementById('socJVMSwitch').classList.contains('active')
+            };
+
+            const currentAbf = client.abf_data || {};
+            const currentCorpo = currentAbf.corpo || {};
+            const updatedAbf = { ...currentAbf, corpo: { ...currentCorpo, societe: data }, section_corpo_societe_completed: true };
+
+            const { error } = await FINOX.supabase
+                .from('clients')
+                .update({ abf_data: updatedAbf, updated_at: new Date().toISOString() })
+                .eq('id', FINOX.CLIENT_ID);
+
+            if (error) throw error;
+            FINOX.updateClientDataCache({ abf_data: updatedAbf });
+            FINOX.showNotification('Société par actions sauvegardée', 'success');
+        } catch (err) {
+            console.error('Erreur sauvegarde société:', err);
+            FINOX.showNotification('Erreur: ' + (err.message || 'Impossible de sauvegarder'), 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Sauvegarder';
+        }
+    };
+
+    console.log('✅ Module Société par actions chargé');
+})();
+</script>

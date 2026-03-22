@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finox CRM - Dossier Client</title>
+    <link rel="stylesheet" href="shared/smartbar/smartbar.css">
+
+    <!-- Preconnect pour accélérer les ressources externes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://vtcnnqzxreuxupsbjufg.supabase.co" crossorigin>
+    <link rel="preconnect" href="https://maps.googleapis.com" crossorigin>
+
+    <!-- Fonts (non-bloquant) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
+    <!-- Google Maps API (chargé en async pour ne pas bloquer le rendu) -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCj_dqKQJ4yg-Cxh9kShX04-ffnmqhtSJo&libraries=places&language=fr" async></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Theme System (doit être chargé en PREMIER pour éviter le flash) -->
+    <script src="shared/themes.js"></script>
+
+    <!-- Shared Config (doit être chargé AVANT navigation.js) -->
+    <script src="shared/config.js"></script>
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="shared/styles.css">
+    <link rel="stylesheet" href="shared/team-chat.css">
+    <link rel="stylesheet" href="shared/notifications-panel.css">
+
+    <style>
+    /* ═══ Scrollbar globale — Style unifié dark ═══ */
+    * { scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.25) transparent; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.4); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+    /* ═══ Custom Select — Dark + Gold ═══ */
+    select[data-cs] { position: absolute !important; opacity: 0 !important; pointer-events: none !important; width: 0 !important; height: 0 !important; overflow: hidden !important; }
+    .cs-wrap { position: relative; width: 100%; }
+    .cs-display {
+        padding: 12px 14px; padding-right: 34px;
+        background: rgba(0,0,0,.3); border: 1px solid var(--border-color); border-radius: 8px;
+        color: var(--text-primary); font-size: 14px; font-family: 'Inter', -apple-system, sans-serif;
+        cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        transition: border-color 0.2s; position: relative; user-select: none;
+        min-height: 20px; height: 46px; box-sizing: border-box;
+        display: flex; align-items: center;
+    }
+    .cs-display::after {
+        content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        color: var(--text-muted); font-size: 11px; transition: transform 0.2s; pointer-events: none;
+    }
+    .cs-wrap.open .cs-display { border-color: var(--gold); }
+    .cs-wrap.open .cs-display::after { transform: translateY(-50%) rotate(180deg); color: var(--gold); }
+    .cs-dropdown {
+        display: none; position: absolute; left: 0; right: 0;
+        background: var(--bg-card, #1a1a2e); border: 1px solid rgba(201,162,39,.4); border-radius: 10px;
+        max-height: 260px; overflow-y: auto; z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0,0,0,.6); padding: 4px;
+        scrollbar-width: thin; scrollbar-color: rgba(201,162,39,0.25) transparent;
+    }
+    .cs-dropdown.up { bottom: calc(100% + 4px); top: auto; }
+    .cs-dropdown.down { top: calc(100% + 4px); bottom: auto; }
+    .cs-wrap.open .cs-dropdown { display: block; animation: csFadeIn .15s ease; }
+    @keyframes csFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .cs-opt {
+        padding: 9px 12px; font-size: 13px; color: var(--text-primary, #e0e0e0);
+        cursor: pointer; border-radius: 6px; transition: background 0.12s;
+        font-family: 'Inter', -apple-system, sans-serif; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .cs-opt:hover { background: rgba(201,162,39,.25); color: #fff; }
+    .cs-opt.sel { background: rgba(201,162,39,.15); color: var(--gold, #C9A227); font-weight: 600; }
+    .cs-opt.dis { opacity: .4; cursor: default; }
+    .cs-opt.dis:hover { background: none; color: var(--text-primary); }
+
+    /* ═══ Supprimer les spinners sur input number ═══ */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    /* Share link button */
+    .share-link-btn {
+        display: none; /* shown only for shareable tools */
+        align-items: center; justify-content: center;
+        width: 28px; height: 28px; border: none;
+        background: rgba(201,162,39,.15); border-radius: 6px;
+        cursor: pointer; font-size: 14px; margin-left: auto;
+        transition: all .2s; flex-shrink: 0;
+    }
+    .share-link-btn:hover { background: rgba(201,162,39,.35); transform: scale(1.1); }
+    .nav-item .share-link-btn { display: flex; }
+
+    /* Share modal overlay */
+    .share-modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,.6); z-index: 9999; align-items: center; justify-content: center;
+    }
+    .share-modal-overlay.active { display: flex; }
+    .share-modal {
+        background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;
+        width: 460px; max-width: 95vw; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .share-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .share-modal-icon { width: 44px; height: 44px; background: linear-gradient(135deg,rgba(201,162,39,.2),rgba(201,162,39,.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .share-modal-title { font-size: 18px; font-weight: 700; }
+    .share-modal-sub { font-size: 12px; color: var(--text-muted); }
+    .share-modal-close { margin-left: auto; background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; }
+    .share-modal-close:hover { color: var(--text-primary); }
+    .share-modal-body { display: flex; flex-direction: column; gap: 16px; }
+    .share-field-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .share-select {
+        width: 100%; padding: 10px 14px; background: rgba(0,0,0,.3); border: 1px solid var(--border-color);
+        border-radius: 8px; color: var(--text-primary); font-size: 13px; cursor: pointer;
+    }
+    .share-select:focus { outline: none; border-color: var(--gold); }
+    .share-generate-btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 12px; background: linear-gradient(135deg,var(--gold),var(--gold-dark));
+        border: none; border-radius: 10px; color: #000; font-weight: 600; font-size: 14px; cursor: pointer;
+        transition: all .2s;
+    }
+    .share-generate-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,162,39,.35); }
+    .share-generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .share-result {
+        display: none; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3);
+        border-radius: 10px; padding: 14px;
+    }
+    .share-result.active { display: block; }
+    .share-result-label { font-size: 11px; color: #10b981; font-weight: 600; margin-bottom: 8px; }
+    .share-url-row { display: flex; gap: 8px; }
+    .share-url-input {
+        flex: 1; padding: 8px 12px; background: rgba(0,0,0,.3); border: 1px solid var(--border-color);
+        border-radius: 8px; color: var(--text-primary); font-size: 11px; font-family: monospace;
+    }
+    .share-copy-btn {
+        padding: 8px 16px; background: #10b981; border: none; border-radius: 8px;
+        color: #fff; font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .share-copy-btn:hover { background: #059669; }
+    .share-links-section { margin-top: 8px; }
+    .share-links-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .share-link-item {
+        display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+        background: rgba(0,0,0,.2); border-radius: 8px; margin-bottom: 6px; font-size: 11px;
+    }
+    .share-link-status { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .share-link-status.active { background: rgba(16,185,129,.2); color: #10b981; }
+    .share-link-status.completed { background: rgba(59,130,246,.2); color: #3b82f6; }
+    .share-link-status.expired { background: rgba(239,68,68,.2); color: #ef4444; }
+    .share-link-status.revoked { background: rgba(127,127,127,.2); color: #999; }
+    .share-link-info { flex: 1; color: var(--text-secondary); }
+    .share-revoke-btn {
+        background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); border-radius: 6px;
+        padding: 4px 10px; font-size: 10px; color: #ef4444; cursor: pointer;
+    }
+    .share-revoke-btn:hover { background: rgba(239,68,68,.3); }
+
+    /* Checkmark styles pour le menu ABF */
+    .nav-item-check {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+    .nav-item-check.completed {
+        background: #4CAF50;
+        color: #fff;
+    }
+    .nav-item-check.partial {
+        background: #FF9800;
+        color: #fff;
+    }
+    .nav-item-check.empty {
+        background: rgba(255,255,255,0.1);
+        border: 1px dashed rgba(255,255,255,0.3);
+        color: transparent;
+    }
+    
+    /* Bouton fermer mobile - caché par défaut, affiché en mobile via CSS */
+    .mobile-close-btn {
+        display: none;
+    }
+
+    /* ══════════════════════════════════════
+       DASHBOARD DRAWER (panneau droit)
+    ══════════════════════════════════════ */
+    .dash-drawer-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 998;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        backdrop-filter: blur(2px);
+    }
+    .dash-drawer-overlay.open { opacity: 1; visibility: visible; }
+    .dash-drawer {
+        position: fixed; top: 0; right: 0; bottom: 0; width: 440px; max-width: 92vw;
+        background: var(--bg-primary, #0d0d0d); border-left: 1px solid rgba(201,162,39,0.15);
+        z-index: 999; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: -16px 0 50px rgba(0,0,0,0.5);
+    }
+    .dash-drawer.open { transform: translateX(0); }
+
+    /* Header avec gradient gold */
+    .dash-drawer-header {
+        display: flex; align-items: center; gap: 14px;
+        padding: 18px 20px; border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, rgba(201,162,39,0.08) 0%, rgba(201,162,39,0.02) 100%);
+        position: relative;
+    }
+    .dash-drawer-header::after {
+        content: ''; position: absolute; bottom: 0; left: 20px; right: 20px;
+        height: 1px; background: linear-gradient(90deg, transparent, rgba(201,162,39,0.3), transparent);
+    }
+    .dash-drawer-avatar {
+        width: 48px; height: 48px; border-radius: 14px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; font-weight: 700; color: #000; flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(201,162,39,0.25);
+    }
+    .dash-drawer-info { flex: 1; min-width: 0; }
+    .dash-drawer-name { font-size: 17px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dash-drawer-type { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .dash-drawer-meta { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+    .dash-drawer-chip {
+        display: inline-flex; align-items: center; gap: 3px;
+        padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;
+        background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.06);
+    }
+    .dash-drawer-close {
+        width: 32px; height: 32px; border-radius: 8px; border: none;
+        background: rgba(255,255,255,0.06); color: var(--text-muted); font-size: 16px;
+        cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+    }
+    .dash-drawer-close:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+    .dash-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+    .dash-drawer-body::-webkit-scrollbar { width: 4px; }
+    .dash-drawer-body::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.2); border-radius: 4px; }
+
+    /* Sections */
+    .dd-section { margin-bottom: 18px; }
+    .dd-section-title {
+        font-size: 10px; font-weight: 700; color: var(--gold); text-transform: uppercase;
+        letter-spacing: 1px; margin-bottom: 10px; padding-left: 2px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .dd-section-title::after {
+        content: ''; flex: 1; height: 1px;
+        background: linear-gradient(90deg, rgba(201,162,39,0.2), transparent);
+    }
+    .dd-card {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 14px; margin-bottom: 8px;
+        transition: border-color 0.2s;
+    }
+    .dd-card:hover { border-color: rgba(201,162,39,0.15); }
+    .dd-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; gap: 8px; }
+    .dd-row + .dd-row { border-top: 1px solid rgba(255,255,255,0.04); }
+    .dd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .dd-value { font-size: 12px; font-weight: 600; color: var(--text-primary); text-align: right; }
+    .dd-value.gold { color: var(--gold); }
+    .dd-value.green { color: #81C784; }
+    .dd-value.red { color: #ef9a9a; }
+    .dd-value.blue { color: #90CAF9; }
+
+    /* KPI cards */
+    .dd-kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .dd-kpi-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .dd-kpi {
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 10px; padding: 12px 10px; text-align: center;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .dd-kpi:hover { border-color: rgba(201,162,39,0.2); transform: translateY(-1px); }
+    .dd-kpi-value { font-size: 17px; font-weight: 700; color: var(--gold); line-height: 1.2; }
+    .dd-kpi-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; letter-spacing: 0.5px; line-height: 1.3; }
+
+    /* Person cards */
+    .dd-person {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 10px; margin-bottom: 6px; transition: border-color 0.2s;
+    }
+    .dd-person:hover { border-color: rgba(201,162,39,0.15); }
+    .dd-person-icon {
+        width: 34px; height: 34px; border-radius: 9px;
+        background: rgba(201,162,39,0.08); display: flex; align-items: center;
+        justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .dd-person-info { flex: 1; min-width: 0; }
+    .dd-person-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .dd-person-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .dd-person-badge {
+        padding: 2px 8px; border-radius: 6px; font-size: 9px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
+    }
+    .dd-empty { text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; }
+
+    /* Mini progress bar */
+    .dd-progress { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .dd-progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+    /* Badge styles */
+    .dd-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
+    }
+    .dd-badge-green { background: rgba(129,199,132,0.12); color: #81C784; }
+    .dd-badge-red { background: rgba(239,154,154,0.12); color: #ef9a9a; }
+    .dd-badge-gold { background: rgba(201,162,39,0.12); color: var(--gold); }
+    .dd-badge-blue { background: rgba(144,202,249,0.12); color: #90CAF9; }
+    .dd-badge-purple { background: rgba(206,147,216,0.12); color: #CE93D8; }
+    .dd-badge-orange { background: rgba(255,183,77,0.12); color: #FFB74D; }
+
+    /* Timeline mini */
+    .dd-timeline-item {
+        display: flex; gap: 10px; padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .dd-timeline-item:last-child { border-bottom: none; }
+    .dd-timeline-dot {
+        width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0;
+        background: var(--gold); box-shadow: 0 0 6px rgba(201,162,39,0.3);
+    }
+    .dd-timeline-content { flex: 1; min-width: 0; }
+    .dd-timeline-action { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .dd-timeline-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dd-timeline-date { font-size: 10px; color: var(--text-muted); opacity: 0.7; margin-top: 2px; }
+
+    /* Dates renouvellement alert */
+    .dd-alert {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px; border-radius: 8px; margin-bottom: 6px;
+        font-size: 12px; font-weight: 500;
+    }
+    .dd-alert-warn { background: rgba(255,183,77,0.08); border: 1px solid rgba(255,183,77,0.2); color: #FFB74D; }
+    .dd-alert-ok { background: rgba(129,199,132,0.06); border: 1px solid rgba(129,199,132,0.15); color: #81C784; }
+    .dd-alert-danger { background: rgba(239,154,154,0.08); border: 1px solid rgba(239,154,154,0.2); color: #ef9a9a; }
+
+    /* ═══════════════════════════════════════════
+       ABF TRACK — Navigation immersive par nodes
+    ═══════════════════════════════════════════ */
+    .abf-stepper {
+        display: none;
+        position: sticky; top: 0; z-index: 50;
+        background: var(--bg-primary);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-gold);
+        padding: 12px 24px 28px;
+        margin: -24px -24px 20px;
+        overflow: visible;
+    }
+    .abf-stepper.active { display: block; }
+
+    /* Labels de catégorie AU-DESSUS de la track */
+    .abf-track-labels {
+        display: flex; justify-content: center; gap: 0;
+        margin-bottom: 6px; overflow: hidden;
+    }
+    .abf-track-label {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--text-muted);
+        text-align: center; transition: color 0.2s; opacity: 0.5;
+    }
+    .abf-track-label.active { color: var(--gold); opacity: 0.7; }
+
+    /* Track — flèches + nodes + toggle sur une ligne */
+    .abf-track {
+        display: flex; align-items: center; justify-content: center;
+        gap: 0; padding: 0; overflow: visible;
+        scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .abf-track::-webkit-scrollbar { display: none; }
+
+    /* Flèches prev/next intégrées dans le track */
+    .abf-nav-arrow {
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: transparent; color: var(--text-muted);
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; margin: 0 8px;
+    }
+    .abf-nav-arrow:hover:not(:disabled) {
+        border-color: var(--gold); color: var(--gold);
+        background: var(--gold-glow);
+    }
+    .abf-nav-arrow:disabled { opacity: 0.15; cursor: default; }
+
+    /* Node — chaque section = un emoji dans un cercle */
+    .abf-node {
+        width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; cursor: pointer; position: relative;
+        background: var(--bg-hover);
+        border: 2.5px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .abf-node:hover {
+        transform: scale(1.15);
+        border-color: var(--gold);
+        box-shadow: 0 0 28px var(--gold-glow);
+        z-index: 2;
+    }
+    /* Node complété — glow vert autour du cercle */
+    .abf-node.done {
+        background: rgba(76,175,80,0.15);
+        border-color: #4CAF50;
+        box-shadow: 0 0 16px rgba(76,175,80,0.35);
+    }
+    .abf-node.done:hover {
+        box-shadow: 0 0 28px rgba(76,175,80,0.5);
+        border-color: #4CAF50;
+    }
+    /* Node actif (courant) */
+    .abf-node.active {
+        width: 58px; height: 58px; font-size: 26px;
+        background: var(--gold-glow);
+        border-color: var(--gold);
+        border-width: 3px;
+        box-shadow: 0 0 28px var(--gold-glow);
+        animation: nodePulse 2.5s ease-in-out infinite;
+        z-index: 1;
+    }
+    .abf-node.done.active {
+        background: rgba(76,175,80,0.12);
+        border-color: #4CAF50;
+        box-shadow: 0 0 28px rgba(76,175,80,0.35);
+    }
+    /* Node optionnel (retraite non activée) — atténué avec bordure pointillée */
+    .abf-node.optional {
+        opacity: 0.45;
+        border-style: dashed;
+        border-color: var(--text-muted);
+    }
+    .abf-node.optional:hover {
+        opacity: 0.8;
+        border-color: var(--gold);
+    }
+    .abf-node.optional.active {
+        opacity: 1;
+        border-style: solid;
+    }
+
+    /* Tooltip sous le node — visible au hover OU quand actif */
+    .abf-node-tip {
+        position: absolute; top: calc(100% + 8px); left: 50%;
+        color: var(--text-muted);
+        padding: 4px 0;
+        font-size: 11px; font-weight: 600; white-space: nowrap;
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.15s, transform 0.15s;
+        transform: translateX(-50%) translateY(-4px);
+        z-index: 10;
+    }
+    .abf-node:hover .abf-node-tip {
+        opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+    /* Le node actif a son titre toujours visible */
+    .abf-node.active .abf-node-tip {
+        opacity: 1; transform: translateX(-50%) translateY(0);
+        color: var(--gold);
+        font-size: 12px;
+    }
+    /* Masquer le titre actif quand on survole un AUTRE node (éviter chevauchement) */
+    .abf-track:has(.abf-node:not(.active):hover) .abf-node.active .abf-node-tip {
+        opacity: 0;
+        transition: opacity 0.1s;
+    }
+
+    /* Connecteurs entre nodes */
+    .abf-connector {
+        width: 28px; height: 3px; flex-shrink: 0;
+        border-radius: 2px; transition: background 0.5s ease;
+    }
+    .abf-connector.done {
+        background: rgba(76,175,80,0.5);
+        box-shadow: 0 0 8px rgba(76,175,80,0.2);
+    }
+    .abf-connector.partial {
+        background: linear-gradient(90deg, rgba(76,175,80,0.5), rgba(255,255,255,0.06));
+    }
+    .abf-connector.todo {
+        background: var(--border-color);
+    }
+
+    /* Séparateur de catégorie */
+    .abf-separator {
+        width: 2px; height: 32px; flex-shrink: 0;
+        background: linear-gradient(180deg, transparent, var(--border-gold), transparent);
+        margin: 0 12px;
+    }
+
+
+    /* Animations */
+    @keyframes nodePulse {
+        0%, 100% { box-shadow: 0 0 20px var(--gold-glow); }
+        50% { box-shadow: 0 0 40px var(--gold-glow); }
+    }
+    @keyframes nodeComplete {
+        0% { transform: scale(1); }
+        40% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    .abf-node.just-completed { animation: nodeComplete 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    /* Célébration 100% */
+    .abf-stepper.all-done .abf-node-tip {
+        color: #4CAF50;
+    }
+
+    /* ═══ MODULE HELP BUTTON — Point d'interrogation flottant ═══ */
+    .module-help-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold, #C9A227), #D4A03D);
+        color: #000;
+        border: none;
+        font-size: 20px;
+        font-weight: 800;
+        cursor: pointer;
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 16px rgba(201,162,39,0.4);
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+    }
+    .module-help-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 24px rgba(201,162,39,0.6);
+    }
+
+    /* ═══ HELP POPUP OVERLAY ═══ */
+    .module-help-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .module-help-overlay.active { display: flex; }
+    .module-help-popup {
+        background: var(--bg-primary, #0f0f0f);
+        border: 1px solid var(--border-color, #2a2a2a);
+        border-radius: 18px;
+        width: 92%;
+        max-width: 620px;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 0;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        animation: helpPopupIn 0.25s ease;
+    }
+    @keyframes helpPopupIn {
+        from { opacity: 0; transform: translateY(20px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .module-help-popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid var(--border-color, #2a2a2a);
+    }
+    .module-help-popup-header h3 {
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+    }
+    .module-help-popup-close {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 18px;
+        background: var(--bg-secondary, #1a1a1a);
+        border: 1px solid var(--border-color, #2a2a2a);
+        color: var(--text-muted, #888);
+        transition: all 0.15s;
+    }
+    .module-help-popup-close:hover { color: #ef4444; border-color: #ef4444; }
+    .module-help-popup-body {
+        padding: 20px 24px 24px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-primary, #e0e0e0);
+    }
+    .module-help-popup-body h4 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--gold, #C9A227);
+        margin: 20px 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .module-help-popup-body h4:first-child { margin-top: 0; }
+    .module-help-popup-body p {
+        margin: 0 0 10px;
+        color: var(--text-secondary, #b0b0b0);
+    }
+    .module-help-popup-body ul {
+        margin: 0 0 12px;
+        padding-left: 20px;
+    }
+    .module-help-popup-body li {
+        margin-bottom: 6px;
+        color: var(--text-secondary, #b0b0b0);
+    }
+    .module-help-popup-body li strong {
+        color: var(--text-primary, #e0e0e0);
+    }
+    .module-help-popup-body .help-tip {
+        background: rgba(201,162,39,0.08);
+        border: 1px solid rgba(201,162,39,0.2);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 16px;
+        font-size: 13px;
+    }
+    .module-help-popup-body .help-tip strong {
+        color: var(--gold, #C9A227);
+    }
+
+    </style>
+</head>
+<body>
+
+<!-- Loading pendant vérification auth -->
+<div class="loading-overlay" id="loadingOverlay" style="position:fixed;inset:0;background:var(--bg-primary, #0a0a0a);display:flex;align-items:center;justify-content:center;z-index:9999;">
+    <div style="width:40px;height:40px;border:3px solid var(--border-color, #2a2a2a);border-top-color:var(--gold, #C9A227);border-radius:50%;animation:spin 1s linear infinite;"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     APPLICATION PRINCIPALE
+═══════════════════════════════════════════════════════════════ -->
+<div class="app-container" id="appContainer" style="display: none;">
+    
+    <!-- Bouton menu mobile -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰ Menu</button>
+    
+    <!-- Overlay pour fermer le menu en cliquant dehors (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileMenu()"></div>
+    
+    <!-- ═══════════════════════════════════════════════════════════
+         SIDEBAR (fixe, ne change jamais)
+    ═══════════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Header avec bouton retour ET bouton fermer (mobile) -->
+        <div class="sidebar-header">
+            <!-- Mode normal: retour au CRM -->
+            <a href="app.html#/clients" class="sidebar-back-link" id="backLinkCrm">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Retour à la liste</span>
+            </a>
+            <!-- Mode Zoho: fermer l'onglet -->
+            <a href="#" class="sidebar-back-link" id="backLinkZoho" style="display:none;" onclick="window.close(); return false;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>↩ Retour à Zoho</span>
+            </a>
+            <!-- Client Name + Pulse Vital — merged clickable block -->
+            <div class="sidebar-client-pulse" id="sidebarClientPulse">
+                <div id="sidebarPulseRing" class="sidebar-pulse-ring" style="display:none;"></div>
+                <div class="sidebar-client-pulse-info">
+                    <div class="sidebar-client-name" id="sidebarClientName">Client</div>
+                    <div class="sidebar-pulse-subtitle" id="sidebarPulseSubtitle" style="display:none;">
+                        <span id="sidebarPulseTitle">Pulse Vital</span>
+                        <span class="sidebar-pulse-dot" id="sidebarPulseDot"> · </span>
+                        <span id="sidebarPulseLabel"></span>
+                    </div>
+                </div>
+            </div>
+            <!-- Bouton Fermer (X) - visible seulement en mobile -->
+            <button class="mobile-close-btn" onclick="closeMobileMenu()">✕</button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <!-- ABF — item simple avec barre de progression -->
+            <div class="nav-item" id="navABF" style="background: rgba(201,162,39,0.06);">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label" style="color: var(--gold);">ABF</span>
+                <div class="nav-progress">
+                    <div class="nav-progress-bar">
+                        <div class="nav-progress-fill" id="abfProgressBar" style="width: 0%"></div>
+                    </div>
+                    <span class="nav-progress-text" id="abfProgressText">0%</span>
+                </div>
+            </div>
+
+            <!-- ABF Corpo — item simple (affiché si type_contact === 'corpo') -->
+            <div class="nav-item" id="navCorpo" style="display:none; background: rgba(201,162,39,0.06);">
+                <span class="nav-icon">🏛️</span>
+                <span class="nav-label" style="color: var(--gold);">ABF Corpo</span>
+                <div class="nav-progress">
+                    <div class="nav-progress-bar">
+                        <div class="nav-progress-fill" id="corpoProgressBar" style="width: 0%"></div>
+                    </div>
+                    <span class="nav-progress-text" id="corpoProgressText">0%</span>
+                </div>
+            </div>
+
+            <!-- Affaires — Assurances, Placements (anciennement Gestion) -->
+            <div class="nav-item" id="navGestion" style="background: rgba(99, 102, 241, 0.06);">
+                <span class="nav-icon">💼</span>
+                <span class="nav-label" style="color: #818CF8;">Affaires</span>
+                <span class="nav-badge" id="affairesBadge" style="display:none;">0</span>
+            </div>
+
+            <!-- Timeline -->
+            <div class="nav-item" data-module="timeline" style="background: rgba(156, 39, 176, 0.05);">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label" style="color: #CE93D8;">Timeline</span>
+            </div>
+
+            <!-- Documents -->
+            <div class="nav-item" data-module="documents" style="background: rgba(59,130,246,0.06);">
+                <span class="nav-icon">📁</span>
+                <span class="nav-label" style="color: #60a5fa;">Documents</span>
+                <span class="nav-badge" id="documentsBadge" style="display:none;">0</span>
+            </div>
+
+            <!-- Séparateur Outils -->
+            <div class="nav-divider"></div>
+
+
+            <!-- Volet Outils -->
+            <div class="nav-volet" id="voletOutils">
+                <div class="nav-volet-header">
+                    <span class="nav-icon">🔧</span>
+                    <span class="nav-label">Outils</span>
+                    <svg class="nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div class="nav-volet-content">
+                    <div class="nav-item" data-module="outils-calculateur-vie">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-label">Calculateur Vie</span>
+                        <button class="share-link-btn" onclick="event.stopPropagation(); openShareModal('assurance_vie', 'Assurance Vie')" title="Générer un lien client">🔗</button>
+                    </div>
+                    <div class="nav-item" data-module="outil-budget" data-corpo-hide>
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-label">Budget Personnel</span>
+                        <button class="share-link-btn" onclick="event.stopPropagation(); openShareModal('budget', 'Budget Personnel')" title="Générer un lien client">🔗</button>
+                    </div>
+                    <div class="nav-item" data-module="outil-calc-hypo" data-corpo-hide>
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-label">Calc. Hypothécaire</span>
+                        <button class="share-link-btn" onclick="event.stopPropagation(); openShareModal('calc_hypo', 'Calc. Hypothécaire')" title="Générer un lien client">🔗</button>
+                    </div>
+                    <div class="nav-item" data-module="outil-profil-investisseur" data-corpo-hide>
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Profil Investisseur</span>
+                        <button class="share-link-btn" onclick="event.stopPropagation(); openShareModal('profil_investisseur', 'Profil Investisseur')" title="Générer un lien client">🔗</button>
+                    </div>
+                    <div class="nav-item" data-module="outil-reee" data-corpo-hide>
+                        <span class="nav-icon">🎓</span>
+                        <span class="nav-label">REEE</span>
+                        <button class="share-link-btn" onclick="event.stopPropagation(); openShareModal('reee', 'REEE')" title="Générer un lien client">🔗</button>
+                    </div>
+
+                    <div class="nav-item" data-module="outil-calc-mg-partage" data-corpo-only style="display:none;">
+                        <span class="nav-icon">💊</span>
+                        <span class="nav-label">Calc. MG Partagée</span>
+                    </div>
+                    <div class="nav-item" data-module="conformite-preavis">
+                        <span class="nav-icon">📄</span>
+                        <span class="nav-label">Préavis Remplacement</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- User Info -->
+        <div class="sidebar-user">
+            <div class="sidebar-user-info" onclick="loadModule('parametres')">
+                <div class="sidebar-user-avatar" id="sidebarUserAvatar">?</div>
+                <div class="sidebar-user-details">
+                    <div class="sidebar-user-name" id="sidebarUserName">Conseiller</div>
+                    <div class="sidebar-user-role"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;box-shadow:0 0 6px #22c55e;"></span>Connecté</div>
+                </div>
+            </div>
+            <button class="sidebar-logout" onclick="handleLogout()">🚪 Déconnexion</button>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         MODAL : Générer un lien client partageable
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="share-modal-overlay" id="shareModalOverlay" onclick="if(event.target===this)closeShareModal()">
+        <div class="share-modal">
+            <div class="share-modal-header">
+                <div class="share-modal-icon">🔗</div>
+                <div>
+                    <div class="share-modal-title">Générer un lien client</div>
+                    <div class="share-modal-sub" id="shareModalToolName">Budget Personnel</div>
+                </div>
+                <button class="share-modal-close" onclick="closeShareModal()">✕</button>
+            </div>
+            <div class="share-modal-body">
+                <div>
+                    <div class="share-field-label">Durée de validité</div>
+                    <select class="share-select" id="shareExpiry">
+                        <option value="5">5 jours</option>
+                        <option value="10" selected>10 jours</option>
+                        <option value="30">30 jours</option>
+                    </select>
+                </div>
+                <button class="share-generate-btn" id="shareGenerateBtn" onclick="generateShareLink()">
+                    <span>🔗</span> Générer le lien
+                </button>
+                <div class="share-result" id="shareResult">
+                    <div class="share-result-label">✅ Lien généré avec succès</div>
+                    <div class="share-url-row">
+                        <input type="text" class="share-url-input" id="shareUrlInput" readonly>
+                        <button class="share-copy-btn" onclick="copyShareUrl()">📋 Copier</button>
+                    </div>
+                </div>
+                <div class="share-links-section" id="shareLinksSection" style="display:none">
+                    <div class="share-links-title">Liens existants pour cet outil</div>
+                    <div id="shareLinksList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ZONE DE CONTENU (les modules sont injectés ici)
+    ═══════════════════════════════════════════════════════════ -->
+    <main class="main-content">
+        <!-- ABF Stepper — Rail de navigation compact -->
+        <div class="abf-stepper" id="abfStepper">
+            <div class="abf-stepper-categories" id="abfStepperCats">
+                <!-- Généré dynamiquement par renderStepper() -->
+            </div>
+        </div>
+
+        <!-- ═══ GESTION STEPPER ═══ -->
+        <div class="abf-stepper" id="gestionStepper">
+            <div class="abf-stepper-categories" id="gestStepperCats">
+                <!-- Généré dynamiquement par renderStepper() -->
+            </div>
+        </div>
+
+        <div id="module-content">
+            <!-- Le contenu des modules est chargé dynamiquement ici -->
+            <div class="module-loading">
+                <div class="spinner"></div>
+                <span>Chargement...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DRAWER — APERÇU CLIENT (panneau droit)
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="dash-drawer-overlay" id="dashDrawerOverlay" onclick="closeDashDrawer()"></div>
+    <aside class="dash-drawer" id="dashDrawer">
+        <div class="dash-drawer-header">
+            <div class="dash-drawer-avatar" id="drawerAvatar">?</div>
+            <div class="dash-drawer-info">
+                <div class="dash-drawer-name" id="drawerClientName">Client</div>
+                <div class="dash-drawer-type" id="drawerClientType">Prospect</div>
+                <div class="dash-drawer-meta" id="drawerMeta"></div>
+            </div>
+            <!-- Pulse Vital Ring (visible seulement pour type_contact === 'client') -->
+            <div id="drawerPulseRing" style="display:none;margin-left:auto;margin-right:8px;"></div>
+            <button class="dash-drawer-close" onclick="closeDashDrawer()">✕</button>
+        </div>
+        <div class="dash-drawer-body" id="drawerBody">
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">Chargement...</div>
+        </div>
+    </aside>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════════ -->
+<script src="shared/navigation.js"></script>
+
+    <!-- Smart Bar -->
+    <script src="shared/smartbar/smartbar-loader.js"></script>
+    <script src="shared/smartbar/popup-call.js"></script>
+    <script src="shared/smartbar/popup-notes.js"></script>
+    <script src="shared/smartbar/popup-calendar.js"></script>
+    <script src="shared/smartbar/popup-sms.js"></script>
+    <script src="shared/smartbar/popup-email.js"></script>
+    <script src="shared/smartbar/popup-finoxai.js"></script>
+    <script src="shared/smartbar/popup-tasks.js"></script>
+
+<script>
+// ==========================================
+// DASHBOARD DRAWER — APERÇU CLIENT
+// ==========================================
+let dashDrawerLoaded = false;
+
+function toggleDashDrawer() {
+    const drawer = document.getElementById('dashDrawer');
+    const overlay = document.getElementById('dashDrawerOverlay');
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+        closeDashDrawer();
+    } else {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        if (!dashDrawerLoaded) loadDashDrawerData();
+    }
+}
+
+function closeDashDrawer() {
+    document.getElementById('dashDrawer').classList.remove('open');
+    document.getElementById('dashDrawerOverlay').classList.remove('open');
+}
+
+async function loadDashDrawerData() {
+    dashDrawerLoaded = true;
+    const body = document.getElementById('drawerBody');
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);"><div class="spinner" style="margin:0 auto 12px;"></div>Chargement...</div>';
+
+    try {
+        const client = await FINOX.loadClientData(true);
+        if (!client) { body.innerHTML = '<div class="dd-empty">Aucun client</div>'; return; }
+
+        const fmt = n => Math.round(n||0).toLocaleString('fr-CA') + ' $';
+        const fullName = ((client.first_name||'') + ' ' + (client.last_name||'')).trim();
+        const typeNorm = (client.type_contact || '').toLowerCase();
+        const isCorpo = typeNorm === 'corpo';
+
+        // Helper: detect sex (DB stores "Homme"/"Femme" or "M"/"F")
+        const isMale = (s) => { if (!s) return null; const u = String(s).toUpperCase(); return u === 'M' || u === 'HOMME' || u === 'MALE' || u === 'H'; };
+
+        // Header
+        const avatarEl = document.getElementById('drawerAvatar');
+        const sexIcon = client.sex ? (isMale(client.sex) ? '👨' : '👩') : null;
+        if (isCorpo) avatarEl.textContent = '🏛️';
+        else if (sexIcon) avatarEl.textContent = sexIcon;
+        else avatarEl.textContent = (client.first_name||'?').charAt(0).toUpperCase();
+
+        const tierBadge = client.client_tier ? ({gold:'🥇',silver:'🥈',bronze:'🥉'}[client.client_tier] || '') : '';
+        document.getElementById('drawerClientName').innerHTML = (isCorpo ? (client.company_name || fullName) : (fullName || 'Client')) + (tierBadge ? ' <span id="sidebarTierBadge" style="font-size:16px;">' + tierBadge + '</span>' : '<span id="sidebarTierBadge"></span>');
+        const typeMap = { prospect:'🎯 Prospect', client:'✅ Client', corpo:'🏛️ Corporation', inactif:'⏸️ Inactif' };
+        document.getElementById('drawerClientType').textContent = typeMap[typeNorm] || client.type_contact || 'Prospect';
+
+        // Pulse Vital Ring — pour clients, prospects, inactif ET corpo
+        const pulseContainer = document.getElementById('drawerPulseRing');
+        if ((typeNorm === 'client' || typeNorm === 'prospect' || typeNorm === 'inactif' || typeNorm === 'corpo') && FINOX.calculatePulseScore) {
+            pulseContainer.style.display = 'block';
+            pulseContainer.innerHTML = '<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;opacity:0.3;"><div class="spinner" style="width:20px;height:20px;"></div></div>';
+            FINOX.calculatePulseScore(client.id).then(pulse => {
+                if (pulse) {
+                    const ringType = typeNorm === 'inactif' ? 'prospect' : typeNorm;
+                    pulseContainer.innerHTML = FINOX.renderPulseRing(pulse.score, 48, ringType);
+                } else {
+                    pulseContainer.style.display = 'none';
+                }
+            }).catch(() => { pulseContainer.style.display = 'none'; });
+        } else {
+            pulseContainer.style.display = 'none';
+        }
+
+        // Meta chips in header
+        const metaEl = document.getElementById('drawerMeta');
+        let metaHtml = '';
+        if (isCorpo) {
+            const corpoMeta = (client.abf_data || {}).corpo || {};
+            if (corpoMeta.forme_juridique) metaHtml += '<span class="dash-drawer-chip">📜 ' + corpoMeta.forme_juridique + '</span>';
+            if (corpoMeta.industrie) metaHtml += '<span class="dash-drawer-chip">🏭 ' + corpoMeta.industrie + '</span>';
+            if (corpoMeta.statut) metaHtml += '<span class="dash-drawer-chip" style="background:rgba(34,197,94,0.12);color:#22c55e;">✅ ' + corpoMeta.statut + '</span>';
+            if (corpoMeta.neq) metaHtml += '<span class="dash-drawer-chip" style="background:rgba(201,162,39,0.12);color:var(--gold);">NEQ ' + corpoMeta.neq + '</span>';
+        } else {
+            if (client.date_naissance) {
+                const age = Math.floor((new Date() - FINOX.parseLocalDate(client.date_naissance)) / 31557600000);
+                metaHtml += '<span class="dash-drawer-chip">' + age + ' ans</span>';
+            }
+            if (client.sex) metaHtml += '<span class="dash-drawer-chip">' + (isMale(client.sex) ? '♂ Homme' : '♀ Femme') + '</span>';
+            if (client.smoker !== undefined && client.smoker !== null) metaHtml += '<span class="dash-drawer-chip">' + (client.smoker ? '🚬 Fumeur' : '🚭 Non-fumeur') + '</span>';
+            if (client.etat_civil) metaHtml += '<span class="dash-drawer-chip">' + client.etat_civil + '</span>';
+            // Lead source badge
+            const _leadSrc = (client.abf_data || {}).lead_source || {};
+            if (_leadSrc.source) {
+                const _srcMap = {
+                    google_ads:'🔵 Google Ads', facebook:'📘 Facebook', instagram:'📸 Instagram',
+                    reference:'🤝 Référence', appel_entrant:'📞 Appel entrant', walkin:'🏢 Walk-in',
+                    evenement:'🎪 Événement', email:'📧 Email', site_organique:'🔗 Organique',
+                    bouche_a_oreille:'💬 Bouche-à-oreille', autre:'📋 Autre'
+                };
+                metaHtml += '<span class="dash-drawer-chip" style="background:rgba(201,162,39,0.12);color:var(--gold);">' + (_srcMap[_leadSrc.source] || _leadSrc.source) + '</span>';
+            }
+        }
+        metaEl.innerHTML = metaHtml;
+
+        const abf = client.abf_data || {};
+
+        // TOUJOURS charger les enfants depuis la table abf_enfants (source de vérité)
+        let enfantsFromDB = [];
+        try {
+            const { data: eDB } = await FINOX.supabase
+                .from('abf_enfants')
+                .select('prenom, nom, date_naissance, sexe, ordre')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .order('ordre');
+            if (eDB && eDB.length > 0) enfantsFromDB = eDB;
+        } catch(e) { console.warn('Erreur chargement enfants sidebar:', e); }
+
+        let html = '';
+
+        // ═══ COORDONNÉES + EMPLOI ═══
+        if (isCorpo) {
+            const corpo = abf.corpo || {};
+            html += '<div class="dd-section"><div class="dd-section-title">🏢 Siège social</div><div class="dd-card">';
+            if (corpo.adresse_siege) html += '<div class="dd-row"><span class="dd-label">📍 Adresse</span><span class="dd-value" style="font-size:11px;text-align:right;max-width:55%;">' + corpo.adresse_siege + '</span></div>';
+            else if (client.city || client.province) html += '<div class="dd-row"><span class="dd-label">📍 Ville</span><span class="dd-value">' + [client.city, client.province].filter(Boolean).join(', ') + '</span></div>';
+            if (corpo.telephone || client.phone) html += '<div class="dd-row"><span class="dd-label">📞 Téléphone</span><span class="dd-value">' + (corpo.telephone || client.phone) + '</span></div>';
+            if (client.email) html += '<div class="dd-row"><span class="dd-label">✉️ Email</span><span class="dd-value" style="font-size:11px;word-break:break-all;">' + client.email + '</span></div>';
+            if (corpo.site_web) html += '<div class="dd-row"><span class="dd-label">🌐 Site web</span><span class="dd-value" style="font-size:11px;word-break:break-all;">' + corpo.site_web + '</span></div>';
+            html += '</div>';
+
+            // Infos société
+            html += '<div class="dd-card">';
+            if (corpo.nom_legal) html += '<div class="dd-row"><span class="dd-label">📜 Nom légal</span><span class="dd-value" style="font-size:11px;">' + corpo.nom_legal + '</span></div>';
+            if (corpo.nom_commercial && corpo.nom_commercial !== corpo.nom_legal) html += '<div class="dd-row"><span class="dd-label">🏷️ Nom commercial</span><span class="dd-value" style="font-size:11px;">' + corpo.nom_commercial + '</span></div>';
+            if (corpo.activite) html += '<div class="dd-row"><span class="dd-label">📋 Activité</span><span class="dd-value" style="font-size:10px;text-align:right;max-width:55%;line-height:1.3;">' + corpo.activite + '</span></div>';
+            const nbEmp = corpo.nb_employes || corpo.societe?.nb_employes;
+            if (nbEmp) html += '<div class="dd-row"><span class="dd-label">👥 Employés</span><span class="dd-value">' + nbEmp + '</span></div>';
+            if (corpo.date_constitution || corpo.societe?.date_incorporation) html += '<div class="dd-row"><span class="dd-label">📅 Constitution</span><span class="dd-value">' + (corpo.date_constitution || corpo.societe?.date_incorporation) + '</span></div>';
+            const typeS = corpo.societe?.type_societe;
+            if (typeS) {
+                const typeLabels = { operante: 'Opérante', holding: 'Holding', gestion: 'Gestion', mixte: 'Mixte' };
+                html += '<div class="dd-row"><span class="dd-label">🏗️ Type</span><span class="dd-value">' + (typeLabels[typeS] || typeS) + '</span></div>';
+            }
+            const evolution = corpo.societe?.evolution;
+            if (evolution) {
+                const evoLabels = { croissance: '📈 Croissance', stable: '➡️ Stable', declin: '📉 Déclin', demarrage: '🚀 Démarrage' };
+                html += '<div class="dd-row"><span class="dd-label">📊 Évolution</span><span class="dd-value">' + (evoLabels[evolution] || evolution) + '</span></div>';
+            }
+            html += '</div></div>';
+        } else {
+            html += '<div class="dd-section"><div class="dd-section-title">📇 Coordonnées</div><div class="dd-card">';
+            if (client.email) html += '<div class="dd-row"><span class="dd-label">✉️ Email</span><span class="dd-value" style="font-size:11px;word-break:break-all;">' + client.email + '</span></div>';
+            if (client.phone) html += '<div class="dd-row"><span class="dd-label">📱 Téléphone</span><span class="dd-value">' + (client.phone||'') + '</span></div>';
+            if (client.phone_mobile && client.phone_mobile !== client.phone) html += '<div class="dd-row"><span class="dd-label">📞 Mobile</span><span class="dd-value">' + client.phone_mobile + '</span></div>';
+            const addrParts = [client.city, client.province].filter(Boolean);
+            if (addrParts.length) html += '<div class="dd-row"><span class="dd-label">📍 Ville</span><span class="dd-value">' + addrParts.join(', ') + '</span></div>';
+            if (client.statut_logement) html += '<div class="dd-row"><span class="dd-label">🏠 Logement</span><span class="dd-value">' + client.statut_logement + '</span></div>';
+            html += '</div>';
+
+            // Emploi
+            if (client.titre_emploi || client.employeur) {
+                html += '<div class="dd-card">';
+                if (client.titre_emploi) html += '<div class="dd-row"><span class="dd-label">💼 Emploi</span><span class="dd-value">' + client.titre_emploi + '</span></div>';
+                if (client.employeur) html += '<div class="dd-row"><span class="dd-label">🏢 Employeur</span><span class="dd-value">' + client.employeur + '</span></div>';
+                const revenu = (parseFloat(client.revenu_emploi)||0) + (parseFloat(client.revenu_autre)||0);
+                if (revenu > 0) html += '<div class="dd-row"><span class="dd-label">💵 Revenu annuel</span><span class="dd-value gold">' + fmt(revenu) + '</span></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        // ═══ CONJOINT + ENFANTS (mode perso) ═══
+        if (!isCorpo) {
+            const hasConjoint = client.has_conjoint && client.conjoint_first_name;
+            const nbEnfants = client.nombre_enfants || enfantsFromDB.length || 0;
+
+            if (hasConjoint || nbEnfants > 0) {
+                html += '<div class="dd-section"><div class="dd-section-title">👨‍👩‍👧‍👦 Famille</div>';
+
+                if (hasConjoint) {
+                    const cName = ((client.conjoint_first_name||'') + ' ' + (client.conjoint_last_name||'')).trim();
+                    let cSub = [];
+                    if (client.conjoint_date_naissance) {
+                        const cAge = Math.floor((new Date() - FINOX.parseLocalDate(client.conjoint_date_naissance)) / 31557600000);
+                        cSub.push(cAge + ' ans');
+                    }
+                    if (client.conjoint_sex) cSub.push(isMale(client.conjoint_sex) ? 'Homme' : 'Femme');
+                    if (client.conjoint_smoker !== undefined && client.conjoint_smoker !== null) cSub.push(client.conjoint_smoker ? '🚬' : '🚭');
+
+                    html += '<div class="dd-person">';
+                    html += '<div class="dd-person-icon">' + (client.conjoint_sex ? (isMale(client.conjoint_sex) ? '👨' : '👩') : '💑') + '</div>';
+                    html += '<div class="dd-person-info"><div class="dd-person-name">' + cName + '</div>';
+                    if (cSub.length) html += '<div class="dd-person-sub">' + cSub.join(' · ') + '</div>';
+                    html += '</div>';
+                    html += '<span class="dd-person-badge dd-badge-purple">Conjoint(e)</span>';
+                    html += '</div>';
+
+                    // Emploi conjoint
+                    if (client.titre_emploi_conjoint || client.employeur_conjoint) {
+                        const revConj = (parseFloat(client.revenu_emploi_conjoint)||0) + (parseFloat(client.revenu_autre_conjoint)||0);
+                        let cEmploi = [];
+                        if (client.titre_emploi_conjoint) cEmploi.push(client.titre_emploi_conjoint);
+                        if (client.employeur_conjoint) cEmploi.push('chez ' + client.employeur_conjoint);
+                        if (revConj > 0) cEmploi.push(fmt(revConj) + '/an');
+                        if (cEmploi.length) {
+                            html += '<div style="padding:0 12px 6px 56px;"><span style="font-size:10px;color:var(--text-muted);">' + cEmploi.join(' · ') + '</span></div>';
+                        }
+                    }
+                }
+
+                // Enfants
+                const enfants = enfantsFromDB;
+                if (enfants.length > 0) {
+                    enfants.forEach(e => {
+                        const eName = ((e.prenom||'') + ' ' + (e.nom||'')).trim() || 'Enfant';
+                        let eSub = [];
+                        if (e.date_naissance) {
+                            const eAge = Math.floor((new Date() - FINOX.parseLocalDate(e.date_naissance)) / 31557600000);
+                            eSub.push(eAge + ' ans');
+                        }
+                        const eSexe = e.sexe;
+                        const eIcon = eSexe === 'Fille' ? '👧' : (eSexe === 'Garçon' ? '👦' : '👶');
+                        html += '<div class="dd-person">';
+                        html += '<div class="dd-person-icon">' + eIcon + '</div>';
+                        html += '<div class="dd-person-info"><div class="dd-person-name">' + eName + '</div>';
+                        if (eSub.length) html += '<div class="dd-person-sub">' + eSub.join(' · ') + '</div>';
+                        html += '</div>';
+                        html += '<span class="dd-person-badge dd-badge-blue">Enfant</span>';
+                        html += '</div>';
+                    });
+                } else if (nbEnfants > 0) {
+                    html += '<div class="dd-person"><div class="dd-person-icon">👶</div><div class="dd-person-info"><div class="dd-person-name">' + nbEnfants + ' enfant' + (nbEnfants>1?'s':'') + '</div></div></div>';
+                }
+                html += '</div>';
+            }
+
+            // Relations
+            try {
+                const { data: rels } = await FINOX.supabase.from('client_relationships')
+                    .select('*, clients!client_relationships_related_client_id_fkey(first_name, last_name, type_contact)')
+                    .eq('client_id', FINOX.CLIENT_ID);
+                if (rels && rels.length > 0) {
+                    html += '<div class="dd-section"><div class="dd-section-title">🔗 Relations</div>';
+                    rels.forEach(r => {
+                        const rc = r.clients;
+                        const rName = rc ? ((rc.first_name||'') + ' ' + (rc.last_name||'')).trim() : 'Inconnu';
+                        html += '<div class="dd-person"><div class="dd-person-icon">🔗</div>';
+                        html += '<div class="dd-person-info"><div class="dd-person-name">' + rName + '</div>';
+                        html += '<div class="dd-person-sub">' + (r.relationship_type || 'Relation') + '</div></div>';
+                        html += '<span class="dd-person-badge dd-badge-gold">' + (rc?.type_contact || '') + '</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+            } catch(e) {}
+        }
+
+        // ═══ ASSURANCES EN VIGUEUR (KPI) ═══
+        let assCount = 0, assVie = 0, assMG = 0, assInv = 0, assTotal = 0;
+        try {
+            const { data: ass } = await FINOX.supabase.from('abf_assurances').select('type, montant_couverture, prime_annuelle, exclure_calcul').eq('client_id', FINOX.CLIENT_ID);
+            if (ass) {
+                const active = ass.filter(a => !a.exclure_calcul);
+                assCount = ass.length;
+                active.forEach(a => {
+                    if (a.type?.includes('Invalidité')) assInv += a.montant_couverture||0;
+                    else if (a.type?.includes('Maladie')) assMG += a.montant_couverture||0;
+                    else assVie += a.montant_couverture||0;
+                    assTotal += a.prime_annuelle||0;
+                });
+            }
+        } catch(e) {}
+        html += '<div class="dd-section"><div class="dd-section-title">🛡️ Assurances en vigueur</div>';
+        html += '<div class="dd-kpi-row triple">';
+        html += '<div class="dd-kpi"><div class="dd-kpi-value">' + fmt(assVie) + '</div><div class="dd-kpi-label">Capital Vie</div></div>';
+        html += '<div class="dd-kpi"><div class="dd-kpi-value">' + fmt(assMG) + '</div><div class="dd-kpi-label">Maladie Grave</div></div>';
+        html += '<div class="dd-kpi"><div class="dd-kpi-value">' + fmt(assInv) + '</div><div class="dd-kpi-label">Invalidité /mois</div></div>';
+        html += '</div>';
+        html += '<div class="dd-card">';
+        html += '<div class="dd-row"><span class="dd-label">Polices actives</span><span class="dd-value">' + assCount + '</span></div>';
+        if (assTotal > 0) html += '<div class="dd-row"><span class="dd-label">Primes annuelles totales</span><span class="dd-value gold">' + fmt(assTotal) + '</span></div>';
+        html += '</div></div>';
+
+        // ═══ BESOINS vs COUVERTURE (conformité, perso seulement) ═══
+        const besoinVieClient = !isCorpo ? (parseFloat(client.conf_montant_vie_client)||0) : 0;
+        const besoinMGClient = parseFloat(client.conf_montant_maladie_client)||0;
+        const besoinInvClient = parseFloat(client.conf_montant_invalidite_client)||0;
+        if (besoinVieClient > 0 || besoinMGClient > 0 || besoinInvClient > 0) {
+            html += '<div class="dd-section"><div class="dd-section-title">📊 Besoins vs Couverture</div><div class="dd-card">';
+            if (besoinVieClient > 0) {
+                const pctVie = assVie > 0 ? Math.min(100, Math.round(assVie / besoinVieClient * 100)) : 0;
+                const colorVie = pctVie >= 80 ? '#81C784' : pctVie >= 50 ? '#FFB74D' : '#ef9a9a';
+                html += '<div style="margin-bottom:10px;"><div class="dd-row" style="margin-bottom:2px;"><span class="dd-label">Vie: ' + fmt(assVie) + ' / ' + fmt(besoinVieClient) + '</span><span class="dd-value" style="color:' + colorVie + ';">' + pctVie + '%</span></div>';
+                html += '<div class="dd-progress"><div class="dd-progress-fill" style="width:' + pctVie + '%;background:' + colorVie + ';"></div></div></div>';
+            }
+            if (besoinMGClient > 0) {
+                const pctMG = assMG > 0 ? Math.min(100, Math.round(assMG / besoinMGClient * 100)) : 0;
+                const colorMG = pctMG >= 80 ? '#81C784' : pctMG >= 50 ? '#FFB74D' : '#ef9a9a';
+                html += '<div style="margin-bottom:10px;"><div class="dd-row" style="margin-bottom:2px;"><span class="dd-label">M. Grave: ' + fmt(assMG) + ' / ' + fmt(besoinMGClient) + '</span><span class="dd-value" style="color:' + colorMG + ';">' + pctMG + '%</span></div>';
+                html += '<div class="dd-progress"><div class="dd-progress-fill" style="width:' + pctMG + '%;background:' + colorMG + ';"></div></div></div>';
+            }
+            if (besoinInvClient > 0) {
+                const pctInv = assInv > 0 ? Math.min(100, Math.round(assInv / besoinInvClient * 100)) : 0;
+                const colorInv = pctInv >= 80 ? '#81C784' : pctInv >= 50 ? '#FFB74D' : '#ef9a9a';
+                html += '<div><div class="dd-row" style="margin-bottom:2px;"><span class="dd-label">Invalidité: ' + fmt(assInv) + ' / ' + fmt(besoinInvClient) + '</span><span class="dd-value" style="color:' + colorInv + ';">' + pctInv + '%</span></div>';
+                html += '<div class="dd-progress"><div class="dd-progress-fill" style="width:' + pctInv + '%;background:' + colorInv + ';"></div></div></div>';
+            }
+            html += '</div></div>';
+        }
+
+        // ═══ PIPELINE (assurances vendues) ═══
+        try {
+            const { data: vendues } = await FINOX.supabase.from('assurances_vendues').select('statut, montant_couverture, type_assurance, prime_annuelle').eq('client_id', FINOX.CLIENT_ID);
+            if (vendues && vendues.length > 0) {
+                const statuts = {};
+                let totalPrimeVendues = 0;
+                vendues.forEach(v => {
+                    statuts[v.statut] = (statuts[v.statut]||0) + 1;
+                    if (v.statut === 'en_vigueur') totalPrimeVendues += (v.prime_annuelle||0);
+                });
+                const statusColors = {
+                    proposition_soumise: 'dd-badge-orange', en_vigueur: 'dd-badge-green',
+                    refusee: 'dd-badge-red', annulee: 'dd-badge-red',
+                    proposition_envoyee: 'dd-badge-blue', en_tarification: 'dd-badge-purple'
+                };
+                const statusLabels = {
+                    proposition_soumise:'Soumises', en_vigueur:'En vigueur', refusee:'Refusées',
+                    annulee:'Annulées', proposition_envoyee:'Envoyées', en_tarification:'Tarification'
+                };
+                html += '<div class="dd-section"><div class="dd-section-title">📋 Pipeline (' + vendues.length + ')</div>';
+                html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">';
+                Object.entries(statuts).forEach(([s, c]) => {
+                    html += '<span class="dd-badge ' + (statusColors[s]||'dd-badge-gold') + '">' + c + ' ' + (statusLabels[s]||s) + '</span>';
+                });
+                html += '</div>';
+                if (totalPrimeVendues > 0) {
+                    html += '<div class="dd-card"><div class="dd-row"><span class="dd-label">Primes en vigueur</span><span class="dd-value green">' + fmt(totalPrimeVendues) + '/an</span></div></div>';
+                }
+                html += '</div>';
+            }
+        } catch(e) {}
+
+        // ═══ FINANCES PERSO (ABF actifs/passifs) ═══
+        if (!isCorpo && (abf.section_actifs_completed || abf.actifs || abf.passifs)) {
+            const totalActifs = Object.values(abf.actifs||{}).reduce((s,v) => s + (parseFloat(v)||0), 0);
+            const totalPassifs = Object.values(abf.passifs||{}).reduce((s,v) => s + (parseFloat(v)||0), 0);
+            const valeurNette = totalActifs - totalPassifs;
+            if (totalActifs > 0 || totalPassifs > 0) {
+                html += '<div class="dd-section"><div class="dd-section-title">💰 Bilan financier</div>';
+                html += '<div class="dd-kpi-row triple">';
+                html += '<div class="dd-kpi"><div class="dd-kpi-value green">' + fmt(totalActifs) + '</div><div class="dd-kpi-label">Actifs</div></div>';
+                html += '<div class="dd-kpi"><div class="dd-kpi-value red">' + fmt(totalPassifs) + '</div><div class="dd-kpi-label">Passifs</div></div>';
+                html += '<div class="dd-kpi"><div class="dd-kpi-value ' + (valeurNette >= 0 ? 'green' : 'red') + '">' + fmt(valeurNette) + '</div><div class="dd-kpi-label">Valeur nette</div></div>';
+                html += '</div></div>';
+            }
+        }
+
+        // ═══ DATES IMPORTANTES (perso seulement) ═══
+        const dates = [];
+        if (!isCorpo) {
+            if (client.date_renouv_hypotheque) dates.push({ label: 'Renouvellement hypothèque', date: client.date_renouv_hypotheque, icon: '🏠' });
+            if (client.date_assurance_auto) dates.push({ label: 'Assurance auto', date: client.date_assurance_auto, icon: '🚗' });
+            if (client.date_assurance_habitation) dates.push({ label: 'Assurance habitation', date: client.date_assurance_habitation, icon: '🏡' });
+        }
+        if (dates.length > 0) {
+            html += '<div class="dd-section"><div class="dd-section-title">📅 Dates importantes</div>';
+            const now = new Date();
+            dates.forEach(d => {
+                const dt = new Date(d.date + 'T12:00:00');
+                const diffDays = Math.ceil((dt - now) / 86400000);
+                let alertClass = 'dd-alert-ok';
+                let status = '';
+                if (diffDays < 0) { alertClass = 'dd-alert-danger'; status = 'Échu'; }
+                else if (diffDays <= 60) { alertClass = 'dd-alert-warn'; status = 'Dans ' + diffDays + 'j'; }
+                else { status = dt.toLocaleDateString('fr-CA', { day:'numeric', month:'short', year:'numeric' }); }
+                html += '<div class="dd-alert ' + alertClass + '"><span>' + d.icon + '</span><span style="flex:1;">' + d.label + '</span><span style="font-weight:600;">' + status + '</span></div>';
+            });
+            html += '</div>';
+        }
+
+        // ═══ CORPO SECTIONS ═══
+        if (isCorpo) {
+            const corpo = abf.corpo || {};
+
+            // ── Finances corporatives ──
+            const fin = corpo.finances || {};
+            const hasFinances = fin.revenu_annuel || fin.actifs_totaux || fin.passifs_totaux || fin.benefice_net || fin.ebitda;
+            if (hasFinances) {
+                html += '<div class="dd-section"><div class="dd-section-title">💰 Finances corporatives</div>';
+                html += '<div class="dd-kpi-row triple">';
+                if (fin.revenu_annuel) html += '<div class="dd-kpi"><div class="dd-kpi-value gold">' + fmt(fin.revenu_annuel) + '</div><div class="dd-kpi-label">Revenu annuel</div></div>';
+                if (fin.benefice_net) html += '<div class="dd-kpi"><div class="dd-kpi-value ' + (fin.benefice_net >= 0 ? 'green' : 'red') + '">' + fmt(fin.benefice_net) + '</div><div class="dd-kpi-label">Bénéfice net</div></div>';
+                if (fin.ebitda) html += '<div class="dd-kpi"><div class="dd-kpi-value">' + fmt(fin.ebitda) + '</div><div class="dd-kpi-label">EBITDA</div></div>';
+                html += '</div>';
+                if (fin.actifs_totaux || fin.passifs_totaux) {
+                    const vnCorpo = (fin.actifs_totaux||0) - (fin.passifs_totaux||0);
+                    html += '<div class="dd-card">';
+                    if (fin.actifs_totaux) html += '<div class="dd-row"><span class="dd-label">📈 Actifs totaux</span><span class="dd-value green">' + fmt(fin.actifs_totaux) + '</span></div>';
+                    if (fin.passifs_totaux) html += '<div class="dd-row"><span class="dd-label">📉 Passifs totaux</span><span class="dd-value red">' + fmt(fin.passifs_totaux) + '</span></div>';
+                    html += '<div class="dd-row"><span class="dd-label">💎 Valeur nette</span><span class="dd-value ' + (vnCorpo >= 0 ? 'green' : 'red') + '">' + fmt(vnCorpo) + '</span></div>';
+                    html += '</div>';
+                }
+                if (fin.fin_exercice) {
+                    html += '<div class="dd-card"><div class="dd-row"><span class="dd-label">📅 Fin d\'exercice</span><span class="dd-value">' + fin.fin_exercice + '</span></div></div>';
+                }
+                const valeurEstimee = corpo.societe?.valeur_estimee;
+                if (valeurEstimee) {
+                    html += '<div class="dd-card"><div class="dd-row"><span class="dd-label">🏷️ Valeur estimée</span><span class="dd-value gold">' + fmt(parseFloat(valeurEstimee)) + '</span></div></div>';
+                }
+                html += '</div>';
+            }
+
+            // ── Dirigeants ──
+            const dirigeants = corpo.dirigeants || [];
+            if (dirigeants.length > 0) {
+                html += '<div class="dd-section"><div class="dd-section-title">👔 Dirigeants (' + dirigeants.length + ')</div>';
+                dirigeants.forEach(d => {
+                    html += '<div class="dd-person"><div class="dd-person-icon">👔</div>';
+                    html += '<div class="dd-person-info"><div class="dd-person-name">' + (d.nom||'Dirigeant') + '</div>';
+                    if (d.fonction) html += '<div class="dd-person-sub">' + d.fonction + '</div>';
+                    html += '</div><span class="dd-person-badge dd-badge-purple">Dir.</span></div>';
+                });
+                html += '</div>';
+            }
+
+            // ── Actionnaires rattachés (DB relationships) ──
+            try {
+                const { data: corpoRels } = await FINOX.supabase.from('client_relationships')
+                    .select('*, clients!client_relationships_related_client_id_fkey(id, first_name, last_name, type_contact, email, phone)')
+                    .eq('client_id', FINOX.CLIENT_ID)
+                    .eq('relationship_type', 'actionnaire');
+                const abfActs = corpo.actionnaires || [];
+                if ((corpoRels && corpoRels.length > 0) || abfActs.length > 0) {
+                    const totalActs = corpoRels?.length || abfActs.length;
+                    html += '<div class="dd-section"><div class="dd-section-title">📊 Actionnaires (' + totalActs + ')</div>';
+                    if (corpoRels && corpoRels.length > 0) {
+                        corpoRels.forEach(r => {
+                            const rc = r.clients;
+                            const aName = rc ? ((rc.first_name||'') + ' ' + (rc.last_name||'')).trim() : 'Actionnaire';
+                            const meta = r.metadata || {};
+                            let aSub = [];
+                            if (meta.pourcentage) aSub.push(meta.pourcentage + '%');
+                            if (rc?.type_contact) aSub.push(rc.type_contact);
+                            if (rc?.email) aSub.push(rc.email);
+                            const typeColor = rc?.type_contact === 'client' ? 'dd-badge-green' : rc?.type_contact === 'prospect' ? 'dd-badge-orange' : 'dd-badge-blue';
+                            html += '<div class="dd-person"><div class="dd-person-icon">📊</div>';
+                            html += '<div class="dd-person-info"><div class="dd-person-name">' + aName + '</div>';
+                            if (aSub.length) html += '<div class="dd-person-sub">' + aSub.join(' · ') + '</div>';
+                            html += '</div><span class="dd-person-badge ' + typeColor + '">Act.</span></div>';
+                        });
+                    } else {
+                        abfActs.forEach(a => {
+                            const aName = ((a.prenom||'') + ' ' + (a.nom||'')).trim() || 'Actionnaire';
+                            let aSub = [];
+                            if (a.parts_pct) aSub.push(a.parts_pct + '%');
+                            if (a.type_actions) aSub.push(a.type_actions);
+                            html += '<div class="dd-person"><div class="dd-person-icon">📊</div>';
+                            html += '<div class="dd-person-info"><div class="dd-person-name">' + aName + '</div>';
+                            if (aSub.length) html += '<div class="dd-person-sub">' + aSub.join(' · ') + '</div>';
+                            html += '</div><span class="dd-person-badge dd-badge-blue">Act.</span></div>';
+                        });
+                    }
+                    html += '</div>';
+                }
+            } catch(e) {}
+
+            // ── Personnes clés ──
+            const pcs = corpo.personnes_cles || [];
+            if (pcs.length > 0) {
+                html += '<div class="dd-section"><div class="dd-section-title">🔑 Personnes clés (' + pcs.length + ')</div>';
+                pcs.forEach(p => {
+                    const pName = ((p.prenom||'') + ' ' + (p.nom||'')).trim() || 'Personne clé';
+                    let pSub = [];
+                    if (p.fonction || p.role) pSub.push(p.fonction || p.role);
+                    if (p.salaire) pSub.push(fmt(parseFloat(p.salaire)) + '/an');
+                    if (p.ddn) { const a = Math.floor((new Date() - new Date(p.ddn)) / 31557600000); if (a > 0 && a < 120) pSub.push(a + ' ans'); }
+                    html += '<div class="dd-person"><div class="dd-person-icon">🔑</div>';
+                    html += '<div class="dd-person-info"><div class="dd-person-name">' + pName + '</div>';
+                    if (pSub.length) html += '<div class="dd-person-sub">' + pSub.join(' · ') + '</div>';
+                    html += '</div><span class="dd-person-badge dd-badge-gold">Clé</span></div>';
+                });
+                html += '</div>';
+            }
+
+            // ── Convention entre actionnaires ──
+            const conv = corpo.societe || {};
+            if (conv.convention_signee !== undefined) {
+                html += '<div class="dd-section"><div class="dd-section-title">📜 Convention entre actionnaires</div><div class="dd-card">';
+                html += '<div class="dd-row"><span class="dd-label">Signée</span><span class="dd-value">' + (conv.convention_signee ? '✅ Oui' : '❌ Non') + '</span></div>';
+                if (conv.convention_date) html += '<div class="dd-row"><span class="dd-label">Date</span><span class="dd-value">' + conv.convention_date + '</span></div>';
+                if (conv.convention_modifiee !== undefined) html += '<div class="dd-row"><span class="dd-label">Modifiée</span><span class="dd-value">' + (conv.convention_modifiee ? 'Oui' : 'Non') + '</span></div>';
+                html += '</div></div>';
+            }
+        }
+
+        // ═══ OPPORTUNITÉS ═══
+        try {
+            const { data: opps } = await FINOX.supabase.from('client_activity_feed').select('type, title, created_at').eq('client_id', FINOX.CLIENT_ID).eq('type', 'opportunity').order('created_at', { ascending: false }).limit(5);
+            if (opps && opps.length > 0) {
+                html += '<div class="dd-section"><div class="dd-section-title">🎯 Opportunités</div>';
+                opps.forEach(o => {
+                    const dt = o.created_at ? new Date(o.created_at).toLocaleDateString('fr-CA', { day:'numeric', month:'short' }) : '';
+                    html += '<div class="dd-person"><div class="dd-person-icon">🎯</div>';
+                    html += '<div class="dd-person-info"><div class="dd-person-name" style="font-size:12px;">' + (o.title||'Opportunité') + '</div>';
+                    if (dt) html += '<div class="dd-person-sub">' + dt + '</div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+        } catch(e) {}
+
+        // ═══ ACTIVITÉ RÉCENTE (timeline enrichie) ═══
+        try {
+            const { data: timeline } = await FINOX.supabase.from('client_timeline').select('activity_type, title, description, external_source, created_at').eq('client_id', FINOX.CLIENT_ID).order('created_at', { ascending: false }).limit(10);
+            if (timeline && timeline.length > 0) {
+                const tlIcons = { note:'📝', status_change:'🔄', call_outbound:'📞', sms_outbound:'💬', email_outbound:'✉️', meeting_virtual:'📅' };
+                html += '<div class="dd-section"><div class="dd-section-title">🕐 Activité récente</div><div class="dd-card" style="padding:10px 14px;">';
+                timeline.forEach(t => {
+                    const date = new Date(t.created_at);
+                    const dateStr = FINOX.formatTimeAgo ? FINOX.formatTimeAgo(date) : date.toLocaleDateString('fr-CA', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                    const icon = tlIcons[t.activity_type] || '📌';
+                    html += '<div class="dd-timeline-item">';
+                    html += '<div class="dd-timeline-dot"></div>';
+                    html += '<div class="dd-timeline-content">';
+                    html += '<div class="dd-timeline-action">' + icon + ' ' + (t.title||'Action') + '</div>';
+                    if (t.description) html += '<div class="dd-timeline-detail">' + t.description.substring(0,100) + '</div>';
+                    html += '<div class="dd-timeline-date">' + dateStr + '</div>';
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+            }
+        } catch(e) {}
+
+        // ═══ NOTES / HOBBIES ═══
+        if (!isCorpo && (client.hobby_client || client.hobby_conjoint)) {
+            html += '<div class="dd-section"><div class="dd-section-title">🎯 Notes personnelles</div><div class="dd-card">';
+            if (client.hobby_client) html += '<div class="dd-row"><span class="dd-label">🎨 Hobbies</span><span class="dd-value" style="font-size:11px;text-align:right;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + client.hobby_client + '</span></div>';
+            if (client.hobby_conjoint) html += '<div class="dd-row"><span class="dd-label">🎨 Hobbies conjoint</span><span class="dd-value" style="font-size:11px;text-align:right;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + client.hobby_conjoint + '</span></div>';
+            html += '</div></div>';
+        }
+
+        body.innerHTML = html || '<div class="dd-empty">Aucune donnée disponible</div>';
+    } catch(err) {
+        console.error('Erreur drawer:', err);
+        body.innerHTML = '<div class="dd-empty">Erreur de chargement</div>';
+    }
+}
+
+// Rafraîchir le drawer quand on change de client (au cas où)
+window.refreshDashDrawer = function() { dashDrawerLoaded = false; };
+
+// Fermer avec Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('dashDrawer')?.classList.contains('open')) closeDashDrawer();
+});
+
+// ==========================================
+// MENU MOBILE - FONCTIONS
+// ==========================================
+function toggleMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebar.classList.contains('open')) {
+        closeMobileMenu();
+    } else {
+        sidebar.classList.add('open');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Empêche le scroll du body
+    }
+}
+
+function closeMobileMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = ''; // Restaure le scroll
+}
+
+// Fermer le menu quand on clique sur un nav-item (mobile)
+document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768) {
+        const navItem = e.target.closest('.nav-item');
+        if (navItem && navItem.dataset.module) {
+            // Petit délai pour voir le feedback visuel
+            setTimeout(() => {
+                closeMobileMenu();
+            }, 150);
+        }
+    }
+});
+
+// ==========================================
+// AUTHENTIFICATION
+// ==========================================
+let currentUser = null;
+
+async function initAuth() {
+    // requireAuth() redirige vers login si non connecté
+    const user = await FINOX.requireAuth();
+    currentUser = user;
+
+    if (user) {
+        // Connecté - afficher l'app
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+
+        // Charger le profil (signature, rôle, etc.) AVANT les modules
+        await FINOX.loadUserProfile();
+
+        // Charger le theme depuis Supabase
+        if (window.FINOX_THEME) FINOX_THEME.load();
+
+        // Initialiser le système de navigation
+        initNavSystem();
+
+
+        // Pulse Vital — charger l'indicateur sidebar pour les clients
+        initSidebarPulse();
+
+    }
+}
+
+/**
+ * Initialise le type de contact + statut lead + Pulse dans la sidebar.
+ * Universel : fonctionne pour prospects ET clients.
+ */
+async function initSidebarPulse() {
+    const clientId = FINOX.CLIENT_ID || FINOX.getClientId();
+    if (!clientId || !FINOX.calculatePulseScore) return;
+
+    try {
+        const client = await FINOX.loadClientData();
+        if (!client) return;
+
+        const typeContact = (client.type_contact || 'prospect').toLowerCase();
+
+        // ── Merged Client Name + Pulse Vital ──
+        const block = document.getElementById('sidebarClientPulse');
+        const ringContainer = document.getElementById('sidebarPulseRing');
+        const subtitleEl = document.getElementById('sidebarPulseSubtitle');
+        const titleEl = document.getElementById('sidebarPulseTitle');
+        const dotEl = document.getElementById('sidebarPulseDot');
+        const labelEl = document.getElementById('sidebarPulseLabel');
+
+        if (!block || !ringContainer || !subtitleEl) return;
+
+        // Fournisseur: no pulse, just name (not clickable to pulse)
+        if (typeContact === 'fournisseur') {
+            ringContainer.style.display = 'none';
+            subtitleEl.style.display = 'none';
+            block.style.cursor = 'default';
+            block.onclick = null;
+            return;
+        }
+
+        // Clickable → Pulse Vital module
+        block.title = typeContact === 'corpo' ? 'Voir le Dossier Corpo' : 'Voir le Pulse Vital';
+        block.onclick = () => {
+            loadModule('pulse-vital');
+            if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar')?.classList.remove('open');
+            }
+        };
+
+        // Set pulse title text
+        if (titleEl) titleEl.textContent = typeContact === 'corpo' ? 'Dossier Corpo' : 'Pulse Vital';
+
+        // Show spinner while loading
+        ringContainer.style.display = 'block';
+        ringContainer.innerHTML = '<div class="spinner" style="width:16px;height:16px;"></div>';
+        subtitleEl.style.display = 'block';
+        if (labelEl) labelEl.textContent = '';
+        if (dotEl) dotEl.style.display = 'none';
+
+        const pulseType = typeContact === 'inactif' ? 'prospect' : typeContact;
+        const pulse = await FINOX.calculatePulseScore(clientId);
+        if (pulse) {
+            ringContainer.innerHTML = FINOX.renderPulseRing(pulse.score, 36, pulseType);
+            const zones = typeContact === 'corpo' ? FINOX.CORPO_ZONES
+                : (typeContact === 'prospect' || typeContact === 'inactif') ? FINOX.PROSPECT_ZONES
+                : FINOX.PULSE_ZONES;
+            const zoneConfig = zones[pulse.zone];
+            if (zoneConfig && labelEl) {
+                // Don't show zone label (e.g. "Lead CHAUD") — visible during screen shares with clients
+                labelEl.textContent = '';
+                if (dotEl) dotEl.style.display = 'none';
+            }
+        } else {
+            // No pulse data — hide ring, show just title
+            ringContainer.style.display = 'none';
+            if (dotEl) dotEl.style.display = 'none';
+            if (labelEl) labelEl.textContent = '';
+        }
+    } catch (err) {
+        console.error('[Pulse] Sidebar init error:', err);
+        const ring = document.getElementById('sidebarPulseRing');
+        const sub = document.getElementById('sidebarPulseSubtitle');
+        if (ring) ring.style.display = 'none';
+        if (sub) sub.style.display = 'none';
+    }
+}
+
+// changeSidebarType removed — type contact is now changed from Pulse Vital module (pvChangeType)
+// or from Gestion Contact module (selectTypeContactChip)
+
+// Logout handler
+async function handleLogout() {
+    await FINOX.logout();
+}
+
+// ==========================================
+// LIENS PARTAGÉS — Modal & Génération
+// ==========================================
+let _shareToolType = null;
+let _shareToolLabel = null;
+
+function openShareModal(toolType, toolLabel) {
+    _shareToolType = toolType;
+    _shareToolLabel = toolLabel;
+    document.getElementById('shareModalToolName').textContent = toolLabel;
+    document.getElementById('shareResult').classList.remove('active');
+    document.getElementById('shareGenerateBtn').disabled = false;
+    document.getElementById('shareModalOverlay').classList.add('active');
+    loadExistingLinks(toolType);
+}
+
+function closeShareModal() {
+    document.getElementById('shareModalOverlay').classList.remove('active');
+    _shareToolType = null;
+}
+
+async function generateShareLink() {
+    const btn = document.getElementById('shareGenerateBtn');
+    const expiry = document.getElementById('shareExpiry').value;
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Génération...';
+
+    try {
+        const session = await FINOX.supabase.auth.getSession();
+        const token = session?.data?.session?.access_token;
+        if (!token) throw new Error('Non authentifié');
+
+        const res = await fetch('/share/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({
+                client_id: FINOX.CLIENT_ID,
+                tool_type: _shareToolType,
+                expiry_days: parseInt(expiry)
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Erreur');
+
+        document.getElementById('shareUrlInput').value = data.url;
+        document.getElementById('shareResult').classList.add('active');
+        FINOX.showNotification('🔗 Lien généré avec succès!', 'success');
+
+        // Recharger la liste
+        loadExistingLinks(_shareToolType);
+
+    } catch (err) {
+        console.error('Erreur génération lien:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔗</span> Générer le lien';
+    }
+}
+
+function copyShareUrl() {
+    const input = document.getElementById('shareUrlInput');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        FINOX.showNotification('📋 Lien copié!', 'success');
+    }).catch(() => {
+        document.execCommand('copy');
+        FINOX.showNotification('📋 Lien copié!', 'success');
+    });
+}
+
+async function loadExistingLinks(toolType) {
+    const section = document.getElementById('shareLinksSection');
+    const list = document.getElementById('shareLinksList');
+
+    try {
+        const session = await FINOX.supabase.auth.getSession();
+        const token = session?.data?.session?.access_token;
+        if (!token) return;
+
+        const res = await fetch('/share/links/' + FINOX.CLIENT_ID, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!data.success) return;
+
+        const links = data.links.filter(l => l.tool_type === toolType);
+        if (links.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        list.innerHTML = links.map(l => {
+            const date = new Date(l.expires_at).toLocaleDateString('fr-CA');
+            const statusLabels = { active: 'Actif', completed: 'Complété', expired: 'Expiré', revoked: 'Révoqué' };
+            return `<div class="share-link-item">
+                <span class="share-link-status ${l.status}">${statusLabels[l.status] || l.status}</span>
+                <span class="share-link-info">Expire: ${date} · ${l.access_count || 0} accès</span>
+                ${l.status === 'active' ? `<button class="share-revoke-btn" onclick="revokeShareLink('${l.id}')">Révoquer</button>` : ''}
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        console.error('Erreur chargement liens:', err);
+    }
+}
+
+async function revokeShareLink(linkId) {
+    try {
+        const session = await FINOX.supabase.auth.getSession();
+        const token = session?.data?.session?.access_token;
+        if (!token) return;
+
+        const res = await fetch('/share/revoke/' + linkId, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (res.ok) {
+            FINOX.showNotification('🚫 Lien révoqué', 'success');
+            loadExistingLinks(_shareToolType);
+        }
+    } catch (err) {
+        console.error('Erreur révocation:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+    }
+}
+
+// ==========================================
+// CUSTOM SELECT — Composant global
+// ==========================================
+(function() {
+    function createCustomSelect(sel) {
+        if (sel.dataset.cs || sel.closest('.cs-wrap')) return;
+        sel.dataset.cs = '1';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'cs-wrap';
+        // Copier les styles inline pertinents (width, etc.)
+        if (sel.style.width) wrap.style.width = sel.style.width;
+        if (sel.style.minWidth) wrap.style.minWidth = sel.style.minWidth;
+        if (sel.style.maxWidth) wrap.style.maxWidth = sel.style.maxWidth;
+        if (sel.style.display === 'none' || sel.style.display === 'inline') {
+            wrap.style.display = sel.style.display;
+        }
+
+        const display = document.createElement('div');
+        display.className = 'cs-display';
+        display.tabIndex = 0;
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'cs-dropdown';
+
+        function buildOptions() {
+            dropdown.innerHTML = '';
+
+            Array.from(sel.options).forEach((opt, i) => {
+
+                const item = document.createElement('div');
+                item.className = 'cs-opt';
+                if (i === sel.selectedIndex) item.classList.add('sel');
+                if (opt.disabled) item.classList.add('dis');
+                item.textContent = opt.textContent;
+                item.dataset.idx = i;
+
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (opt.disabled) return;
+                    sel.selectedIndex = i;
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    updateDisplay();
+                    closeDropdown();
+                });
+
+                dropdown.appendChild(item);
+            });
+
+        }
+
+        function updateDisplay() {
+            const opt = sel.options[sel.selectedIndex];
+            display.textContent = opt ? opt.textContent : '';
+            dropdown.querySelectorAll('.cs-opt').forEach(item => {
+                item.classList.toggle('sel', parseInt(item.dataset.idx) === sel.selectedIndex);
+            });
+        }
+
+        function openDropdown() {
+            // Fermer les autres
+            document.querySelectorAll('.cs-wrap.open').forEach(w => {
+                if (w !== wrap) w.classList.remove('open');
+            });
+
+            buildOptions();
+
+            // Position: up ou down
+            const rect = wrap.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            dropdown.classList.toggle('up', spaceBelow < 280 && rect.top > spaceBelow);
+            dropdown.classList.toggle('down', !(spaceBelow < 280 && rect.top > spaceBelow));
+
+            wrap.classList.add('open');
+        }
+
+        function closeDropdown() {
+            wrap.classList.remove('open');
+        }
+
+        display.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sel.disabled) return;
+            if (wrap.classList.contains('open')) closeDropdown();
+            else openDropdown();
+        });
+
+        display.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (wrap.classList.contains('open')) closeDropdown();
+                else openDropdown();
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (sel.selectedIndex < sel.options.length - 1) {
+                    sel.selectedIndex++;
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    updateDisplay();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (sel.selectedIndex > 0) {
+                    sel.selectedIndex--;
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                    updateDisplay();
+                }
+            }
+        });
+
+        // Insérer dans le DOM
+        sel.parentNode.insertBefore(wrap, sel);
+        wrap.appendChild(display);
+        wrap.appendChild(dropdown);
+        wrap.appendChild(sel);
+
+        updateDisplay();
+
+        // Surveiller les changements programmatiques de value/selectedIndex
+        const valDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+        const idxDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+
+        if (valDesc && valDesc.set) {
+            Object.defineProperty(sel, 'value', {
+                get() { return valDesc.get.call(this); },
+                set(v) { valDesc.set.call(this, v); updateDisplay(); },
+                configurable: true
+            });
+        }
+        if (idxDesc && idxDesc.set) {
+            Object.defineProperty(sel, 'selectedIndex', {
+                get() { return idxDesc.get.call(this); },
+                set(v) { idxDesc.set.call(this, v); updateDisplay(); },
+                configurable: true
+            });
+        }
+
+        // Observer les changements d'options (ajout/suppression dynamique)
+        const mo = new MutationObserver(() => {
+            if (wrap.classList.contains('open')) buildOptions();
+            updateDisplay();
+        });
+        mo.observe(sel, { childList: true, subtree: true });
+
+        // Observer disabled
+        if (sel.disabled) display.style.opacity = '0.5';
+        const attrObs = new MutationObserver(() => {
+            display.style.opacity = sel.disabled ? '0.5' : '';
+            display.style.cursor = sel.disabled ? 'not-allowed' : '';
+        });
+        attrObs.observe(sel, { attributes: true, attributeFilter: ['disabled'] });
+    }
+
+    // Initialiser tous les selects dans un container
+    window.initCustomSelects = function(container) {
+        const root = container || document;
+        root.querySelectorAll('select:not([data-cs])').forEach(sel => {
+            // Ignorer les selects qui sont cachés par design (file inputs, etc.)
+            if (sel.type === 'file') return;
+            try { createCustomSelect(sel); }
+            catch(e) { console.warn('[CS] Erreur init select:', e); }
+        });
+    };
+
+    // Fermer au clic extérieur
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.cs-wrap.open').forEach(w => w.classList.remove('open'));
+    });
+
+    // MutationObserver sur #module-content pour les selects dynamiques
+    const moduleContent = document.getElementById('module-content');
+    if (moduleContent) {
+        const obs = new MutationObserver((mutations) => {
+            let hasNewSelects = false;
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'SELECT' && !node.dataset.cs) hasNewSelects = true;
+                        else if (node.querySelectorAll && node.querySelectorAll('select:not([data-cs])').length) hasNewSelects = true;
+                    }
+                }
+            }
+            if (hasNewSelects) {
+                // Petit délai pour laisser le DOM se stabiliser
+                requestAnimationFrame(() => initCustomSelects(moduleContent));
+            }
+        });
+        obs.observe(moduleContent, { childList: true, subtree: true });
+    }
+
+    // Init selects déjà présents (sidebar, etc.)
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => initCustomSelects(), 500);
+    });
+})();
+
+// ==========================================
+// INITIALISATION
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Détecter mode Zoho (?from=zoho)
+    const params = new URLSearchParams(window.location.search);
+    const isZohoMode = params.get('from') === 'zoho';
+
+    if (isZohoMode) {
+        // Activer le mode Zoho: masquer le lien CRM, afficher le lien Zoho
+        const crmLink = document.getElementById('backLinkCrm');
+        const zohoLink = document.getElementById('backLinkZoho');
+        if (crmLink) crmLink.style.display = 'none';
+        if (zohoLink) zohoLink.style.display = '';
+        document.title = 'Finox ABF - Dossier Client';
+        console.log('🔗 Mode Zoho activé');
+    }
+
+    if (!FINOX.CLIENT_ID) {
+        console.warn('⚠️ Pas de CLIENT_ID dans l\'URL');
+    }
+    initSmartBar();
+    initAuth();
+});
+</script>
+<script src="shared/team-chat.js"></script>
+<script src="shared/notifications-panel.js"></script>
+
+</body>
+</html>

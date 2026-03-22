@@ -1,0 +1,1934 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULE: OUTILS - CALCULATEUR ASSURANCE VIE v2
+     Comparateur de soumissions intégré à la fiche client
+     Avec boutons famille et sauvegarde des recherches
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Reset pour ce module */
+.calc-container { max-width: 100%; padding: 0; }
+
+/* Header du module */
+.calc-header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    margin-bottom: 24px; 
+    flex-wrap: wrap; 
+    gap: 16px;
+}
+.calc-header-left { display: flex; align-items: center; gap: 16px; }
+.calc-header-icon { 
+    width: 56px; 
+    height: 56px; 
+    background: linear-gradient(135deg, #E5A84B, #D89635); 
+    border-radius: 16px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 28px;
+}
+.calc-header h1 { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+.calc-header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+/* Main Grid */
+.calc-main-grid { 
+    display: grid; 
+    grid-template-columns: 380px 1fr; 
+    gap: 24px; 
+    align-items: start; 
+}
+
+/* Form Card */
+.calc-form-card { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; 
+    padding: 24px; 
+    position: sticky; 
+    top: 20px;
+}
+.calc-form-card h2 { 
+    font-size: 18px; 
+    font-weight: 700; 
+    color: var(--text-primary); 
+    margin-bottom: 20px; 
+    padding-bottom: 12px; 
+    border-bottom: 2px solid var(--gold);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOUTONS FAMILLE - Sélection rapide des membres
+═══════════════════════════════════════════════════════════════ */
+.calc-family-selector {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+.calc-family-selector h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b5cf6;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.calc-family-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.calc-family-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.calc-family-btn:hover {
+    border-color: #8b5cf6;
+    color: #a78bfa;
+    background: rgba(139, 92, 246, 0.1);
+}
+.calc-family-btn.active {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    border-color: #8b5cf6;
+    color: white;
+}
+.calc-family-btn .btn-icon { font-size: 14px; }
+.calc-family-btn .btn-age { 
+    font-size: 10px; 
+    opacity: 0.8; 
+    margin-left: 2px;
+}
+
+/* Form Groups */
+.calc-form-group { margin-bottom: 12px; }
+.calc-form-group label { 
+    display: block; 
+    font-size: 12px; 
+    font-weight: 600; 
+    color: var(--text-secondary); 
+    margin-bottom: 6px;
+}
+.calc-form-input, .calc-form-select { 
+    width: 100%; 
+    padding: 12px 14px; 
+    height: 44px; 
+    background: rgba(0,0,0,0.3); 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    font-size: 14px; 
+    color: var(--text-primary); 
+    font-family: inherit;
+}
+.calc-form-select { 
+    appearance: none; 
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23E5A84B' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); 
+    background-repeat: no-repeat; 
+    background-position: right 14px center; 
+    background-size: 12px; 
+    padding-right: 40px; 
+    cursor: pointer;
+}
+.calc-form-input:focus, .calc-form-select:focus { 
+    outline: none; 
+    border-color: var(--gold);
+}
+
+/* Section Boxes */
+.calc-section-box { 
+    background: rgba(0,0,0,0.2); 
+    padding: 16px; 
+    border-radius: 12px; 
+    margin-bottom: 16px; 
+    border: 1px solid var(--border-color);
+}
+.calc-section-box.gold { 
+    background: rgba(229, 168, 75, 0.08); 
+    border-color: rgba(229, 168, 75, 0.3);
+}
+.calc-section-box h3 { 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: var(--text-muted); 
+    margin-bottom: 12px; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.calc-section-box.gold h3 { color: var(--gold); }
+
+/* Active Person Display */
+.calc-active-person {
+    background: linear-gradient(135deg, rgba(229, 168, 75, 0.15), rgba(229, 168, 75, 0.05));
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.calc-active-person-icon { font-size: 24px; }
+.calc-active-person-info { flex: 1; }
+.calc-active-person-name { font-size: 14px; font-weight: 700; color: var(--gold); }
+.calc-active-person-details { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Age Display Badge */
+.calc-age-display { 
+    display: inline-block; 
+    margin-left: 10px; 
+    padding: 4px 12px; 
+    background: linear-gradient(135deg, var(--gold), #D89635); 
+    color: #000; 
+    border-radius: 16px; 
+    font-size: 11px; 
+    font-weight: 700;
+}
+
+/* Toggle Switch */
+.calc-toggle-mode { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    margin-bottom: 12px; 
+    padding: 8px 12px; 
+    background: rgba(0,0,0,0.2); 
+    border-radius: 8px; 
+    border: 1px solid var(--border-color);
+}
+.calc-toggle-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.calc-toggle-switch { 
+    position: relative; 
+    width: 130px; 
+    height: 30px; 
+    background: rgba(0,0,0,0.3); 
+    border-radius: 15px; 
+    cursor: pointer; 
+    border: 1px solid var(--border-color);
+}
+.calc-toggle-inner { 
+    position: absolute; 
+    top: 2px; 
+    left: 2px; 
+    width: 62px; 
+    height: 24px; 
+    background: linear-gradient(135deg, var(--gold), #D89635); 
+    border-radius: 12px; 
+    transition: all 0.3s;
+}
+.calc-toggle-switch.date-mode .calc-toggle-inner { left: 64px; }
+.calc-toggle-options { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    align-items: center; 
+    padding: 0 8px;
+}
+.calc-toggle-option { 
+    flex: 1; 
+    text-align: center; 
+    font-size: 10px; 
+    font-weight: 600; 
+    color: var(--text-muted); 
+    transition: color 0.3s; 
+    z-index: 1; 
+    user-select: none;
+}
+.calc-toggle-switch:not(.date-mode) .calc-toggle-option:first-child { color: #000; }
+.calc-toggle-switch.date-mode .calc-toggle-option:last-child { color: #000; }
+
+/* Conjoint Toggle & Fields */
+.calc-conjoint-toggle { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 10px 12px; 
+    background: rgba(139, 92, 246, 0.1); 
+    border: 2px solid rgba(139, 92, 246, 0.3); 
+    border-radius: 8px; 
+    margin-bottom: 12px; 
+    cursor: pointer; 
+    transition: all 0.3s;
+}
+.calc-conjoint-toggle:hover { 
+    background: rgba(139, 92, 246, 0.15); 
+    border-color: rgba(139, 92, 246, 0.5);
+}
+.calc-conjoint-toggle input[type="checkbox"] { 
+    width: 16px; 
+    height: 16px; 
+    accent-color: #8b5cf6; 
+    cursor: pointer;
+}
+.calc-conjoint-toggle label { 
+    font-size: 12px; 
+    font-weight: 600; 
+    color: var(--text-primary); 
+    cursor: pointer; 
+    flex: 1;
+}
+.calc-conjoint-fields { 
+    display: none; 
+    background: rgba(139, 92, 246, 0.05); 
+    padding: 14px; 
+    border-radius: 8px; 
+    margin-bottom: 12px; 
+    border: 2px dashed rgba(139, 92, 246, 0.3);
+}
+.calc-conjoint-fields.visible { display: block; }
+.calc-conjoint-fields h4 { 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: #8b5cf6; 
+    margin-bottom: 12px; 
+    text-transform: uppercase;
+}
+
+/* Décès Type Options */
+.calc-deces-type-group { display: none; margin-top: 10px; }
+.calc-deces-type-group.visible { display: block; }
+.calc-deces-type-options { display: flex; gap: 8px; }
+.calc-deces-type-option { 
+    flex: 1; 
+    padding: 10px; 
+    border: 2px solid var(--border-color); 
+    border-radius: 8px; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: all 0.3s; 
+    background: rgba(0,0,0,0.2);
+}
+.calc-deces-type-option:hover { border-color: var(--gold); }
+.calc-deces-type-option.selected { 
+    border-color: var(--gold); 
+    background: rgba(229, 168, 75, 0.1);
+}
+.calc-deces-type-option input { display: none; }
+.calc-deces-type-option .option-icon { font-size: 18px; margin-bottom: 4px; }
+.calc-deces-type-option .option-label { font-size: 10px; font-weight: 600; color: var(--text-primary); }
+.calc-deces-type-option .option-desc { font-size: 8px; color: var(--text-muted); }
+
+/* Calculate Button */
+.calc-btn-calculate { 
+    width: 100%; 
+    padding: 14px; 
+    background: linear-gradient(135deg, var(--gold), #D89635); 
+    border: none; 
+    border-radius: 10px; 
+    color: #000; 
+    font-size: 16px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: all 0.3s; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px;
+}
+.calc-btn-calculate:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 20px var(--gold-glow);
+}
+.calc-btn-calculate:disabled { 
+    background: var(--border-color); 
+    cursor: not-allowed; 
+    transform: none;
+}
+
+/* Saved Searches Section */
+.calc-saved-searches { 
+    background: rgba(16, 185, 129, 0.08); 
+    border: 2px solid rgba(16, 185, 129, 0.3); 
+    border-radius: 12px; 
+    padding: 16px; 
+    margin-top: 20px;
+}
+.calc-saved-searches h3 { 
+    font-size: 14px; 
+    font-weight: 700; 
+    color: #10b981; 
+    margin-bottom: 12px; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px;
+}
+.calc-saved-item { 
+    background: var(--bg-card); 
+    border-radius: 8px; 
+    padding: 10px 12px; 
+    margin-bottom: 8px; 
+    border: 1px solid var(--border-color); 
+    font-size: 11px;
+}
+.calc-saved-item:last-child { margin-bottom: 0; }
+.calc-saved-item-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 6px;
+}
+.calc-saved-item-label { font-weight: 600; color: var(--text-primary); }
+.calc-saved-item-date { font-size: 10px; color: var(--text-muted); }
+.calc-saved-item-products { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 4px; 
+    margin-bottom: 8px;
+}
+.calc-saved-item-tag { 
+    background: rgba(229, 168, 75, 0.2); 
+    color: var(--gold); 
+    padding: 2px 8px; 
+    border-radius: 10px; 
+    font-size: 9px; 
+    font-weight: 600;
+}
+.calc-saved-item-actions { display: flex; gap: 6px; }
+.calc-saved-item-btn { 
+    padding: 4px 10px; 
+    border-radius: 6px; 
+    font-size: 10px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    border: none; 
+    transition: all 0.2s;
+}
+.calc-saved-item-btn.load { 
+    background: rgba(59, 130, 246, 0.15); 
+    color: #60a5fa;
+}
+.calc-saved-item-btn.load:hover { background: rgba(59, 130, 246, 0.25); }
+.calc-saved-item-btn.delete { 
+    background: rgba(239, 68, 68, 0.15); 
+    color: #ef4444;
+}
+.calc-saved-item-btn.delete:hover { background: rgba(239, 68, 68, 0.25); }
+
+/* Results Section */
+.calc-results-container { min-height: 400px; }
+
+/* Saved Searches Dropdown - TOP */
+.calc-saved-dropdown {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.calc-saved-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(16, 185, 129, 0.05);
+    border-bottom: 1px solid transparent;
+}
+.calc-saved-dropdown-header:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+.calc-saved-dropdown.open .calc-saved-dropdown-header {
+    border-bottom-color: var(--border-color);
+}
+.calc-saved-dropdown-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #10b981;
+}
+.calc-saved-dropdown-count {
+    background: #10b981;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.calc-saved-dropdown-toggle {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 185, 129, 0.15);
+    border-radius: 8px;
+    color: #10b981;
+    font-size: 14px;
+    transition: transform 0.3s;
+}
+.calc-saved-dropdown.open .calc-saved-dropdown-toggle {
+    transform: rotate(180deg);
+}
+.calc-saved-dropdown-content {
+    display: none;
+    padding: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.calc-saved-dropdown.open .calc-saved-dropdown-content {
+    display: block;
+}
+.calc-saved-dropdown-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Categories Grid - MAX 2 COLONNES */
+.calc-categories-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 20px; 
+    margin-bottom: 20px;
+}
+@media (max-width: 1100px) {
+    .calc-categories-grid { grid-template-columns: 1fr; }
+}
+.calc-category-section { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    overflow: hidden;
+}
+.calc-category-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    padding: 16px; 
+    border-bottom: 3px solid var(--gold);
+    background: rgba(0,0,0,0.2);
+}
+.calc-category-icon { font-size: 28px; }
+.calc-category-title { flex: 1; }
+.calc-category-title h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.calc-category-title p { font-size: 11px; color: var(--text-muted); }
+.calc-category-count { 
+    background: var(--gold); 
+    color: #000; 
+    padding: 4px 12px; 
+    border-radius: 16px; 
+    font-size: 13px; 
+    font-weight: 700;
+}
+.calc-results-list { padding: 12px; }
+
+/* Result Card */
+.calc-result-card { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    padding: 12px; 
+    margin-bottom: 8px; 
+    background: rgba(0,0,0,0.2); 
+    border: 2px solid var(--border-color); 
+    border-radius: 10px; 
+    transition: all 0.3s; 
+    cursor: pointer;
+}
+.calc-result-card:hover { 
+    border-color: var(--gold); 
+    transform: translateX(3px);
+}
+.calc-result-card.selected { 
+    background: rgba(229, 168, 75, 0.1); 
+    border-color: var(--gold);
+}
+.calc-result-top { display: flex; align-items: center; gap: 10px; }
+.calc-result-checkbox { 
+    width: 18px; 
+    height: 18px; 
+    cursor: pointer; 
+    accent-color: var(--gold); 
+    flex-shrink: 0;
+}
+.calc-rank-badge { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 14px; 
+    font-weight: 700; 
+    background: var(--border-color); 
+    color: var(--text-primary); 
+    flex-shrink: 0;
+}
+.calc-rank-badge.gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+.calc-rank-badge.silver { background: linear-gradient(135deg, #C0C0C0, #E8E8E8); color: #000; }
+.calc-rank-badge.bronze { background: linear-gradient(135deg, #CD7F32, #E69B5C); color: #fff; }
+.calc-company-logo { 
+    width: 70px; 
+    height: 70px; 
+    object-fit: contain; 
+    padding: 6px; 
+    background: white; 
+    border-radius: 8px; 
+    flex-shrink: 0; 
+    border: 1px solid var(--border-color);
+}
+.calc-result-info { flex: 1; min-width: 0; }
+.calc-company-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+.calc-product-name { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+.calc-price-container { text-align: right; flex-shrink: 0; }
+.calc-price-value { font-size: 22px; font-weight: 700; color: #22c55e; line-height: 1; margin-bottom: 3px; }
+.calc-price-label { font-size: 8px; color: var(--text-muted); font-weight: 600; }
+
+/* Export/Save Section */
+.calc-export-section { 
+    position: sticky; 
+    bottom: 20px; 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    padding: 16px 20px; 
+    display: none; 
+    align-items: center; 
+    gap: 12px; 
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+.calc-export-section.visible { display: flex; }
+.calc-export-info { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.calc-export-count { 
+    background: var(--gold); 
+    color: #000; 
+    padding: 4px 12px; 
+    border-radius: 16px; 
+    font-size: 13px; 
+    font-weight: 700;
+}
+.calc-btn-save { 
+    padding: 12px 24px; 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    border: none; 
+    border-radius: 8px; 
+    color: white; 
+    font-size: 14px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.calc-btn-save:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+.calc-btn-clear { 
+    padding: 12px 20px; 
+    background: transparent; 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    color: var(--text-secondary); 
+    font-size: 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: all 0.3s;
+}
+.calc-btn-clear:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Loading & Empty States */
+.calc-loading-state, .calc-empty-state { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    padding: 60px; 
+    text-align: center;
+}
+.calc-spinner { 
+    width: 50px; 
+    height: 50px; 
+    border: 4px solid var(--border-color); 
+    border-top: 4px solid var(--gold); 
+    border-radius: 50%; 
+    animation: calc-spin 1s linear infinite; 
+    margin: 0 auto 20px;
+}
+@keyframes calc-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.calc-empty-icon { font-size: 48px; margin-bottom: 15px; }
+.calc-empty-title { font-size: 18px; color: var(--text-primary); font-weight: 600; }
+.calc-empty-text { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+
+/* Saved Search Display Header */
+.calc-search-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.calc-search-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.calc-search-label {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+}
+.calc-search-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.calc-search-params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.calc-param-tag {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Saved Card Style */
+.calc-result-card.saved-card { cursor: default; }
+.calc-result-card.saved-card:hover { transform: none; border-color: var(--border-color); }
+
+/* Reload Actions */
+.calc-reload-actions {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    margin-top: 20px;
+}
+.calc-btn-reload {
+    padding: 14px 28px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+    color: #60a5fa;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.calc-btn-reload:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: #60a5fa;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .calc-main-grid { grid-template-columns: 1fr; }
+    .calc-form-card { position: relative; top: 0; }
+}
+@media (max-width: 600px) {
+    .calc-categories-grid { grid-template-columns: 1fr; }
+    .calc-export-section { flex-direction: column; gap: 10px; }
+    .calc-btn-save, .calc-btn-clear { width: 100%; }
+    .calc-family-buttons { flex-direction: column; }
+    .calc-family-btn { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="calc-container">
+    <!-- Header -->
+    <div class="calc-header">
+        <div class="calc-header-left">
+            <div class="calc-header-icon">💰</div>
+            <div>
+                <h1>Calculateur Assurance Vie</h1>
+                <p>Comparateur de soumissions - Standard et Simplifiée</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="calc-main-grid">
+        <!-- Formulaire -->
+        <div class="calc-form-card">
+            <h2>Paramètres de recherche</h2>
+            
+            <!-- SÉLECTEUR FAMILLE -->
+            <div class="calc-family-selector">
+                <h3>👨‍👩‍👧‍👦 Sélectionner un membre</h3>
+                <div class="calc-family-buttons" id="calcFamilyButtons">
+                    <!-- Rempli dynamiquement -->
+                </div>
+            </div>
+            
+            <!-- Personne active -->
+            <div class="calc-active-person" id="calcActivePerson">
+                <div class="calc-active-person-icon">👤</div>
+                <div class="calc-active-person-info">
+                    <div class="calc-active-person-name" id="calcActivePersonName">Client</div>
+                    <div class="calc-active-person-details" id="calcActivePersonDetails">--</div>
+                </div>
+            </div>
+            
+            <!-- Section Profil -->
+            <div class="calc-section-box">
+                <h3>👤 Profil assuré</h3>
+                
+                <div class="calc-form-group">
+                    <label>Âge le plus proche</label>
+                    <input id="calcAgeManuel" type="number" class="calc-form-input" min="18" max="80" value="35" placeholder="Ex: 35">
+                </div>
+                <div class="calc-form-group">
+                    <label>Sexe</label>
+                    <select id="calcSexe" class="calc-form-select">
+                        <option value="M">Homme</option>
+                        <option value="F">Femme</option>
+                    </select>
+                </div>
+                <div class="calc-form-group">
+                    <label>Usage du tabac</label>
+                    <select id="calcFumeur" class="calc-form-select">
+                        <option value="Non-fumeur">Non-fumeur</option>
+                        <option value="Fumeur">Fumeur</option>
+                    </select>
+                </div>
+                
+                <!-- Option Conjoint -->
+                <div class="calc-conjoint-toggle" onclick="CALC.toggleConjoint()">
+                    <input type="checkbox" id="calcHasConjoint" onclick="event.stopPropagation(); CALC.toggleConjoint();">
+                    <label for="calcHasConjoint">Ajouter un conjoint (assurance conjointe)</label>
+                    <span>💑</span>
+                </div>
+                
+                <div class="calc-conjoint-fields" id="calcConjointFields">
+                    <h4>👫 Profil du conjoint</h4>
+                    <div class="calc-form-group">
+                        <label>Âge du conjoint</label>
+                        <input id="calcAgeConjoint" type="number" class="calc-form-input" min="18" max="80" value="35">
+                    </div>
+                    <div class="calc-form-group">
+                        <label>Sexe du conjoint</label>
+                        <select id="calcSexeConjoint" class="calc-form-select">
+                            <option value="F">Femme</option>
+                            <option value="M">Homme</option>
+                        </select>
+                    </div>
+                    <div class="calc-form-group">
+                        <label>Usage du tabac (conjoint)</label>
+                        <select id="calcFumeurConjoint" class="calc-form-select">
+                            <option value="Non-fumeur">Non-fumeur</option>
+                            <option value="Fumeur">Fumeur</option>
+                        </select>
+                    </div>
+                    
+                    <div class="calc-deces-type-group visible" id="calcDecesTypeGroup">
+                        <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Type d'assurance conjointe</label>
+                        <div class="calc-deces-type-options">
+                            <label class="calc-deces-type-option selected" onclick="CALC.selectDecesType('premier')">
+                                <input type="radio" name="calcDecesType" value="premier" checked>
+                                <div class="option-icon">🥇</div>
+                                <div class="option-label">Premier décès</div>
+                                <div class="option-desc">Paiement au 1er</div>
+                            </label>
+                            <label class="calc-deces-type-option" onclick="CALC.selectDecesType('dernier')">
+                                <input type="radio" name="calcDecesType" value="dernier">
+                                <div class="option-icon">🏛️</div>
+                                <div class="option-label">Dernier décès</div>
+                                <div class="option-desc">Paiement au 2e</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Critères -->
+            <div class="calc-section-box gold">
+                <h3>🔍 Critères de recherche</h3>
+                
+                <div class="calc-form-group">
+                    <label>Montant d'assurance ($)</label>
+                    <input id="calcMontant" type="text" class="calc-form-input money-input" value="250000" min="50000">
+                </div>
+                <div class="calc-form-group">
+                    <label>Type d'assurance</label>
+                    <select id="calcTypeAssurance" class="calc-form-select" onchange="CALC.updateDureeOptions()">
+                        <option value="temporaire" selected>Temporaire</option>
+                        <option value="decroissant">Décroissant</option>
+                        <option value="permanent">Permanent Payable à Vie</option>
+                        <option value="permanent20">Permanent Payable 20 Ans</option>
+                    </select>
+                </div>
+                <div class="calc-form-group" id="calcDureeGroup">
+                    <label>Durée</label>
+                    <select id="calcDuree" class="calc-form-select">
+                        <option value="3">10 ans</option>
+                        <option value="4">15 ans</option>
+                        <option value="5" selected>20 ans</option>
+                        <option value="6">25 ans</option>
+                        <option value="7">30 ans</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="calc-btn-calculate" id="calcBtnCalculer" onclick="CALC.calculer()">
+                🔍 Comparer les prix
+            </button>
+        </div>
+        
+        <!-- Résultats -->
+        <div class="calc-results-container">
+            <!-- Dropdown Recherches Sauvegardées - EN HAUT -->
+            <div class="calc-saved-dropdown" id="calcSavedDropdown" style="display: none;">
+                <div class="calc-saved-dropdown-header" onclick="CALC.toggleSavedDropdown()">
+                    <div class="calc-saved-dropdown-title">
+                        💾 Recherches sauvegardées
+                        <span class="calc-saved-dropdown-count" id="calcSavedCount">0</span>
+                    </div>
+                    <div class="calc-saved-dropdown-toggle">▼</div>
+                </div>
+                <div class="calc-saved-dropdown-content" id="calcSavedDropdownContent">
+                    <!-- Rempli dynamiquement -->
+                </div>
+            </div>
+            
+            <div id="calcResults">
+                <div class="calc-empty-state">
+                    <div class="calc-empty-icon">💰</div>
+                    <div class="calc-empty-title">Prêt à comparer?</div>
+                    <div class="calc-empty-text">Sélectionnez un membre de la famille et cliquez sur "Comparer les prix"</div>
+                </div>
+            </div>
+            
+            <!-- Barre de sauvegarde -->
+            <div class="calc-export-section" id="calcExportSection">
+                <div class="calc-export-info">
+                    <span class="calc-export-count" id="calcSelectedCount">0</span> produit(s) sélectionné(s)
+                </div>
+                <button class="calc-btn-clear" onclick="CALC.clearSelection()">Effacer</button>
+                <button class="calc-btn-save" onclick="CALC.saveSearch()">
+                    💾 Enregistrer dans le dossier
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Nettoyer l'instance précédente
+if (window.CALC) { delete window.CALC; }
+
+window.CALC = {
+    // APIs
+    API_URL: "https://dark-limit-4332.dany-michaud.workers.dev/api/quote",
+    INALCO_API: "https://inalco.dany-michaud.workers.dev/api/inalco",
+    WINQUOTE_JOINT_API: "https://winquoteconjoint.dany-michaud.workers.dev",
+    
+    // State
+    currentMode: 'age',
+    savedSelections: new Map(),
+    selectedProducts: new Set(),
+    allResults: [],
+    savedSearches: [],
+    
+    // Famille
+    familyMembers: [],
+    activeMember: null,
+    
+    // Mappings
+    COMPANY_MAPPING: { 
+        "Assomption Compagnie Mutuelle Assur-vie": "Assomption Vie", 
+        "Assumption Life": "Assomption Vie", 
+        "Beneva Inc.": "Beneva", 
+        "Co-operators Compagnie d'assurance-vie": "Co-operators",
+        "Co-operators Life": "Co-operators",
+        "Desjardins Sécurité financière": "Desjardins", 
+        "Desjardins Financial Security": "Desjardins",
+        "Equitable Life of Canada": "Equitable", 
+        "Foresters, compagnie d'assurance vie": "Foresters",
+        "Foresters Financial": "Foresters",
+        "Humania Compagnie d'Assurance Inc.": "Humania", 
+        "ivari": "Ivari", 
+        "L'Industrielle - Alliance Cie d'Ass.-Vie": "Industrielle Alliance",
+        "iA Financial Group": "Industrielle Alliance",
+        "La Cie d'Assurance-Vie BMO": "BMO", 
+        "La Cie d'Assurance-Vie Manufacturers": "Manuvie", 
+        "La Compagnie d'Assurance-Vie Canada": "Canada Vie",
+        "Canada Life": "Canada Vie",
+        "La Compagnie d'Assurance Vie Empire": "Empire Vie", 
+        "Empire Life": "Empire Vie",
+        "Plan de Protection Canada (Foresters)": "CPP", 
+        "RBC, Cie d'Assurance-Vie": "RBC", 
+        "Sun Life du Canada (Cie d'Assurance-Vie)": "Sun Life",
+        "UV Insurance": "UV Assurance" 
+    },
+    
+    COMPANY_LOGOS: { 
+        "UV Assurance": "https://www.finox.ca/Images-Assureurs/UV.png", 
+        "Sun Life": "https://www.finox.ca/Images-Assureurs/Sun%20Life.png", 
+        "CPP": "https://www.finox.ca/Images-Assureurs/CPP.png", 
+        "RBC": "https://www.finox.ca/Images-Assureurs/RBC.png", 
+        "Humania": "https://www.finox.ca/Images-Assureurs/Humania.png", 
+        "Industrielle Alliance": "https://www.finox.ca/Images-Assureurs/IA.png", 
+        "Ivari": "https://www.finox.ca/Images-Assureurs/Ivari.png", 
+        "Manuvie": "https://www.finox.ca/Images-Assureurs/Manuvie.png", 
+        "Desjardins": "https://www.finox.ca/Images-Assureurs/Desjardins.png", 
+        "Empire Vie": "https://www.finox.ca/Images-Assureurs/Empire.png", 
+        "Equitable": "https://www.finox.ca/Images-Assureurs/%C3%89quitable.png", 
+        "Foresters": "https://www.finox.ca/Images-Assureurs/Foresters.png", 
+        "Assomption Vie": "https://www.finox.ca/Images-Assureurs/Assomption%20Vie.png", 
+        "Beneva": "https://www.finox.ca/Images-Assureurs/Beneva.png", 
+        "BMO": "https://www.finox.ca/Images-Assureurs/BMO.png", 
+        "Canada Vie": "https://www.finox.ca/Images-Assureurs/Canada%20Vie.png", 
+        "Co-operators": "https://www.finox.ca/Images-Assureurs/Cooperators.png" 
+    },
+    
+    EXCLUDED_COMPANIES: ['primerica', 'sherbrooke'],
+
+    // ==========================================
+    // INIT
+    // ==========================================
+    async init() {
+        let retries = 0;
+        while ((!window.FINOX || !FINOX.CLIENT_ID || !FINOX.supabase) && retries < 20) {
+            await new Promise(r => setTimeout(r, 200));
+            retries++;
+        }
+        
+        if (!window.FINOX || !FINOX.CLIENT_ID) {
+            console.error('❌ CALC: Module non initialisé');
+            return;
+        }
+        
+        // Initialiser le formatage monétaire
+        FINOX.setupAllMoneyInputs();
+
+        // Charger les membres de la famille
+        await this.loadFamilyMembers();
+
+        // Charger les recherches sauvegardées
+        await this.loadSavedSearches();
+
+        console.log('✅ Module Calculateur Assurance Vie chargé');
+    },
+    
+    // ==========================================
+    // CHARGER LA FAMILLE
+    // ==========================================
+    async loadFamilyMembers() {
+        try {
+            const client = await FINOX.loadClientData(true);
+            if (!client) return;
+            
+            this.familyMembers = [];
+            
+            // Client principal
+            const clientAge = this.calculateAge(client.date_of_birth);
+            this.familyMembers.push({
+                type: 'client',
+                icon: '👤',
+                prenom: client.first_name || 'Client',
+                age: clientAge,
+                sexe: /^f/i.test(client.sex || '') ? 'F' : 'M',
+                fumeur: client.smoker ? 'Fumeur' : 'Non-fumeur',
+                dob: client.date_of_birth
+            });
+
+            // Conjoint
+            if (client.has_conjoint && client.conjoint_first_name) {
+                const conjointAge = this.calculateAge(client.conjoint_dob);
+                this.familyMembers.push({
+                    type: 'conjoint',
+                    icon: '💑',
+                    prenom: client.conjoint_first_name,
+                    age: conjointAge,
+                    sexe: /^f/i.test(client.conjoint_sex || '') ? 'F' : 'M',
+                    fumeur: client.conjoint_smoker ? 'Fumeur' : 'Non-fumeur',
+                    dob: client.conjoint_dob
+                });
+            }
+            
+            // Enfants
+            const { data: enfants } = await FINOX.supabase
+                .from('abf_enfants')
+                .select('*')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .order('ordre', { ascending: true });
+            
+            if (enfants && enfants.length > 0) {
+                enfants.forEach((enfant, i) => {
+                    const enfantAge = this.calculateAge(enfant.date_naissance);
+                    if (enfantAge >= 0) {
+                        // Mapper garçon/fille vers M/F
+                        let sexeEnfant = 'M';
+                        const sexeRaw = (enfant.sexe || '').toLowerCase();
+                        if (sexeRaw === 'f' || sexeRaw === 'fille' || sexeRaw === 'femme') {
+                            sexeEnfant = 'F';
+                        } else if (sexeRaw === 'm' || sexeRaw === 'garçon' || sexeRaw === 'garcon' || sexeRaw === 'homme') {
+                            sexeEnfant = 'M';
+                        }
+                        
+                        this.familyMembers.push({
+                            type: 'enfant',
+                            icon: sexeEnfant === 'F' ? '👧' : '👦',
+                            prenom: enfant.prenom || `Enfant ${i+1}`,
+                            age: enfantAge,
+                            sexe: sexeEnfant,
+                            fumeur: 'Non-fumeur',
+                            dob: enfant.date_naissance
+                        });
+                    }
+                });
+            }
+            
+            this.renderFamilyButtons();
+            
+            // Sélectionner le client par défaut
+            if (this.familyMembers.length > 0) {
+                this.selectFamilyMember(0);
+            }
+            
+        } catch (e) {
+            console.warn('Erreur chargement famille:', e);
+        }
+    },
+    
+    // Âge le plus proche (nearest age): si < 6 mois du prochain anniversaire → +1 an
+    calculateAge(dob) {
+        if (!dob) return null;
+        const birthDate = new Date(dob);
+        const today = new Date();
+        // Prochain anniversaire cette année ou l'an prochain
+        let nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+        if (nextBirthday < today) nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+        // Dernier anniversaire
+        let lastBirthday = new Date(nextBirthday);
+        lastBirthday.setFullYear(lastBirthday.getFullYear() - 1);
+        // Jours depuis dernier anniversaire vs jours jusqu'au prochain
+        const daysSinceLast = (today - lastBirthday) / (1000 * 60 * 60 * 24);
+        const daysToNext = (nextBirthday - today) / (1000 * 60 * 60 * 24);
+        // Âge de base (dernier anniversaire)
+        let age = lastBirthday.getFullYear() - birthDate.getFullYear();
+        // Si plus proche du prochain anniversaire (< 6 mois), arrondir vers le haut
+        if (daysToNext < daysSinceLast) age++;
+        return age;
+    },
+    
+    renderFamilyButtons() {
+        const container = document.getElementById('calcFamilyButtons');
+        if (!container) return;
+        
+        let html = '';
+        this.familyMembers.forEach((member, index) => {
+            html += `
+                <button class="calc-family-btn" data-index="${index}" onclick="CALC.selectFamilyMember(${index})">
+                    <span class="btn-icon">${member.icon}</span>
+                    <span>${member.prenom}</span>
+                    ${member.age !== null ? `<span class="btn-age">(${member.age} ans)</span>` : ''}
+                </button>
+            `;
+        });
+        
+        container.innerHTML = html || '<p style="color: var(--text-muted); font-size: 11px;">Aucun membre trouvé</p>';
+    },
+    
+    selectFamilyMember(index) {
+        const member = this.familyMembers[index];
+        if (!member) return;
+        
+        this.activeMember = member;
+        
+        // Mettre à jour les boutons
+        document.querySelectorAll('.calc-family-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        
+        // Mettre à jour l'affichage de la personne active
+        document.getElementById('calcActivePersonName').textContent = member.prenom;
+        document.getElementById('calcActivePersonDetails').textContent = 
+            `${member.age !== null ? member.age + ' ans' : '--'} • ${member.sexe === 'M' ? 'Homme' : 'Femme'} • ${member.fumeur}`;
+        document.querySelector('.calc-active-person-icon').textContent = member.icon;
+        
+        // Remplir le formulaire
+        if (member.age !== null) document.getElementById('calcAgeManuel').value = member.age;
+        document.getElementById('calcSexe').value = member.sexe;
+        document.getElementById('calcFumeur').value = member.fumeur;
+        
+        // Si c'est le client et qu'il y a un conjoint, pré-remplir aussi le conjoint
+        if (member.type === 'client') {
+            const conjoint = this.familyMembers.find(m => m.type === 'conjoint');
+            if (conjoint) {
+                if (conjoint.age !== null) document.getElementById('calcAgeConjoint').value = conjoint.age;
+                document.getElementById('calcSexeConjoint').value = conjoint.sexe;
+                document.getElementById('calcFumeurConjoint').value = conjoint.fumeur;
+            }
+        }
+    },
+
+    // ==========================================
+    // TOGGLE FUNCTIONS
+    // ==========================================
+    toggleConjoint() {
+        const cb = document.getElementById('calcHasConjoint');
+        const fields = document.getElementById('calcConjointFields');
+        const typeSelect = document.getElementById('calcTypeAssurance');
+        
+        if (event && event.target.tagName !== 'INPUT') {
+            cb.checked = !cb.checked;
+        }
+        
+        if (cb.checked) {
+            fields.classList.add('visible');
+            const sexePrincipal = document.getElementById('calcSexe').value;
+            document.getElementById('calcSexeConjoint').value = sexePrincipal === 'M' ? 'F' : 'M';
+            
+            if (typeSelect.value === 'decroissant') {
+                typeSelect.value = 'temporaire';
+                this.updateDureeOptions();
+            }
+            this.updateTypeAssuranceOptions(true);
+        } else {
+            fields.classList.remove('visible');
+            this.updateTypeAssuranceOptions(false);
+        }
+    },
+    
+    updateTypeAssuranceOptions(hideDecroissant) {
+        const sel = document.getElementById('calcTypeAssurance');
+        const val = sel.value;
+        
+        if (hideDecroissant) {
+            sel.innerHTML = `
+                <option value="temporaire">Temporaire</option>
+                <option value="permanent">Permanent Payable à Vie</option>
+                <option value="permanent20">Permanent Payable 20 Ans</option>
+            `;
+        } else {
+            sel.innerHTML = `
+                <option value="temporaire">Temporaire</option>
+                <option value="decroissant">Décroissant</option>
+                <option value="permanent">Permanent Payable à Vie</option>
+                <option value="permanent20">Permanent Payable 20 Ans</option>
+            `;
+        }
+        
+        if (sel.querySelector(`option[value="${val}"]`)) sel.value = val;
+    },
+    
+    selectDecesType(type) {
+        document.querySelectorAll('.calc-deces-type-option').forEach(opt => opt.classList.remove('selected'));
+        const input = document.querySelector(`input[name="calcDecesType"][value="${type}"]`);
+        if (input) {
+            input.checked = true;
+            input.closest('.calc-deces-type-option').classList.add('selected');
+        }
+    },
+    
+    updateDureeOptions() {
+        const type = document.getElementById('calcTypeAssurance').value;
+        const dureeSelect = document.getElementById('calcDuree');
+        const dureeGroup = document.getElementById('calcDureeGroup');
+        
+        if (type === 'temporaire') {
+            dureeGroup.style.display = 'block';
+            dureeSelect.innerHTML = `<option value="3">10 ans</option><option value="4">15 ans</option><option value="5" selected>20 ans</option><option value="6">25 ans</option><option value="7">30 ans</option>`;
+        } else if (type === 'decroissant') {
+            dureeGroup.style.display = 'block';
+            dureeSelect.innerHTML = `<option value="10">10 ans</option><option value="15">15 ans</option><option value="20" selected>20 ans</option><option value="25">25 ans</option><option value="30">30 ans</option>`;
+        } else {
+            dureeGroup.style.display = 'none';
+        }
+    },
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    getConjointParams() {
+        const hasConjoint = document.getElementById('calcHasConjoint').checked;
+        if (!hasConjoint) return null;
+        
+        return {
+            age: document.getElementById('calcAgeConjoint').value,
+            sexe: document.getElementById('calcSexeConjoint').value,
+            fumeur: document.getElementById('calcFumeurConjoint').value,
+            decesType: document.querySelector('input[name="calcDecesType"]:checked')?.value || 'premier'
+        };
+    },
+    
+    getCurrentSearchParams() {
+        const age = document.getElementById('calcAgeManuel').value;
+        const typeAssurance = document.getElementById('calcTypeAssurance').value;
+        const duree = document.getElementById('calcDuree').value;
+        const montant = FINOX.parseNumber(document.getElementById('calcMontant').value);
+        const conjointParams = this.getConjointParams();
+
+        let typeLabel = '';
+        if (typeAssurance === 'temporaire') {
+            const dureeMap = { '3': '10 ans', '4': '15 ans', '5': '20 ans', '6': '25 ans', '7': '30 ans' };
+            typeLabel = `Temporaire ${dureeMap[duree] || duree}`;
+        } else if (typeAssurance === 'decroissant') {
+            typeLabel = `Décroissant ${duree} ans`;
+        } else if (typeAssurance === 'permanent') {
+            typeLabel = 'Permanent Vie';
+        } else if (typeAssurance === 'permanent20') {
+            typeLabel = 'Permanent 20 ans';
+        }
+
+        if (conjointParams) {
+            typeLabel += ` - ${conjointParams.decesType === 'premier' ? '1er décès' : 'Dernier décès'}`;
+        }
+
+        const memberName = this.activeMember?.prenom || 'Client';
+
+        return {
+            age, montant, typeAssurance, duree,
+            sexe: document.getElementById('calcSexe').value,
+            fumeur: document.getElementById('calcFumeur').value,
+            conjoint: conjointParams,
+            memberName: memberName,
+            label: `${memberName} - ${FINOX.formatMoney(montant)} - ${typeLabel}`
+        };
+    },
+    
+    formatCompanyName(apiName) {
+        if (this.COMPANY_MAPPING[apiName]) return this.COMPANY_MAPPING[apiName];
+        const lowerName = apiName.toLowerCase();
+        if (lowerName.includes('desjardins')) return 'Desjardins';
+        if (lowerName.includes('empire')) return 'Empire Vie';
+        if (lowerName.includes('equitable')) return 'Equitable';
+        if (lowerName.includes('assomption')) return 'Assomption Vie';
+        if (lowerName.includes('beneva')) return 'Beneva';
+        if (lowerName.includes('bmo')) return 'BMO';
+        if (lowerName.includes('canada') && lowerName.includes('life')) return 'Canada Vie';
+        if (lowerName.includes('foresters') && !lowerName.includes('plan')) return 'Foresters';
+        if (lowerName.includes('cpp') || lowerName.includes('plan de protection')) return 'CPP';
+        if (lowerName.includes('humania')) return 'Humania';
+        if (lowerName.includes('ivari')) return 'Ivari';
+        if (lowerName.includes('ia financial') || lowerName.includes('industrielle')) return 'Industrielle Alliance';
+        if (lowerName.includes('manuvie') || lowerName.includes('manufacturers')) return 'Manuvie';
+        if (lowerName.includes('rbc')) return 'RBC';
+        if (lowerName.includes('sun life')) return 'Sun Life';
+        if (lowerName.includes('uv')) return 'UV Assurance';
+        return apiName;
+    },
+    
+    isSimplified(item) {
+        const company = (item.compagnie || '').toLowerCase();
+        const product = (item.produit || '').toLowerCase();
+        if (product.includes('décroissant') || product.includes('decreasing')) return false;
+        if (company.includes('plan de protection') || company.includes('cpp')) {
+            if (product.includes('express elite') || product.includes('préféré') || product.includes('elite')) return false;
+            return true;
+        }
+        if (item._sourceAPI === 'inalco') return true;
+        if (company.includes('uv')) return true;
+        if (product.includes('si -')) return true;
+        if (company.includes('assomption') && (product.includes('platine') || product.includes('or'))) return true;
+        return false;
+    },
+    
+    deduplicateProducts(products) {
+        const seen = new Map();
+        return products.filter(item => {
+            const key = `${item.compagnie}_${item.produit}_${item.prix}`;
+            if (seen.has(key)) return false;
+            seen.set(key, true);
+            return true;
+        });
+    },
+
+    mapTermeInalco(termeCompulife) {
+        const mapTemporaire = { '3': '10', '4': '15', '5': '20', '6': '25', '7': '30' };
+        if (['R', 'H', 'P', 'L'].includes(termeCompulife)) return termeCompulife;
+        return mapTemporaire[termeCompulife] || '20';
+    },
+
+    // ==========================================
+    // API CALLS
+    // ==========================================
+    async fetchInalcoSimplified(params, terme) {
+        try {
+            const inalcoParams = new URLSearchParams({
+                age: params.age, amount: params.montant, gender: params.sexe,
+                smoker: params.fumeur === 'Fumeur' ? 'Y' : 'N',
+                term: this.mapTermeInalco(terme)
+            });
+            const response = await fetch(`${this.INALCO_API}?${inalcoParams.toString()}`);
+            if (!response.ok) return [];
+            const data = await response.json();
+            if (data.status === 'success' && data.data) {
+                return data.data.map(item => ({ ...item, _termCode: terme, _sourceAPI: 'inalco' }));
+            }
+            return [];
+        } catch (error) { return []; }
+    },
+
+    async fetchWinQuoteJoint(params, conjointParams, typeAssurance, duree) {
+        try {
+            const jointType = conjointParams.decesType === 'premier' ? '2' : '1';
+            const queryParams = new URLSearchParams({
+                age1: params.age, sexe1: params.sexe, fumeur1: params.fumeur === 'Fumeur' ? 'true' : 'false',
+                age2: conjointParams.age, sexe2: conjointParams.sexe, fumeur2: conjointParams.fumeur === 'Fumeur' ? 'true' : 'false',
+                montant: params.montant, jointType, typeAssurance, duree
+            });
+            const response = await fetch(`${this.WINQUOTE_JOINT_API}?${queryParams.toString()}`);
+            const data = await response.json();
+            if (data.status !== 'success' || !data.data) return [];
+            return data.data.map(p => ({
+                compagnie: p.compagnie, produit: p.produit, classe: p.classe || 'Joint',
+                prix: p.prix.toString(), primeAnnuelle: p.primeAnnuelle,
+                _termCode: `JOINT_${conjointParams.decesType.toUpperCase()}_${typeAssurance.toUpperCase()}`,
+                _sourceAPI: 'winquote-conjoint', _isJoint: true
+            }));
+        } catch (error) { return []; }
+    },
+
+    async fetchWinQuoteParticipatifs(params, typeAssurance) {
+        try {
+            const response = await fetch(`https://winquote.dany-michaud.workers.dev/?age=${params.age}&montant=${params.montant}&sexe=${params.sexe}&fumeur=${params.fumeur === 'Fumeur' ? 'true' : 'false'}&type=${typeAssurance}`);
+            const data = await response.json();
+            if (data.status !== 'success' || !data.data) return [];
+            
+            const filtered = data.data.filter(product => {
+                const company = product.compagnie;
+                const productName = product.produit.toLowerCase();
+                if (typeAssurance === 'permanent') {
+                    return (company === 'Equitable' && productName.includes('life pay') && productName.includes('enhanced')) ||
+                           (company === 'Assumption Life' && productName.includes('parplus') && productName.includes('life pay')) ||
+                           (company === 'Empire Life' && productName.includes('100') && productName.includes('enhanced'));
+                }
+                if (typeAssurance === 'permanent20') {
+                    return (company === 'Assumption Life' && productName.includes('parplus') && productName.includes('20-pay')) ||
+                           (company === 'Empire Life' && productName.includes('20 pay')) ||
+                           (company === 'Equitable' && productName.includes('20 pay'));
+                }
+                return false;
+            });
+            
+            return filtered.map(p => ({
+                compagnie: p.compagnie, produit: p.produit, classe: p.classe || 'Non-Smoker',
+                prix: p.prix.toString(), primeAnnuelle: p.primeAnnuelle,
+                _termCode: typeAssurance === 'permanent' ? 'PART_LIFE' : 'PART_20',
+                _sourceAPI: 'winquote-participatif'
+            }));
+        } catch (error) { return []; }
+    },
+
+    // ==========================================
+    // MAIN CALCULATE FUNCTION
+    // ==========================================
+    async calculer() {
+        const resultsDiv = document.getElementById("calcResults");
+        const btnCalculer = document.getElementById("calcBtnCalculer");
+        
+        const ageToUse = parseInt(document.getElementById('calcAgeManuel').value);
+        if (!ageToUse || ageToUse < 0) {
+            FINOX.showNotification('⚠️ Âge invalide', 'error');
+            return;
+        }
+        
+        btnCalculer.disabled = true;
+        btnCalculer.textContent = "🔍 Recherche en cours...";
+        resultsDiv.innerHTML = `<div class="calc-loading-state"><div class="calc-spinner"></div><div class="calc-empty-title">Analyse des meilleures offres...</div></div>`;
+        
+        this.selectedProducts.clear();
+        this.savedSelections.clear();
+        this.updateExportSection();
+        
+        try {
+            const typeAssurance = document.getElementById('calcTypeAssurance').value;
+            const conjointParams = this.getConjointParams();
+            let termes = [];
+            
+            if (typeAssurance === 'temporaire') termes = [document.getElementById('calcDuree').value];
+            else if (typeAssurance === 'decroissant') termes = ['G'];
+            else if (typeAssurance === 'permanent') termes = ['H', 'P', 'L'];
+            else if (typeAssurance === 'permanent20') termes = ['J', 'M', 'R'];
+            
+            const params = {
+                age: ageToUse.toString(),
+                sexe: document.getElementById("calcSexe").value,
+                fumeur: document.getElementById("calcFumeur").value,
+                montant: FINOX.parseNumber(document.getElementById("calcMontant").value).toString()
+            };
+            
+            let allData = [];
+            
+            if (conjointParams) {
+                const jointData = await this.fetchWinQuoteJoint(params, conjointParams, typeAssurance, document.getElementById('calcDuree').value);
+                if (jointData.length > 0) allData = allData.concat(jointData);
+            } else {
+                for (const terme of termes) {
+                    try {
+                        const queryParams = new URLSearchParams({...params, terme});
+                        const response = await fetch(`${this.API_URL}?${queryParams.toString()}&_t=${Date.now()}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status !== "error" && data.data?.length > 0) {
+                                data.data.forEach(item => { item._termCode = terme; item._sourceAPI = 'compulife'; });
+                                allData = allData.concat(data.data);
+                            }
+                        }
+                    } catch (error) { console.warn(`Compulife erreur terme ${terme}:`, error); }
+                    
+                    if (typeAssurance !== 'decroissant' && typeAssurance !== 'permanent20') {
+                        const inalcoData = await this.fetchInalcoSimplified(params, terme);
+                        if (inalcoData.length > 0) allData = allData.concat(inalcoData);
+                    }
+                }
+                
+                if (typeAssurance === 'permanent' || typeAssurance === 'permanent20') {
+                    const winquoteData = await this.fetchWinQuoteParticipatifs(params, typeAssurance);
+                    if (winquoteData.length > 0) allData = allData.concat(winquoteData);
+                }
+            }
+            
+            if (allData.length === 0) {
+                resultsDiv.innerHTML = `<div class="calc-empty-state"><div class="calc-empty-icon">😕</div><div class="calc-empty-title">Aucune soumission disponible</div><div class="calc-empty-text">Essayez de modifier vos critères</div></div>`;
+                return;
+            }
+            
+            allData = allData.filter(item => {
+                const company = (item.compagnie || '').toLowerCase();
+                return !this.EXCLUDED_COMPANIES.some(excluded => company.includes(excluded));
+            });
+            
+            this.allResults = allData;
+            this.afficherResultats();
+            
+        } catch (error) {
+            resultsDiv.innerHTML = `<div class="calc-empty-state"><div class="calc-empty-icon">❌</div><div class="calc-empty-title">Erreur</div><div class="calc-empty-text">${error.message}</div></div>`;
+        } finally {
+            btnCalculer.disabled = false;
+            btnCalculer.textContent = "🔍 Comparer les prix";
+        }
+    },
+
+    // ==========================================
+    // DISPLAY RESULTS
+    // ==========================================
+    afficherResultats() {
+        const resultsDiv = document.getElementById("calcResults");
+        const typeAssurance = document.getElementById('calcTypeAssurance').value;
+        const conjointParams = this.getConjointParams();
+        let filteredResults = this.allResults;
+        
+        if (typeAssurance === 'decroissant') {
+            const dureeDecroissant = document.getElementById('calcDuree').value;
+            filteredResults = filteredResults.filter(item => {
+                const product = (item.produit || '').toLowerCase();
+                return product.includes(dureeDecroissant + ' ans') || product.includes(dureeDecroissant + ' year');
+            });
+        }
+        
+        if (filteredResults.length === 0) {
+            resultsDiv.innerHTML = `<div class="calc-empty-state"><div class="calc-empty-icon">🔍</div><div class="calc-empty-title">Aucun résultat</div></div>`;
+            return;
+        }
+        
+        let html = `<div class="calc-categories-grid">`;
+        
+        if (conjointParams) {
+            const decesTypeLabel = conjointParams.decesType === 'premier' ? 'Premier Décès' : 'Dernier Décès';
+            const decesTypeIcon = conjointParams.decesType === 'premier' ? '🥇' : '🏛️';
+            filteredResults.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            html += this.buildCategory(decesTypeIcon, `Assurance Conjointe - ${decesTypeLabel}`, `Protection pour les deux conjoints`, filteredResults.slice(0, 10));
+        } else if (typeAssurance === 'permanent' || typeAssurance === 'permanent20') {
+            const standard = filteredResults.filter(item => !this.isSimplified(item) && !item._termCode?.includes('PART'));
+            const simplifie = filteredResults.filter(item => this.isSimplified(item));
+            const participatifs = filteredResults.filter(item => item._termCode === 'PART_LIFE' || item._termCode === 'PART_20');
+            
+            const standardUnique = this.deduplicateProducts(standard);
+            const simplifieUnique = this.deduplicateProducts(simplifie);
+            
+            standardUnique.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            simplifieUnique.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            participatifs.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            
+            if (standardUnique.length > 0) html += this.buildCategory("💎", "Permanent Standard", "Avec examen médical", standardUnique.slice(0, 5));
+            if (simplifieUnique.length > 0) html += this.buildCategory("⚡", "Assurance Simplifiée", "Sans examen médical", simplifieUnique.slice(0, 5));
+            if (participatifs.length > 0) html += this.buildCategory("🌟", "Assurance Participative", "Avec participation aux bénéfices", participatifs.slice(0, 5));
+        } else {
+            const standard = filteredResults.filter(item => !this.isSimplified(item));
+            const simplifie = filteredResults.filter(item => this.isSimplified(item));
+            
+            const standardUnique = this.deduplicateProducts(standard);
+            const simplifieUnique = this.deduplicateProducts(simplifie);
+            
+            standardUnique.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            simplifieUnique.sort((a, b) => FINOX.parseNumber(a.prix) - FINOX.parseNumber(b.prix));
+            
+            if (standardUnique.length > 0) {
+                const titre = typeAssurance === "decroissant" ? "Assurance Décroissante" : "Assurance Standard";
+                const desc = typeAssurance === "decroissant" ? "Protection hypothécaire" : "Avec examen médical";
+                html += this.buildCategory("🏆", titre, desc, standardUnique.slice(0, 5));
+            }
+            if (simplifieUnique.length > 0) {
+                html += this.buildCategory("⚡", "Assurance Simplifiée", "Sans examen médical", simplifieUnique.slice(0, 5));
+            }
+        }
+        
+        html += `</div>`;
+        resultsDiv.innerHTML = html;
+    },
+
+    buildCategory(icon, title, desc, items) {
+        let html = `<div class="calc-category-section"><div class="calc-category-header"><div class="calc-category-icon">${icon}</div><div class="calc-category-title"><h3>${title}</h3><p>${desc}</p></div><div class="calc-category-count">${items.length}</div></div><div class="calc-results-list">`;
+        
+        items.forEach((item, i) => {
+            const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            const prix = FINOX.parseNumber(item.prix || 0);
+            const company = this.formatCompanyName(item.compagnie);
+            const logo = this.COMPANY_LOGOS[company] || '';
+            const productId = `${company}_${item.produit}_${prix}`.replace(/[^a-zA-Z0-9]/g, '_');
+            
+            html += `<div class="calc-result-card" data-product-id="${productId}" data-category="${title}" onclick="CALC.toggleProductSelection('${productId}', event, '${title}')">
+                <div class="calc-result-top">
+                    <input type="checkbox" class="calc-result-checkbox" onclick="CALC.toggleProductSelection('${productId}', event, '${title}')">
+                    <div class="calc-rank-badge ${rankClass}">${i + 1}</div>
+                    ${logo ? `<img src="${logo}" alt="${company}" class="calc-company-logo">` : ''}
+                    <div class="calc-result-info">
+                        <div class="calc-company-name">${company}</div>
+                        <div class="calc-product-name">${item.produit || ""}</div>
+                    </div>
+                    <div class="calc-price-container">
+                        <div class="calc-price-value">${FINOX.formatMoney(prix)}</div>
+                        <div class="calc-price-label">PAR MOIS</div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        
+        html += `</div></div>`;
+        return html;
+    },
+
+    // ==========================================
+    // SELECTION MANAGEMENT
+    // ==========================================
+    toggleProductSelection(productId, event, category) {
+        event.stopPropagation();
+        const card = document.querySelector(`[data-product-id="${productId}"]`);
+        if (!card) return;
+        const checkbox = card.querySelector('.calc-result-checkbox');
+        
+        if (this.selectedProducts.has(productId)) {
+            this.selectedProducts.delete(productId);
+            this.savedSelections.delete(productId);
+            card.classList.remove('selected');
+            if (checkbox) checkbox.checked = false;
+        } else {
+            this.selectedProducts.add(productId);
+            
+            const searchParams = this.getCurrentSearchParams();
+            const productData = {
+                id: productId,
+                company: card.querySelector('.calc-company-name').textContent,
+                product: card.querySelector('.calc-product-name').textContent,
+                price: card.querySelector('.calc-price-value').textContent,
+                category: category || 'Standard'
+            };
+            
+            this.savedSelections.set(productId, { product: productData, searchParams: searchParams });
+            card.classList.add('selected');
+            if (checkbox) checkbox.checked = true;
+        }
+        
+        this.updateExportSection();
+    },
+
+    updateExportSection() {
+        const exportSection = document.getElementById('calcExportSection');
+        const countElement = document.getElementById('calcSelectedCount');
+        countElement.textContent = this.savedSelections.size;
+        exportSection.classList.toggle('visible', this.savedSelections.size > 0);
+    },
+
+    clearSelection() {
+        this.selectedProducts.clear();
+        this.savedSelections.clear();
+        document.querySelectorAll('.calc-result-card').forEach(card => {
+            card.classList.remove('selected');
+            const checkbox = card.querySelector('.calc-result-checkbox');
+            if (checkbox) checkbox.checked = false;
+        });
+        this.updateExportSection();
+    },
+
+    // ==========================================
+    // SAVE & LOAD SEARCHES
+    // ==========================================
+    async saveSearch() {
+        if (this.savedSelections.size === 0) {
+            FINOX.showNotification('⚠️ Sélectionnez au moins un produit', 'error');
+            return;
+        }
+        
+        const searchParams = this.getCurrentSearchParams();
+        const products = [];
+        this.savedSelections.forEach((data, productId) => {
+            products.push({
+                id: productId,
+                company: data.product.company,
+                product: data.product.product,
+                price: data.product.price,
+                category: data.product.category
+            });
+        });
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('client_recherches_assurance_vie')
+                .insert({
+                    client_id: FINOX.CLIENT_ID,
+                    search_params: searchParams,
+                    selected_products: products,
+                    label: searchParams.label
+                });
+            
+            if (error) throw error;
+            
+            FINOX.showNotification('✅ Recherche sauvegardée', 'success');
+            this.clearSelection();
+            await this.loadSavedSearches();
+            
+        } catch (e) {
+            console.error('Erreur sauvegarde:', e);
+            FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+        }
+    },
+
+    async loadSavedSearches() {
+        try {
+            const { data, error } = await FINOX.supabase
+                .from('client_recherches_assurance_vie')
+                .select('*')
+                .eq('client_id', FINOX.CLIENT_ID)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            this.savedSearches = data || [];
+            this.renderSavedSearches();
+        } catch (e) {
+            console.warn('Erreur chargement recherches:', e);
+            this.savedSearches = [];
+        }
+    },
+
+    // ==========================================
+    // SAVED SEARCHES DROPDOWN
+    // ==========================================
+    toggleSavedDropdown() {
+        const dropdown = document.getElementById('calcSavedDropdown');
+        dropdown.classList.toggle('open');
+    },
+
+    renderSavedSearches() {
+        const dropdown = document.getElementById('calcSavedDropdown');
+        const content = document.getElementById('calcSavedDropdownContent');
+        const countBadge = document.getElementById('calcSavedCount');
+        
+        if (this.savedSearches.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        dropdown.style.display = 'block';
+        countBadge.textContent = this.savedSearches.length;
+        
+        let html = '';
+        
+        this.savedSearches.forEach(search => {
+            const date = new Date(search.created_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+            const products = search.selected_products || [];
+            const params = search.search_params || {};
+            const memberName = params.memberName || 'Client';
+            
+            html += `
+                <div class="calc-saved-item">
+                    <div class="calc-saved-item-header">
+                        <span class="calc-saved-item-label">👤 ${memberName}</span>
+                        <span class="calc-saved-item-date">${date}</span>
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">
+                        ${search.label || 'Recherche'}
+                    </div>
+                    <div class="calc-saved-item-products">
+                        ${products.slice(0, 3).map(p => `<span class="calc-saved-item-tag">${p.company} ${p.price}</span>`).join('')}
+                        ${products.length > 3 ? `<span class="calc-saved-item-tag">+${products.length - 3}</span>` : ''}
+                    </div>
+                    <div class="calc-saved-item-actions">
+                        <button class="calc-saved-item-btn load" onclick="CALC.loadSearch('${search.id}')">📋 Voir</button>
+                        <button class="calc-saved-item-btn delete" onclick="CALC.deleteSearch('${search.id}')">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+    },
+
+    async loadSearch(searchId) {
+        const search = this.savedSearches.find(s => s.id === searchId);
+        if (!search) return;
+        
+        const products = search.selected_products || [];
+        if (products.length === 0) {
+            FINOX.showNotification('⚠️ Aucun produit', 'error');
+            return;
+        }
+        
+        const resultsDiv = document.getElementById("calcResults");
+        const params = search.search_params;
+        
+        let html = `
+            <div class="calc-search-header">
+                <div class="calc-search-info">
+                    <span class="calc-search-label">📋 ${search.label || 'Recherche'}</span>
+                    <span class="calc-search-date">${new Date(search.created_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+                <div class="calc-search-params">
+                    <span class="calc-param-tag">👤 ${params.memberName || 'Client'}</span>
+                    <span class="calc-param-tag">${params.age} ans</span>
+                    <span class="calc-param-tag">${params.sexe === 'M' ? '♂️ H' : '♀️ F'}</span>
+                    <span class="calc-param-tag">${params.fumeur === 'Fumeur' ? '🚬' : '🚭'}</span>
+                    ${params.conjoint ? `<span class="calc-param-tag">💑 Conj. ${params.conjoint.age} ans</span>` : ''}
+                </div>
+            </div>
+        `;
+        
+        const byCategory = {};
+        products.forEach(p => {
+            const cat = p.category || 'Standard';
+            if (!byCategory[cat]) byCategory[cat] = [];
+            byCategory[cat].push(p);
+        });
+        
+        html += `<div class="calc-categories-grid">`;
+        
+        Object.entries(byCategory).forEach(([category, prods]) => {
+            const icon = category.includes('Simplifiée') ? '⚡' : category.includes('Participative') ? '🌟' : category.includes('Conjoint') ? '💑' : '🏆';
+            
+            html += `<div class="calc-category-section">
+                <div class="calc-category-header">
+                    <div class="calc-category-icon">${icon}</div>
+                    <div class="calc-category-title"><h3>${category}</h3><p>Sélection sauvegardée</p></div>
+                    <div class="calc-category-count">${prods.length}</div>
+                </div>
+                <div class="calc-results-list">`;
+            
+            prods.forEach((p, i) => {
+                const logo = this.COMPANY_LOGOS[p.company] || '';
+                const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                
+                html += `<div class="calc-result-card saved-card">
+                    <div class="calc-result-top">
+                        <div class="calc-rank-badge ${rankClass}">${i + 1}</div>
+                        ${logo ? `<img src="${logo}" alt="${p.company}" class="calc-company-logo">` : ''}
+                        <div class="calc-result-info">
+                            <div class="calc-company-name">${p.company}</div>
+                            <div class="calc-product-name">${p.product || ''}</div>
+                        </div>
+                        <div class="calc-price-container">
+                            <div class="calc-price-value">${p.price}</div>
+                            <div class="calc-price-label">PAR MOIS</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            html += `</div></div>`;
+        });
+        
+        html += `</div>
+            <div class="calc-reload-actions">
+                <button class="calc-btn-reload" onclick="CALC.reloadSearchParams('${searchId}')">
+                    🔄 Relancer avec les prix actuels
+                </button>
+            </div>`;
+        
+        resultsDiv.innerHTML = html;
+    },
+    
+    async reloadSearchParams(searchId) {
+        const search = this.savedSearches.find(s => s.id === searchId);
+        if (!search) return;
+        
+        const params = search.search_params;
+        
+        if (params.age) document.getElementById('calcAgeManuel').value = params.age;
+        if (params.sexe) document.getElementById('calcSexe').value = params.sexe;
+        if (params.fumeur) document.getElementById('calcFumeur').value = params.fumeur;
+        if (params.montant) {
+            const montantInput = document.getElementById('calcMontant');
+            montantInput.value = FINOX.formatMoney(params.montant);
+        }
+        if (params.typeAssurance) {
+            document.getElementById('calcTypeAssurance').value = params.typeAssurance;
+            this.updateDureeOptions();
+        }
+        if (params.duree) document.getElementById('calcDuree').value = params.duree;
+        
+        if (params.conjoint) {
+            document.getElementById('calcHasConjoint').checked = true;
+            document.getElementById('calcConjointFields').classList.add('visible');
+            document.getElementById('calcAgeConjoint').value = params.conjoint.age;
+            document.getElementById('calcSexeConjoint').value = params.conjoint.sexe;
+            document.getElementById('calcFumeurConjoint').value = params.conjoint.fumeur;
+            this.selectDecesType(params.conjoint.decesType);
+            this.updateTypeAssuranceOptions(true);
+        } else {
+            document.getElementById('calcHasConjoint').checked = false;
+            document.getElementById('calcConjointFields').classList.remove('visible');
+            this.updateTypeAssuranceOptions(false);
+        }
+        
+        await this.calculer();
+    },
+
+    async deleteSearch(searchId) {
+        if (!(await FINOX.confirm('Supprimer cette recherche?'))) return;
+        
+        try {
+            const { error } = await FINOX.supabase
+                .from('client_recherches_assurance_vie')
+                .delete()
+                .eq('id', searchId);
+            
+            if (error) throw error;
+            
+            FINOX.showNotification('🗑️ Supprimée', 'success');
+            await this.loadSavedSearches();
+            
+            // Si on affichait cette recherche, revenir à l'état vide
+            document.getElementById('calcResults').innerHTML = `
+                <div class="calc-empty-state">
+                    <div class="calc-empty-icon">💰</div>
+                    <div class="calc-empty-title">Prêt à comparer?</div>
+                    <div class="calc-empty-text">Sélectionnez un membre et cliquez sur "Comparer les prix"</div>
+                </div>`;
+            
+        } catch (e) {
+            FINOX.showNotification('❌ Erreur: ' + e.message, 'error');
+        }
+    }
+};
+
+// Initialiser le module
+CALC.init();
+</script>
