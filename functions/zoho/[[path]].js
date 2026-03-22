@@ -170,7 +170,7 @@ async function handleSyncClient(request, env, corsHeaders) {
     } else {
         // Insert
         clientData.type_contact = 'client';
-        clientData.status = 'actif';
+        clientData.status = 'client';
         clientData.created_at = new Date().toISOString();
         clientData.updated_at = new Date().toISOString();
         const insertRes = await supabaseFetch('/rest/v1/clients', {
@@ -206,6 +206,7 @@ async function handleLaunch(url, env, corsHeaders) {
     const email = url.searchParams.get('email') || '';
     const phone = url.searchParams.get('phone') || '';
     const dob = url.searchParams.get('dob') || '';
+    const conseillerEmail = url.searchParams.get('conseiller_email') || '';
 
     if (!clientId && !zohoId) {
         return json({ error: 'Provide client_id or zoho_id' }, corsHeaders, 400);
@@ -225,18 +226,29 @@ async function handleLaunch(url, env, corsHeaders) {
 
         // Auto-create si le client n'existe pas encore
         if (!targetId) {
+            // Trouver le conseiller par email pour l'assigner
+            let conseiller_id = null;
+            if (conseillerEmail) {
+                const profileRes = await supabaseFetch(`/rest/v1/profiles?email=eq.${encodeURIComponent(conseillerEmail)}&select=id&limit=1`);
+                if (profileRes.ok) {
+                    const profiles = await profileRes.json();
+                    if (profiles.length > 0) conseiller_id = profiles[0].id;
+                }
+            }
+
             const newClient = {
                 zoho_id: zohoId,
                 first_name: firstName || 'Nouveau',
                 last_name: lastName || 'Client',
                 organization_id: ORG_ID,
                 type_contact: 'client',
-                status: 'actif',
+                status: 'prospect',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
                 ...(email && { email }),
                 ...(phone && { phone }),
                 ...(dob && { date_of_birth: dob }),
+                ...(conseiller_id && { conseiller_id }),
             };
 
             const insertRes = await supabaseFetch('/rest/v1/clients', {
