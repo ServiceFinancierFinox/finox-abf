@@ -205,7 +205,24 @@ async function handleLaunch(url, env, corsHeaders) {
     const lastName = url.searchParams.get('last_name') || '';
     const email = url.searchParams.get('email') || '';
     const phone = url.searchParams.get('phone') || '';
-    const dob = url.searchParams.get('dob') || '';
+    const dobRaw = url.searchParams.get('dob') || '';
+    // Convert DD/MM/YYYY or MM/DD/YYYY to YYYY-MM-DD for Postgres
+    let dob = '';
+    if (dobRaw) {
+        if (dobRaw.includes('-') && dobRaw.length === 10) {
+            // Already YYYY-MM-DD
+            dob = dobRaw;
+        } else if (dobRaw.includes('/')) {
+            const parts = dobRaw.split('/');
+            if (parts.length === 3) {
+                let [a, b, c] = parts;
+                // Zoho FR sends DD/MM/YYYY
+                if (c.length === 4) {
+                    dob = `${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+                }
+            }
+        }
+    }
     const sex = url.searchParams.get('sex') || '';
     const smoker = url.searchParams.get('smoker') || '';
     const conseillerEmail = url.searchParams.get('conseiller_email') || '';
