@@ -24,10 +24,19 @@
 }
 .pv-soumission-btn:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,92,246,0.3); }
 
+.pv-notes-amf-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff; font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+}
+.pv-notes-amf-btn:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,158,11,0.3); }
+
 /* Soumission Modal */
 .soum-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
 .soum-overlay.show { display: flex; }
-.soum-modal { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border-color, #333); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; animation: soumPopIn 0.3s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.soum-modal { background: var(--bg-card, #1a1a2e); border: 1px solid var(--border-color, #333); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; overflow-y: auto; animation: soumPopIn 0.3s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 @keyframes soumPopIn { from { opacity: 0; transform: scale(0.9) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .soum-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(139,92,246,0.1); border-bottom: 1px solid var(--border-color, #333); }
 .soum-header-title { font-size: 16px; font-weight: 700; color: #a78bfa; display: flex; align-items: center; gap: 10px; }
@@ -411,6 +420,8 @@
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 14px;
     background: rgba(255,255,255,0.02);
+}
+.pv-collapse:not([open]) {
     overflow: hidden;
 }
 .pv-collapse summary {
@@ -719,6 +730,10 @@
                 <span>🎙️</span>
                 <span>Transcript AI</span>
             </button>
+            <button class="pv-notes-amf-btn" id="pvNotesAmfBtn" onclick="pvOpenNotesAmf()" title="Générer des notes AMF à partir d'un transcript écrit" style="display:none;">
+                <span>📋</span>
+                <span>Notes AMF</span>
+            </button>
             <button class="pv-soumission-btn" id="pvSoumissionBtn" onclick="pvOpenSoumission()" title="Générer un courriel de soumission à partir d'un transcript" style="display:none;">
                 <span>✨</span>
                 <span>Générer soumission</span>
@@ -814,6 +829,32 @@
             <button class="soum-btn" id="transcriptNotesBtn" onclick="pvTranscriptToNotes()" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">📋 Notes AMF</button>
             <button class="soum-btn" id="transcriptToSoumBtn" onclick="pvTranscriptToSoumission()" style="display:none;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;">✨ Générer soumission</button>
             <button class="soum-btn primary" id="transcriptGenerateBtn" onclick="pvTranscribe()" style="background:linear-gradient(135deg,#22c55e,#16a34a);" disabled>🎙️ Transcrire</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notes AMF (Transcript écrit) Modal -->
+<div class="soum-overlay" id="notesAmfOverlay">
+    <div class="soum-modal">
+        <div class="soum-header" style="background:rgba(245,158,11,0.1);">
+            <span class="soum-header-title" style="color:#f59e0b;">📋 Notes AMF — Transcript écrit</span>
+            <button class="soum-close" onclick="pvCloseNotesAmf()">✕</button>
+        </div>
+        <div class="soum-body">
+            <div>
+                <div class="soum-section-label">📝 Collez votre transcript ou notes de rencontre</div>
+                <textarea class="soum-textarea" id="notesAmfTranscript" style="min-height:200px;" placeholder="Collez ici le transcript de votre appel, vos notes manuscrites, ou un résumé de la rencontre...&#10;&#10;L'IA va structurer le tout en notes conformes AMF (objectif, besoins identifiés, recommandations, etc.)"></textarea>
+            </div>
+            <div id="notesAmfResultSection" style="display:none;">
+                <div class="soum-section-label">📋 Notes AMF générées</div>
+                <textarea class="soum-textarea result" id="notesAmfResult" style="min-height:350px;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05);"></textarea>
+            </div>
+        </div>
+        <div class="soum-actions">
+            <button class="soum-btn secondary" onclick="pvCloseNotesAmf()">Fermer</button>
+            <button class="soum-btn copy" id="notesAmfCopyBtn" onclick="pvCopyNotesAmf()" style="display:none;">📋 Copier</button>
+            <button class="soum-btn" id="notesAmfSaveBtn" onclick="pvSaveNotesAmf()" style="display:none;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;">💾 Sauvegarder au dossier</button>
+            <button class="soum-btn primary" id="notesAmfGenerateBtn" onclick="pvGenerateNotesAmf()" style="background:linear-gradient(135deg,#f59e0b,#d97706);">📋 Générer Notes AMF</button>
         </div>
     </div>
 </div>
@@ -960,11 +1001,13 @@ async function initPulseVital(forceRefresh = false) {
             if (subEl) subEl.textContent = 'Diagnostic de santé relationnelle';
         }
 
-        // Show soumission button for all types
+        // Show action buttons for all types
         const soumBtn = document.getElementById('pvSoumissionBtn');
         if (soumBtn) soumBtn.style.display = 'flex';
         const transBtn = document.getElementById('pvTranscriptBtn');
         if (transBtn) transBtn.style.display = 'flex';
+        const notesAmfBtn = document.getElementById('pvNotesAmfBtn');
+        if (notesAmfBtn) notesAmfBtn.style.display = 'flex';
 
         // Show creation date and last activity
         const datesEl = document.getElementById('pvClientDates');
@@ -2483,6 +2526,121 @@ window.pvTranscriptToNotes = async function() {
         FINOX.showNotification('Erreur: ' + err.message, 'error');
         btn.innerHTML = '📋 Notes AMF';
         btn.disabled = false;
+    }
+};
+
+// ═══ NOTES AMF (TRANSCRIPT ÉCRIT) ═══
+window.pvOpenNotesAmf = function() {
+    document.getElementById('notesAmfOverlay').classList.add('show');
+    document.getElementById('notesAmfTranscript').value = '';
+    document.getElementById('notesAmfResult').value = '';
+    document.getElementById('notesAmfResultSection').style.display = 'none';
+    document.getElementById('notesAmfCopyBtn').style.display = 'none';
+    document.getElementById('notesAmfSaveBtn').style.display = 'none';
+    document.getElementById('notesAmfGenerateBtn').disabled = false;
+    document.getElementById('notesAmfGenerateBtn').innerHTML = '📋 Générer Notes AMF';
+};
+
+window.pvCloseNotesAmf = function() {
+    document.getElementById('notesAmfOverlay').classList.remove('show');
+};
+
+window.pvCopyNotesAmf = function() {
+    const text = document.getElementById('notesAmfResult').value;
+    navigator.clipboard.writeText(text);
+    FINOX.showNotification('Notes AMF copiées!', 'success');
+};
+
+window.pvGenerateNotesAmf = async function() {
+    const transcript = document.getElementById('notesAmfTranscript').value.trim();
+    if (!transcript || transcript.length < 30) {
+        FINOX.showNotification('Collez un transcript d\'au moins 30 caractères', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('notesAmfGenerateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="soum-spinner"></span>Génération en cours...';
+
+    try {
+        let clientInfo = '';
+        if (pvClientData) {
+            const c = pvClientData;
+            clientInfo += `Prénom: ${c.first_name || '?'}\nNom: ${c.last_name || '?'}`;
+            if (c.date_naissance) clientInfo += `\nDate de naissance: ${c.date_naissance}`;
+            if (c.email) clientInfo += `\nEmail: ${c.email}`;
+            if (c.type_contact) clientInfo += `\nType: ${c.type_contact}`;
+            if (c.conjoint_prenom) clientInfo += `\nConjoint: ${c.conjoint_prenom} ${c.conjoint_nom || ''}`;
+        }
+
+        const user = FINOX.getCurrentUser();
+        const conseillerName = user ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() : '';
+
+        const resp = await fetch('/claude/notes_amf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'notes_amf',
+                transcript,
+                clientInfo: clientInfo || null,
+                conseillerName: conseillerName || null
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `Erreur ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        const notes = data.content?.[0]?.text || '';
+        if (!notes) throw new Error('Aucune note générée');
+
+        document.getElementById('notesAmfResult').value = notes;
+        document.getElementById('notesAmfResultSection').style.display = 'block';
+        document.getElementById('notesAmfCopyBtn').style.display = 'inline-flex';
+        document.getElementById('notesAmfSaveBtn').style.display = 'inline-flex';
+        btn.innerHTML = '📋 Régénérer';
+        btn.disabled = false;
+
+    } catch (err) {
+        console.error('[Notes AMF texte] Error:', err);
+        FINOX.showNotification('Erreur: ' + err.message, 'error');
+        btn.innerHTML = '📋 Générer Notes AMF';
+        btn.disabled = false;
+    }
+};
+
+window.pvSaveNotesAmf = async function() {
+    const notes = document.getElementById('notesAmfResult').value;
+    if (!notes) return;
+
+    const saveBtn = document.getElementById('notesAmfSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="soum-spinner"></span>Sauvegarde...';
+
+    try {
+        if (!pvClientData?.id) throw new Error('Aucun client sélectionné');
+
+        const user = FINOX.getCurrentUser();
+        await FINOX.supabase.from('client_timeline').insert({
+            client_id: pvClientData.id,
+            created_by: user?.id,
+            activity_type: 'ai_notes_amf',
+            title: 'Notes AMF — Transcript écrit',
+            description: notes,
+            external_source: 'manual_transcript',
+            metadata: { source: 'manual_transcript', auto_generated: true }
+        });
+
+        FINOX.showNotification('Notes AMF sauvegardées au dossier!', 'success');
+        saveBtn.innerHTML = '✅ Sauvegardé';
+        setTimeout(() => { saveBtn.innerHTML = '💾 Sauvegarder au dossier'; saveBtn.disabled = false; }, 2000);
+    } catch (err) {
+        console.error('[Notes AMF save] Error:', err);
+        FINOX.showNotification('Erreur sauvegarde: ' + err.message, 'error');
+        saveBtn.innerHTML = '💾 Sauvegarder au dossier';
+        saveBtn.disabled = false;
     }
 };
 

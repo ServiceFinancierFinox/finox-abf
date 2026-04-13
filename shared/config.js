@@ -30,7 +30,7 @@ if (window.FINOX) {
     // ═══════════════════════════════════════════════════════════════
 
     // Mode production - désactive les logs de debug
-    const IS_PRODUCTION = window.location.hostname === 'crm.finox.ca';
+    const IS_PRODUCTION = ['crm.finox.ca', 'crm-finox.ca', 'abf.crm-finox.ca', 'finox-abf.pages.dev'].includes(window.location.hostname);
 
     // Logger conditionnel - ne log qu'en développement
     const log = {
@@ -858,6 +858,7 @@ if (window.FINOX) {
 
         const notification = document.createElement('div');
         notification.className = `finox-notification ${type}`;
+        notification.style.zIndex = '99999';
 
         const iconMap = { success: 'check', warning: 'alert', error: 'x' };
         notification.innerHTML = `

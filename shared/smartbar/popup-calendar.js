@@ -128,8 +128,8 @@ window.calSelectDate = function(y, m, d) {
     if (calGoogleTokens) calLoadScheduledMeetings();
 };
 
-window.calPrevMonth = function() { calCurrentMonth.setMonth(calCurrentMonth.getMonth() - 1); calRenderMiniCalendar(); };
-window.calNextMonth = function() { calCurrentMonth.setMonth(calCurrentMonth.getMonth() + 1); calRenderMiniCalendar(); };
+window.calPrevMonth = function() { calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() - 1, 1); calRenderMiniCalendar(); };
+window.calNextMonth = function() { calCurrentMonth = new Date(calCurrentMonth.getFullYear(), calCurrentMonth.getMonth() + 1, 1); calRenderMiniCalendar(); };
 window.calGoToToday = function() { calCurrentMonth = new Date(); calSelectedDate = new Date(); calRenderMiniCalendar(); calRenderTimeSlots(); if (calGoogleTokens) calLoadScheduledMeetings(); };
 
 // Fetch events
