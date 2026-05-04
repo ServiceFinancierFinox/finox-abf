@@ -744,32 +744,55 @@ function getSelectedLettres() {
     return selected;
 }
 
-// Built-in Avis de Divulgation HTML (used when no template configured)
+// Built-in Avis de Divulgation HTML (fallback minimal si BD inaccessible)
+// Les vrais templates (Cabinet + RA) sont en BD dans compliance_templates.
 function getBuiltInAvisHTML() {
-    return `<div style="font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;max-width:800px;margin:0 auto;line-height:1.6;">
-    <div style="text-align:center;padding:24px 0;border-bottom:3px solid #1a3a5c;">
-        <h1 style="color:#1a3a5c;font-size:22px;margin:0;">Avis de Divulgation et de Consentement Client</h1>
-        <p style="color:#666;font-size:12px;margin-top:6px;">Ce document présente les informations essentielles concernant {{nom_cabinet}}, ses pratiques, la protection de vos renseignements personnels et vos droits en tant que client.</p>
-    </div>
-    <div style="margin-top:20px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">1. Identification du Cabinet</h2><p style="font-size:11px;"><strong>{{nom_cabinet}}</strong> — AMF #<strong>{{no_inscription_amf}}</strong><br>Siège social: <strong>{{adresse_cabinet}}</strong><br>Conseiller: <strong>{{nom_conseiller}}</strong> — Certificat #{{no_certificat}}<br>{{email_conseiller}} · {{tel_conseiller}}</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">2. Rôle du Conseiller</h2><p style="font-size:11px;">Chaque client se voit attribuer un conseiller en sécurité financière responsable qui évalue sa situation, conseille sur les solutions appropriées et effectue une Analyse des besoins financiers (ABF) complète.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">3. Assureurs Représentés</h2><p style="font-size:11px;">Cabinet indépendant et impartial. Partenaires: Assomption Vie, Beneva, BMO, Canada Vie, Desjardins, Empire Vie, Foresters, Humania, iA, Ivari, Manuvie, RBC, Sun Life, UV Assurance, L'Équitable.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">4. Rémunération</h2><p style="font-size:11px;"><strong>Aucuns frais de courtage directs.</strong> Rémunération via commissions de l'assureur incluses dans votre prime. Des rémunérations conditionnelles peuvent exister sans affecter l'indépendance des recommandations.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">5. Conflits d'Intérêts</h2><p style="font-size:11px;">Votre conseiller s'engage à placer vos intérêts avant les siens. Aucun conflit d'intérêts réel ou potentiel identifié à ce jour.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">6. Protection des Renseignements (Loi 25)</h2><p style="font-size:11px;">Vos renseignements sont protégés conformément à la Loi 25 du Québec. Vous disposez de droits d'accès, de rectification et de retrait de consentement. Responsable: {{nom_conseiller}} ({{email_conseiller}}).</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">7. Communication aux Partenaires</h2><p style="font-size:11px;">Vos renseignements peuvent être communiqués aux assureurs partenaires, fournisseurs de services, professionnels affiliés et collaborateurs autorisés, sous accord de confidentialité.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">8. Référencement à des Professionnels</h2><p style="font-size:11px;">{{nom_cabinet}} peut vous référer à des professionnels affiliés (courtier hypothécaire, planificateur financier, etc.). Ce consentement est facultatif.</p></div>
-    <div style="margin-top:16px;"><h2 style="color:#1a3a5c;font-size:15px;border-bottom:2px solid #c9a227;padding-bottom:4px;">9. Communications Électroniques (LCAP)</h2><p style="font-size:11px;">En signant, vous consentez à recevoir des communications électroniques de {{nom_cabinet}}. Vous pouvez vous désabonner en tout temps. Ce consentement est volontaire et distinct.</p></div>
-</div>`;
+    const isRA = !!window._isRepresentantAutonome;
+    const titre = "Communication de renseignements relative à l'assurance et consentement sur la protection des renseignements personnels";
+    const statutLine = isRA
+        ? `<li><strong>Statut :</strong> Représentant autonome (non rattaché à un cabinet)</li><li><strong>Adresse d'affaires :</strong> {{adresse_representant}}</li>`
+        : `<li><strong>Cabinet :</strong> {{nom_cabinet}}</li><li><strong>Adresse d'affaires :</strong> {{adresse_cabinet}}</li>`;
+    const portrait = isRA
+        ? `J'exerce à titre de représentant autonome et ne suis pas rattaché à un cabinet.`
+        : `Je suis rattaché à {{nom_cabinet}}.`;
+    return `<div style="font-family:'Segoe UI',Arial,sans-serif;color:#111827;font-size:11px;line-height:1.6;max-width:800px;margin:0 auto;">
+        <h1 style="color:#1a3a5c;font-size:22px;border-bottom:2px solid #c9a227;padding-bottom:8px;">${titre}</h1>
+        <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:14px;margin:14px 0;">
+            <h2 style="color:#1a3a5c;font-size:16px;margin:0 0 8px 0;">Coordonnées et titres réglementaires</h2>
+            <ul style="margin:0;padding-left:18px;list-style:none;">
+                <li><strong>Nom (tel qu'inscrit au Registre de l'AMF) :</strong> {{nom_conseiller}}</li>
+                <li><strong>Numéro de certificat AMF :</strong> {{no_certificat}}</li>
+                ${statutLine}
+                <li><strong>Téléphone :</strong> {{tel_conseiller}}</li>
+                <li><strong>Courriel :</strong> {{email_conseiller}}</li>
+            </ul>
+        </div>
+        <h2 style="color:#1a3a5c;font-size:16px;border-bottom:1px solid #c9a227;padding-bottom:4px;">Mon portrait</h2>
+        <p>Je suis inscrit auprès de l'Autorité des marchés financiers (AMF) et autorisé à exercer (certificat no {{no_certificat}}). ${portrait}</p>
+        <p style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px;margin-top:14px;">
+            ⚠️ <strong>Avis de divulgation par défaut</strong> — le template complet n'est pas chargé depuis la base de données. Veuillez configurer le template via Paramètres → Conformité.
+        </p>
+    </div>`;
 }
 
 // Load compliance template for the current conseiller
+// Switch: cabinet_id IS NULL → Représentant Autonome (avis_divulgation_ra)
+//         sinon → Cabinet (avis_divulgation, is_default=true)
 async function loadComplianceTemplate() {
     try {
         const user = FINOX.getCurrentUser();
         if (!user) return;
 
-        // Check assignment first
+        // Détecter si le conseiller est Représentant Autonome (pas de cabinet rattaché)
+        const { data: profile } = await FINOX.supabase
+            .from('profiles')
+            .select('cabinet_id')
+            .eq('id', user.id)
+            .single();
+        const isRepresentantAutonome = !profile?.cabinet_id;
+        window._isRepresentantAutonome = isRepresentantAutonome;
+
+        // Check assignment first (override manuel)
         const { data: assignment } = await FINOX.supabase
             .from('compliance_template_assignments')
             .select('template_id, compliance_templates(content_html, consent_checkboxes)')
@@ -783,18 +806,36 @@ async function loadComplianceTemplate() {
             return;
         }
 
-        // Fall back to default
-        const { data: defaultTpl } = await FINOX.supabase
+        // Sélection du template selon le statut du conseiller
+        const targetType = isRepresentantAutonome ? 'avis_divulgation_ra' : 'avis_divulgation';
+        const { data: tpl } = await FINOX.supabase
             .from('compliance_templates')
             .select('content_html, consent_checkboxes')
-            .eq('is_default', true)
+            .eq('document_type', targetType)
             .eq('is_active', true)
+            .order('is_default', { ascending: false })
+            .order('version', { ascending: false })
             .limit(1)
             .maybeSingle();
 
-        if (defaultTpl?.content_html) {
-            window._complianceTemplateHTML = defaultTpl.content_html;
-            window._complianceCheckboxes = defaultTpl.consent_checkboxes;
+        if (tpl?.content_html) {
+            window._complianceTemplateHTML = tpl.content_html;
+            window._complianceCheckboxes = tpl.consent_checkboxes;
+            console.log(`[Compliance] Template chargé: ${targetType}`);
+        } else if (isRepresentantAutonome) {
+            // Fallback: si template RA introuvable, charger le default Cabinet
+            const { data: defaultTpl } = await FINOX.supabase
+                .from('compliance_templates')
+                .select('content_html, consent_checkboxes')
+                .eq('is_default', true)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+            if (defaultTpl?.content_html) {
+                window._complianceTemplateHTML = defaultTpl.content_html;
+                window._complianceCheckboxes = defaultTpl.consent_checkboxes;
+                console.warn('[Compliance] Template RA introuvable, fallback Cabinet');
+            }
         }
     } catch (e) {
         console.warn('[Compliance] Template load error:', e);
@@ -2573,14 +2614,23 @@ function generateSignatureDocumentHTML(data, sections, lettres, conseiller) {
 
         // Cabinet dynamique
         const cab = _cabinetCache;
-        const cabNom = cab?.nom || 'Services Financiers Finox inc.';
-        const cabAdresse = cab ? `${cab.adresse || ''}${cab.ville ? ', ' + cab.ville : ''}${cab.province ? ' (' + cab.province + ')' : ''}` : '3235, avenue de la Gare, Mascouche (QC)';
-        const cabAmf = cab?.no_inscription_amf || '609440';
+        const isRA = !!window._isRepresentantAutonome;
+        const cabNom = cab?.nom || (isRA ? '' : 'Services Financiers Finox inc.');
+        const cabAdresse = cab ? `${cab.adresse || ''}${cab.ville ? ', ' + cab.ville : ''}${cab.province ? ' (' + cab.province + ')' : ''}` : (isRA ? '' : '3235, avenue de la Gare, Mascouche (QC)');
+        const cabAmf = cab?.no_inscription_amf || (isRA ? '' : '609440');
+        const cabTel = cab?.telephone || '';
+        const cabEmail = cab?.courriel || '';
+        const cabDirigeants = cab?.dirigeants || `${conseiller.firstName || ''} ${conseiller.lastName || ''}`.trim();
 
         const vars = {
             '{{nom_cabinet}}': cabNom,
             '{{adresse_cabinet}}': cabAdresse,
             '{{no_inscription_amf}}': cabAmf,
+            '{{telephone_cabinet}}': cabTel,
+            '{{courriel_cabinet}}': cabEmail || conseiller.email || '',
+            '{{dirigeants_cabinet}}': cabDirigeants,
+            // Variable RA: adresse personnelle d'affaires
+            '{{adresse_representant}}': cabAdresse || conseiller.adresse_pro || '',
             '{{nom_conseiller}}': `${conseiller.firstName || ''} ${conseiller.lastName || ''}`.trim(),
             '{{no_certificat}}': certNum,
             '{{titre_conseiller}}': conseiller.title || 'Conseiller en sécurité financière',

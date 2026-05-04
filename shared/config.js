@@ -46,8 +46,8 @@ if (window.FINOX) {
     const LOGIN_PAGE = '/index.html';
     const GOOGLE_API = 'https://crm.finox.ca/google';
 
-    // Organisation (Multi-tenant future-proof)
-    const ORG_ID = '7572c420-6c4d-4313-8284-7ba5a4351f2c';
+    // Organisation (Multi-tenant) — fallback Finox, écrasé dynamiquement par loadUserProfile()
+    let ORG_ID = '7572c420-6c4d-4313-8284-7ba5a4351f2c';
 
     // Instance Supabase
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -287,6 +287,15 @@ if (window.FINOX) {
 
             if (error) throw error;
             _userProfile = data;
+
+            // Multi-tenant: setter ORG_ID depuis le profil de l'utilisateur
+            if (data?.organization_id) {
+                ORG_ID = data.organization_id;
+                log.debug('[Config ABF] ORG_ID chargé depuis profil:', ORG_ID);
+            } else {
+                log.error('[Config ABF] Profil sans organization_id — accès impossible');
+            }
+
             return data;
         } catch (err) {
             log.error('[Config] Erreur loadUserProfile:', err.message);
@@ -829,11 +838,10 @@ if (window.FINOX) {
     // ═══════════════════════════════════════════════════════════════
 
     const STATUT_LABELS = {
-        proposition_soumise: 'Soumise',
         attente_conseiller: 'Attente',
         tarification: 'Tarification',
         exigence_assureur: 'Exigence assureur',
-        exigence_finox: 'Exigence Finox',
+        exigence_finox: 'Exigence cabinet',
         a_faire_signature: 'À signer',
         attente_signature: 'Attente signature',
         traiter_commission: 'Commission',
@@ -2659,9 +2667,6 @@ if (window.FINOX) {
         // Supabase
         supabase: sb,
 
-        // Organisation
-        ORG_ID: ORG_ID,
-
         // Auth
         requireAuth,
         checkAuth,
@@ -2779,6 +2784,13 @@ if (window.FINOX) {
         // Debug (only in dev)
         _debug: IS_PRODUCTION ? null : { log, secureStorage }
     };
+
+    // ⚠️ Bug fix 2026-05-04: ORG_ID doit être lu dynamiquement.
+    Object.defineProperty(window.FINOX, 'ORG_ID', {
+        get: function() { return ORG_ID; },
+        configurable: false,
+        enumerable: true
+    });
 
     log.debug('[Config] Chargé - CLIENT_ID:', window.FINOX.CLIENT_ID);
 

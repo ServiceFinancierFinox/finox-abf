@@ -1174,6 +1174,14 @@
             </button>`;
         }
 
+        // Hide DM (any participant can hide a DM from their own list)
+        if (isDirect) {
+            items += `<div class="tc-menu-sep"></div>`;
+            items += `<button class="tc-menu-item tc-menu-danger" onclick="window.TeamChat.hideDMConversation()">
+                🗑️ Supprimer cette conversation
+            </button>`;
+        }
+
         // Delete / Archive (creator or admin)
         if (canDelete && !isDirect) {
             items += `<div class="tc-menu-sep"></div>`;
@@ -1304,6 +1312,46 @@
             backToChannels();
             FINOX.showNotification('Conversation supprimée', 'success');
         } catch(e) {
+            FINOX.showNotification('Erreur', 'error');
+        }
+    }
+
+    // Hide a DM from the current user's list. L'autre participant continue de voir
+    // la conversation. Si plus aucun membre, on archive complètement.
+    async function hideDMConversation() {
+        const ch = state.currentChannel;
+        const user = getUser();
+        if (!ch || !user) return;
+        if (ch.type !== 'direct') return;
+
+        const otherIds = (ch.members || []).filter(id => id !== user.id);
+        const otherName = otherIds.length > 0 ? (getMember(otherIds[0]).full_name || 'Inconnu') : 'cette conversation';
+
+        const confirmed = await FINOX.showConfirmDialog(
+            'Supprimer cette conversation',
+            `Retirer la conversation avec ${otherName} de votre liste? L'autre participant pourra toujours la voir, sauf s'il l'a aussi quittée.`
+        );
+        if (!confirmed) return;
+
+        try {
+            const newMembers = (ch.members || []).filter(id => id !== user.id);
+            await FINOX.supabase
+                .from('team_channels')
+                .update({ members: newMembers })
+                .eq('id', ch.id);
+
+            if (newMembers.length === 0) {
+                await FINOX.supabase
+                    .from('team_channels')
+                    .update({ is_archived: true })
+                    .eq('id', ch.id);
+            }
+
+            state.channels = state.channels.filter(c => c.id !== ch.id);
+            backToChannels();
+            FINOX.showNotification('Conversation supprimée', 'success');
+        } catch(e) {
+            console.error('[TeamChat] hideDMConversation error:', e);
             FINOX.showNotification('Erreur', 'error');
         }
     }
@@ -1799,6 +1847,7 @@
         toggleMute,
         leaveChannel,
         deleteChannel,
+        hideDMConversation,
         pinMessage,
         unpinMessage,
         acceptCall,
