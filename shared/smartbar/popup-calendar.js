@@ -197,16 +197,22 @@ async function openTypeSelectModal() {
     document.getElementById('typeSelectClientName').textContent = calClientName || 'Client';
 
     try {
+        const currentUserId = FINOX.getCurrentUser()?.id;
         const { data: types, error } = await FINOX.supabase
             .from('meeting_types')
             .select('*')
             .eq('is_active', true)
+            .eq('organization_id', FINOX.ORG_ID)
             .order('display_order', { ascending: true });
 
         if (error) throw error;
 
-        const appels = (types || []).filter(t => t.category === 'appel');
-        const rencontres = (types || []).filter(t => t.category === 'rencontre');
+        // Filtre: types org (scope null ou 'org') + types perso de l'utilisateur courant uniquement
+        const visible = (types || []).filter(t =>
+            !t.scope || t.scope === 'org' || (t.scope === 'personal' && t.created_by === currentUserId)
+        );
+        const appels = visible.filter(t => t.category === 'appel');
+        const rencontres = visible.filter(t => t.category === 'rencontre');
 
         document.getElementById('typeSelectAppels').innerHTML = appels.map(t =>
             `<div class="type-select-item appel" onclick="selectTypeFromModal('${t.name.replace(/'/g, "\\'")}', '${t.icon}', ${t.duration_minutes}, false, '${t.id}', '${t.category}')"><span class="tsi-icon">${t.icon}</span><span class="tsi-label">${t.name}</span><span class="tsi-duration">${t.duration_minutes}min</span></div>`
@@ -326,6 +332,7 @@ window.confirmBookingFromModal = async function() {
     }
 
     // 1. Créer événement Google Calendar
+    let googleSyncFailed = false;
     if (calGoogleTokens) {
         try {
             const eventBody = {
@@ -347,7 +354,21 @@ window.confirmBookingFromModal = async function() {
             FINOX.showNotification('📅 RDV créé dans Google Calendar!', 'success');
         } catch (e) {
             console.error('Erreur Google Calendar:', e);
-            FINOX.showNotification('Erreur création RDV Google', 'error');
+            googleSyncFailed = true;
+            const errMsg = (e && e.message ? String(e.message) : '').toLowerCase();
+            const isAuthErr = errMsg.includes('401') || errMsg.includes('403')
+                || errMsg.includes('unauthorized') || errMsg.includes('insufficient')
+                || errMsg.includes('invalid_grant') || errMsg.includes('scope');
+            if (isAuthErr) {
+                const url = '/index.html?connect=google';
+                FINOX.showNotification(
+                    `⚠️ Calendrier Google non autorisé — RDV créé localement seulement. <a href="${url}" style="color:#fff;text-decoration:underline;">Se reconnecter à Google</a>`,
+                    'error',
+                    12000
+                );
+            } else {
+                FINOX.showNotification('⚠️ Erreur Google Calendar — RDV créé localement seulement', 'error', 8000);
+            }
         }
     }
 
@@ -376,7 +397,7 @@ window.confirmBookingFromModal = async function() {
             body: JSON.stringify(meetingPayload)
         });
         const workflowResult = await workflowResponse.json();
-        if (workflowResult.success && workflowResult.workflows_triggered > 0) {
+        if (workflowResult.success && workflowResult.workflows_triggered > 0 && !googleSyncFailed) {
             FINOX.showNotification(`✅ RDV + ${workflowResult.workflows_triggered} workflow(s) déclenchés`, 'success');
         }
     } catch (e) {
